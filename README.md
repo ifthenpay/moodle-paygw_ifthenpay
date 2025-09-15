@@ -37,7 +37,7 @@ Ifthenpay payment gateway plugin for <a href="https://moodle.org/">Moodle</a> wi
 - **Dev Environment:** <a href="https://code.visualstudio.com/docs/devcontainers/containers">VS Code Dev Containers</a> + <a href="https://docs.docker.com/compose/">docker-compose</a>
 - **PHP Tooling:** <a href="https://getcomposer.org/">Composer</a> · <a href="https://github.com/squizlabs/PHP_CodeSniffer">PHPCS</a> (Moodle CS) · <a href="https://cs.symfony.com/">PHP-CS-Fixer</a> · <a href="https://phpstan.org/">PHPStan</a> · <a href="https://phpmd.org/">PHPMD</a>
 - **JS/AMD:** <a href="https://nodejs.org/">Node</a> 20 + <a href="https://gruntjs.com/">Grunt</a> (uglify, watch)
-- **JS QA:** <a href="https://eslint.org/">ESLint</a> (with <a href="https://github.com/gajus/eslint-plugin-jsdoc">JSDoc</a>, <a href="https://github.com/xjamundx/eslint-plugin-promise">Promise</a>, <a href="https://babel.dev/docs/eslint-plugin-babel">Babel</a>, <a href="https://eslint.org/docs/latest/use/configure/migration-guide">Globals</a>) · <a href="https://stylelint.io/">Stylelint</a> (+ <a href="https://github.com/stylelint-stylistic/stylelint-stylistic">Stylistic plugin</a> · <a href="https://github.com/stylelint/stylelint-config-standard">Config Standard</a>)
+- **JS Tooling:** <a href="https://eslint.org/">ESLint</a> (with <a href="https://github.com/gajus/eslint-plugin-jsdoc">JSDoc</a>, <a href="https://github.com/xjamundx/eslint-plugin-promise">Promise</a>, <a href="https://babel.dev/docs/eslint-plugin-babel">Babel</a>, <a href="https://eslint.org/docs/latest/use/configure/migration-guide">Globals</a>) · <a href="https://stylelint.io/">Stylelint</a> (+ <a href="https://github.com/stylelint-stylistic/stylelint-stylistic">Stylistic plugin</a> · <a href="https://github.com/stylelint/stylelint-config-standard">Config Standard</a>)
 
 ---
 
@@ -61,6 +61,9 @@ Ifthenpay payment gateway plugin for <a href="https://moodle.org/">Moodle</a> wi
 │  ├─ Dockerfile.dev           # VS Code dev image (CLI tools)
 │  └─ post-start.sh            # Symlink plugin into Moodle on shared volume
 │
+├─ .github/
+│  └─ workflows/               # GitHub Actions CI/CD workflows
+│
 ├─ .vscode/
 │  ├─ launch.json              # Xdebug launchers (web + CLI)
 │  └─ ifthenpay-moodle.code-workspace
@@ -68,11 +71,14 @@ Ifthenpay payment gateway plugin for <a href="https://moodle.org/">Moodle</a> wi
 ├─ src/                        # Plugin source (PHP, templates, AMD JS under src/amd/*)
 ├─ vendor/                     # Composer dependencies
 ├─ composer.json               # PHP toolchain (PHPCS, PHP-CS-Fixer, PHPStan, PHPMD)
+├─ node_modules/               # Node dependencies
 ├─ package.json                # JS toolchain (Grunt, ESLint, Stylelint)
 ├─ Gruntfile.js                # AMD build/watch tasks
 ├─ phpcs.xml                   # Coding standards (Moodle CS)
 ├─ phpstan.neon                # Static analysis config
-└─ docker-compose.yml          # App, DB, dev services, volumes/ports
+├─ docker-compose.yml          # App, DB, dev services, volumes/ports
+└─ (...)                       # Other configuration files
+
 ```
 
 > 🔗 **Symlink created on start**
@@ -161,11 +167,13 @@ src/
 │
 ├─ classes/
 │  ├─ adminsetting/
-│  │  └─ backofficekey.php          # Custom admin setting + server‑side validation
-│  └─ local/
-│     ├─ api_client.php             # HTTP client for ifthenpay endpoints
-│     ├─ data_formatter.php         # Small helpers (payloads/data types)
-│     └─ gateway.php                # Gateway integration glue (Payment Account form/adapters)
+│  │  └─ backofficekey.php          # Custom admin setting + server-side validation
+│  ├─ local/
+│  │  ├─ api_client.php             # HTTP client for ifthenpay endpoints
+│  │  └─ data_formatter.php         # Helpers for payloads/data types
+│  ├─ privacy/
+│  │  └─ provider.php               # GDPR/privacy API implementation
+│  └─ gateway.php                   # Gateway integration glue (Payment Account form/adapters)
 │
 ├─ db/
 │  ├─ install.xml                   # DB schema

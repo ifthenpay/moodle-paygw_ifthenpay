@@ -60,6 +60,7 @@ $string['backoffice_key_desc'] = 'Utilizada para autenticar chamadas à API e we
 // Validation / messages.
 $string['error_invalidformat'] = 'Formato inválido. Use 1234-5678-9012-3456.';
 $string['error_invalid_backoffice_key'] = 'A Backoffice Key não é válida. Verifique e tente novamente.';
+$string['error_missing_backoffice_key'] = 'A Backoffice Key não está configurada. Por favor, configure-a nas definições da gateway.';
 
 
 // Errors for API responses.
@@ -69,6 +70,7 @@ $string['api:error_invalid_json_get'] = 'Resposta JSON inválida no pedido GET: 
 $string['api:error_invalid_json_post'] = 'Resposta JSON inválida no pedido POST.';
 $string['api:error_http_request_failed'] = 'Falha na chamada HTTP: {$a}';
 $string['api:error_http_status'] = 'Erro HTTP da API: {$a}';
+$string['api:error_unsupported_method'] = 'Ação não suportada: {$a}';
 
 
 // Form – sections & labels.
@@ -101,7 +103,11 @@ $string['form:error_maxchars'] = 'Máximo de {$a} caracteres.';
 $string['form:error_callback_activation'] = 'Falha ao ativar notificações de pagamento. Verifique a sua Backoffice Key e a conectividade à internet, depois guarde novamente. Erro: {$a}';
 
 
-// Cancel/error page (processing flow).
+// Proccessing => pay page.
+$string['process:missing_ifthenpay_state'] = 'Não foram encontrados dados de configuração para a ifthenpay. Por favor, contacte o administrador do site.';
+$string['process:error_missing_redirect']  = 'Falta a URL de redirecionamento da ifthenpay. Por favor, contacte o administrador do site.';
+
+// Proccessing => cancel/error page.
 $string['process:cancel_title']        = 'Pagamento não concluído';
 $string['process:cancel_desc_cancel']  = 'O pagamento foi cancelado. Pode tentar novamente ou contactar o suporte.';
 $string['process:cancel_desc_error']   = 'Ocorreu um erro ao processar o pagamento. Pode tentar novamente ou contactar o suporte.';
@@ -111,7 +117,7 @@ $string['process:btn_try_again']       = 'Tentar novamente';
 $string['process:btn_contact_support'] = 'Contactar o suporte';
 $string['process:not_found']           = 'Tentativa de pagamento não encontrada.';
 
-// Processing / return page.
+// Processing => return page.
 $string['process:return_title']       = 'A confirmar o seu pagamento';
 $string['process:waiting']            = 'A verificar o estado…';
 $string['process:waiting_hint']       = 'Esta verificação pode demorar alguns segundos. Pode tentar novamente uma vez ou regressar aos seus cursos.';
@@ -120,3 +126,8 @@ $string['process:transaction_id']     = 'ID da transação';
 $string['process:amount']             = 'Montante';
 $string['process:btn_retry']          = 'Tentar novamente';
 $string['process:btn_go_to_courses']  = 'Ir para os meus cursos';
+
+
+// Privacy provider.
+$string['privacy:metadata:ifthenpay_tx'] = 'Armazena a relação entre utilizadores Moodle e objetos de transações ifthenpay';
+$string['privacy:metadata:ifthenpay_tx:userid'] = 'ID do utilizador Moodle';

@@ -43,7 +43,7 @@ function paygw_ifthenpay_get_backoffice_key(): string {
 function paygw_ifthenpay_api(): api_client {
     $key = paygw_ifthenpay_get_backoffice_key();
     if ($key === '') {
-        throw new \moodle_exception('missing_backoffice_key', 'paygw_ifthenpay');
+        throw new \moodle_exception('error_missing_backoffice_key', 'paygw_ifthenpay');
     }
     return new api_client($key, 8);
 }
@@ -252,7 +252,7 @@ function paygw_ifthenpay_build_optgroups_for_method(array $dataset, string $meth
 function paygw_ifthenpay_process_webhook(string $token, string $amount, string $apk): bool {
     global $DB;
 
-    $rec = $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
+    $rec = $DB->get_record('moodle-paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
     if (!$rec) {
         return false;
     }
@@ -295,7 +295,7 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         $rec->paymentid    = $paymentid;
         $rec->state        = 'PAID';
         $rec->timemodified = time();
-        $DB->update_record('paygw_ifthenpay_tx', $rec);
+        $DB->update_record('moodle-paygw_ifthenpay_tx', $rec);
 
         return true;
     } catch (\Throwable $e) {

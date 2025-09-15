@@ -60,6 +60,7 @@ $string['backoffice_key_desc'] = 'Used to authenticate API calls and webhooks.';
 // Validation / messages.
 $string['error_invalidformat'] = 'Invalid format. Use 1234-5678-9012-3456.';
 $string['error_invalid_backoffice_key'] = 'The Backoffice Key is not valid. Please check and try again.';
+$string['error_missing_backoffice_key'] = 'The Backoffice Key is not configured. Please set it in the gateway settings.';
 
 
 // Errors for API responses.
@@ -69,6 +70,7 @@ $string['api:error_invalid_json_get'] = 'Invalid JSON on GET request: {$a}';
 $string['api:error_invalid_json_post'] = 'Invalid JSON on POST request.';
 $string['api:error_http_request_failed'] = 'HTTP request failed: {$a}';
 $string['api:error_http_status'] = 'API HTTP error: {$a}';
+$string['api:error_unsupported_method'] = 'Unsupported action: {$a}';
 
 
 // Form – sections & labels.
@@ -101,7 +103,11 @@ $string['form:error_maxchars'] = 'Maximum {$a} characters.';
 $string['form:error_callback_activation'] = 'Failed to activate payment notifications. Please check your Backoffice Key and internet connectivity, then save again. Error: {$a}';
 
 
-// Cancel/error page (processing flow).
+// Proccessing => pay page.
+$string['process:missing_ifthenpay_state'] = 'No configuration data found for ifthenpay. Please contact the site administrator.';
+$string['process:error_missing_redirect']  = 'Missing redirect URL from ifthenpay. Please contact the site administrator.';
+
+// Proccessing => cancel/error page.
 $string['process:cancel_title']        = 'Payment not completed';
 $string['process:cancel_desc_cancel']  = 'You canceled the payment before it was completed. You can try again below.';
 $string['process:cancel_desc_error']   = 'We could not confirm your payment due to an error. You can try again or contact support.';
@@ -111,7 +117,7 @@ $string['process:btn_try_again']       = 'Try again';
 $string['process:btn_contact_support'] = 'Contact support';
 $string['process:not_found']           = 'Payment attempt not found.';
 
-// Processing / return page.
+// Processing => return page.
 $string['process:return_title']        = 'Confirming your payment';
 $string['process:waiting']             = 'Checking status…';
 $string['process:waiting_hint']        = 'This may take a few seconds. You can try once again; if it still does not complete, return to your courses.';
@@ -120,3 +126,8 @@ $string['process:transaction_id']      = 'Transaction ID';
 $string['process:amount']              = 'Amount';
 $string['process:btn_retry']           = 'Retry validation';
 $string['process:btn_go_to_courses']   = 'Go to My courses';
+
+
+// Privacy provider.
+$string['privacy:metadata:ifthenpay_tx'] = 'Stores the relation from Moodle users to ifthenpay transactions objects';
+$string['privacy:metadata:ifthenpay_tx:userid'] = 'Moodle user ID';

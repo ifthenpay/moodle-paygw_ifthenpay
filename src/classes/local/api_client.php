@@ -350,7 +350,7 @@ final class api_client
             } else if ($method === 'POST') {
                 $body = $curl->post($url, $rawbody ?? '');
             } else {
-                throw new moodle_exception('unsupportedmethod', 'error', '', $method);
+                throw new moodle_exception('api:error_unsupported_method', 'paygw_ifthenpay', '', $method);
             }
         } catch (\Throwable $e) {
             throw new moodle_exception('api:error_http_request_failed', 'paygw_ifthenpay', '', $e->getMessage());

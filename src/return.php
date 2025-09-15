@@ -37,7 +37,7 @@ $action = optional_param('action', '', PARAM_ALPHA);   // For AJAX polling.
 global $DB, $PAGE, $OUTPUT;
 
 // Fetch record or bail to courses.
-$rec = $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
+$rec = $DB->get_record('moodle-paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
 if (!$rec) {
     if ($action === 'verify') {
         @header('Content-Type: application/json; charset=utf-8');
@@ -51,7 +51,7 @@ if (!$rec) {
 if (empty($rec->transaction_id)) {
     $rec->transaction_id = $txid;
     $rec->timemodified   = time();
-    $DB->update_record('paygw_ifthenpay_tx', $rec);
+    $DB->update_record('moodle-paygw_ifthenpay_tx', $rec);
 }
 
 $successurl = helper::get_success_url($rec->component, $rec->paymentarea, $rec->itemid);
@@ -64,7 +64,7 @@ if ($action === 'verify') {
     $deadline = time() + 15;
 
     $ispaid = function () use ($DB, $token): bool {
-        $fresh = $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], 'id,state', IGNORE_MISSING);
+        $fresh = $DB->get_record('moodle-paygw_ifthenpay_tx', ['token' => $token], 'id,state', IGNORE_MISSING);
         return $fresh && (string)$fresh->state === 'PAID';
     };
 

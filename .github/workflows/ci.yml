@@ -61,7 +61,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-src-${{ github.ref_name }}-${{ github.run_number }}
+          # Use PR head ref if present, otherwise ref_name; sanitize slashes & spaces
+          name: plugin-src-${{ replace(replace(github.head_ref || github.ref_name, '/', '-'), ' ', '_') }}-${{ github.run_number }}
           path: |
             src/**
           if-no-files-found: error

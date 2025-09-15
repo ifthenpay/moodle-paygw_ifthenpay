@@ -56,12 +56,11 @@ jobs:
       - name: 🎨 Stylelint (CSS)
         run: npm run lint:css
 
-      # ---- Artifact: whole plugin source (no build) ----
       - name: ⬆️ Upload plugin source
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-src-${{ github.ref_name }}-${{ github.run_number }}
+          name: plugin-src-${{ github.sha }}-${{ github.run_number }}
           path: |
             src/**
           if-no-files-found: error

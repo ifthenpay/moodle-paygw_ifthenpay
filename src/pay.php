@@ -45,7 +45,7 @@ $cfg = helper::get_gateway_configuration($component, $paymentarea, $itemid, 'ift
 
 // Check if $cfg exists, contains 'ifthenpay_state', and is not empty.
 if (!isset($cfg) || !is_array($cfg) || !array_key_exists('ifthenpay_state', $cfg) || empty($cfg['ifthenpay_state'])) {
-    throw new moodle_exception('missing_ifthenpay_state', 'paygw_ifthenpay');
+    throw new moodle_exception('process:missing_ifthenpay_state', 'paygw_ifthenpay');
 }
 
 // 3) Build transaction token (short, 8 chars, base64url)
@@ -60,7 +60,7 @@ $client = paygw_ifthenpay_api();
 $order  = $client->create_pay_by_link($state->gatewaykey, $payload);
 
 // 6) (Optional, recommended) Persist for diagnostics/idempotency (minimal fields).
-if ($DB->get_manager()->table_exists('paygw_ifthenpay_tx')) {
+if ($DB->get_manager()->table_exists('moodle-paygw_ifthenpay_tx')) {
     $rec = (object)[
         'timecreated'   => time(),
         'timemodified'  => time(),
@@ -78,12 +78,12 @@ if ($DB->get_manager()->table_exists('paygw_ifthenpay_tx')) {
         'transaction_id' => null,
         'state'         => 'PENDING',
     ];
-    $DB->insert_record('paygw_ifthenpay_tx', $rec);
+    $DB->insert_record('moodle-paygw_ifthenpay_tx', $rec);
 }
 
-// 7) Off you go to Ifthenpay checkout.
+// 7) Off you go to ifthenpay checkout.
 $redirect = $order->redirect_url ?? $order->RedirectUrl ?? '';
 if ($redirect === '') {
-    throw new moodle_exception('error_missing_redirect', 'paygw_ifthenpay');
+    throw new moodle_exception('process:error_missing_redirect', 'paygw_ifthenpay');
 }
 redirect(new moodle_url($redirect));

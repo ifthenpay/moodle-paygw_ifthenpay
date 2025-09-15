@@ -25,14 +25,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    // 0) Primeiros passos (bloco informativo com HTML).
+    // 0) First steps instructions (HTML block).
     $settings->add(new \admin_setting_heading(
         'paygw_ifthenpay/onboarding',
         get_string('onboarding_title', 'paygw_ifthenpay'),
         get_string('onboarding_html', 'paygw_ifthenpay')
     ));
 
-    // 1) Ligação à ifthenpay (API / Backoffice Key).
+    // 1) Heading + Backoffice Key field.
     $settings->add(new \admin_setting_heading(
         'paygw_ifthenpay/api_heading',
         get_string('api_heading', 'paygw_ifthenpay'),
@@ -46,7 +46,7 @@ if ($ADMIN->fulltree) {
         ''
     ));
 
-    // 2) Comportamento do pagamento (opções core: surcharge, instructions).
+    // 2) Headings + Moodle common settings.
     $settings->add(new \admin_setting_heading(
         'paygw_ifthenpay/behavior_heading',
         get_string('behavior_heading', 'paygw_ifthenpay'),

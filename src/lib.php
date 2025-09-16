@@ -184,7 +184,7 @@ function paygw_ifthenpay_get_accounts_by_gateway_map(string $gatewaykey): array 
  * @return array Ordered list of method keys.
  */
 function paygw_ifthenpay_order_method_keys(array $methodsrich): array {
-    uasort($methodsrich, fn($a, $b) => ($a['position'] ?? 0) <=> ($b['position'] ?? 0));
+    uasort($methodsrich, fn ($a, $b) => ($a['position'] ?? 0) <=> ($b['position'] ?? 0));
     return array_keys($methodsrich);
 }
 
@@ -252,7 +252,7 @@ function paygw_ifthenpay_build_optgroups_for_method(array $dataset, string $meth
 function paygw_ifthenpay_process_webhook(string $token, string $amount, string $apk): bool {
     global $DB;
 
-    $rec = $DB->get_record('moodle-paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
+    $rec = $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
     if (!$rec) {
         return false;
     }
@@ -295,7 +295,7 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         $rec->paymentid    = $paymentid;
         $rec->state        = 'PAID';
         $rec->timemodified = time();
-        $DB->update_record('moodle-paygw_ifthenpay_tx', $rec);
+        $DB->update_record('paygw_ifthenpay_tx', $rec);
 
         return true;
     } catch (\Throwable $e) {

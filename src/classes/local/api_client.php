@@ -267,7 +267,7 @@ final class api_client
             }
             $ent = isset($item['Entidade']) ? trim((string)$item['Entidade']) : '';
             $subs = isset($item['SubEntidade']) && is_array($item['SubEntidade'])
-                ? array_filter($item['SubEntidade'], static fn($s) => trim((string)$s) !== '')
+                ? array_filter($item['SubEntidade'], static fn ($s) => trim((string)$s) !== '')
                 : [];
 
             if ($ent !== '' && !empty($subs)) {

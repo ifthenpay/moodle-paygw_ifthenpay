@@ -78,7 +78,7 @@ class data_formatter
             ];
         }
         // Ensure stable ordering by position.
-        uasort($methods, fn($a, $b) => $a['position'] <=> $b['position']);
+        uasort($methods, fn ($a, $b) => $a['position'] <=> $b['position']);
         return $methods;
     }
 

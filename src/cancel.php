@@ -34,7 +34,7 @@ $type  = required_param('type', PARAM_ALPHA);        // CANCEL or ERROR.
 global $DB, $CFG, $PAGE, $OUTPUT;
 
 // Fetch transaction.
-$rec = $DB->get_record('moodle-paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
+$rec = $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
 
 // Strings (single fetch, then reuse).
 $str = (object)[
@@ -74,7 +74,7 @@ if ((string)$rec->state !== 'PAID') {
     $rec->state = (strtoupper($type) === 'ERROR') ? 'ERROR' : 'CANCELED';
 }
 $rec->timemodified = time();
-$DB->update_record('moodle-paygw_ifthenpay_tx', $rec);
+$DB->update_record('paygw_ifthenpay_tx', $rec);
 
 // Variants.
 $iserror   = (strtoupper($type) === 'ERROR');

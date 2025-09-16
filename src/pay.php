@@ -60,7 +60,7 @@ $client = paygw_ifthenpay_api();
 $order  = $client->create_pay_by_link($state->gatewaykey, $payload);
 
 // 6) (Optional, recommended) Persist for diagnostics/idempotency (minimal fields).
-if ($DB->get_manager()->table_exists('moodle-paygw_ifthenpay_tx')) {
+if ($DB->get_manager()->table_exists('paygw_ifthenpay_tx')) {
     $rec = (object)[
         'timecreated'   => time(),
         'timemodified'  => time(),
@@ -78,7 +78,7 @@ if ($DB->get_manager()->table_exists('moodle-paygw_ifthenpay_tx')) {
         'transaction_id' => null,
         'state'         => 'PENDING',
     ];
-    $DB->insert_record('moodle-paygw_ifthenpay_tx', $rec);
+    $DB->insert_record('paygw_ifthenpay_tx', $rec);
 }
 
 // 7) Off you go to ifthenpay checkout.

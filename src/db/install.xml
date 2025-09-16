@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="payment/gateway/ifthenpay/db" VERSION="2025091509" COMMENT="Ifthenpay minimal tracking" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<XMLDB PATH="payment/gateway/ifthenpay/db" VERSION="2025091609" COMMENT="Ifthenpay minimal tracking" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <TABLES>
-    <TABLE NAME="moodle-paygw_ifthenpay_tx" COMMENT="Ifthenpay Pay-by-Link transactions">
+    <TABLE NAME="paygw_ifthenpay_tx" COMMENT="Ifthenpay Pay-by-Link transactions">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>

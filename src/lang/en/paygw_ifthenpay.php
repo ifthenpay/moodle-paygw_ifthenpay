@@ -128,6 +128,20 @@ $string['process:btn_retry']           = 'Retry validation';
 $string['process:btn_go_to_courses']   = 'Go to My courses';
 
 
-// Privacy provider.
-$string['privacy:metadata:ifthenpay_tx'] = 'Stores the relation from Moodle users to ifthenpay transactions objects';
-$string['privacy:metadata:ifthenpay_tx:userid'] = 'Moodle user ID';
+// Privacy strings.
+$string['privacy:metadata:ifthenpay_tx'] = 'Minimal transaction tracking for the ifthenpay gateway.';
+$string['privacy:metadata:ifthenpay_tx:userid'] = 'User ID associated with the transaction attempt.';
+$string['privacy:metadata:ifthenpay_tx:timecreated'] = 'When the transaction was created.';
+$string['privacy:metadata:ifthenpay_tx:timemodified'] = 'When the transaction was last updated.';
+$string['privacy:metadata:ifthenpay_tx:token'] = 'Random token identifying the transaction attempt.';
+$string['privacy:metadata:ifthenpay_tx:component'] = 'Component which initiated the payment.';
+$string['privacy:metadata:ifthenpay_tx:paymentarea'] = 'Payment area within the component.';
+$string['privacy:metadata:ifthenpay_tx:itemid'] = 'Item identifier inside the payment area.';
+$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Mapped ifthenpay account used for this payment.';
+$string['privacy:metadata:ifthenpay_tx:amount'] = 'Payment amount.';
+$string['privacy:metadata:ifthenpay_tx:currency'] = 'Payment currency.';
+$string['privacy:metadata:ifthenpay_tx:gateway_key'] = 'Gateway Key used for the request.';
+$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'Return URL used during the payment flow.';
+$string['privacy:metadata:ifthenpay_tx:transaction_id'] = 'Transaction identifier returned by ifthenpay (if available).';
+$string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Link to the core payment record.';
+$string['privacy:metadata:ifthenpay_tx:state'] = 'Current transaction state.';

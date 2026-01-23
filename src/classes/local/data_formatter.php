@@ -67,7 +67,7 @@ class data_formatter
         $methods = [];
         foreach ($raw as $entry) {
             $key = $entry['Entity'] ?? '';
-            if ($key === '') {
+            if ($key === '' || !($entry['IsVisible'] ?? false)) {
                 continue;
             }
             $methods[$key] = [

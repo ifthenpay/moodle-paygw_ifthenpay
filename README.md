@@ -35,7 +35,7 @@ Ifthenpay payment gateway plugin for <a href="https://moodle.org/">Moodle</a> wi
 - **Runtime:** <a href="https://moodle.org/">Moodle</a> · <a href="https://www.php.net/">PHP</a> ≥ 8.2 · <a href="https://xdebug.org/">Xdebug</a> 3
 - **Database:** <a href="https://dev.mysql.com/doc/refman/8.0/en/">MySQL 8.0</a>
 - **Dev Environment:** <a href="https://code.visualstudio.com/docs/devcontainers/containers">VS Code Dev Containers</a> + <a href="https://docs.docker.com/compose/">docker-compose</a>
-- **PHP Tooling:** <a href="https://getcomposer.org/">Composer</a> · <a href="https://github.com/squizlabs/PHP_CodeSniffer">PHPCS</a> (Moodle CS) · <a href="https://cs.symfony.com/">PHP-CS-Fixer</a> · <a href="https://phpstan.org/">PHPStan</a> · <a href="https://phpmd.org/">PHPMD</a>
+- **PHP Tooling:** <a href="https://getcomposer.org/">Composer</a> · <a href="https://github.com/PHPCSStandards/PHP_CodeSniffer">PHPCS</a> (Moodle CS) · <a href="https://cs.symfony.com/">PHP-CS-Fixer</a> · <a href="https://phpstan.org/">PHPStan</a> · <a href="https://phpmd.org/">PHPMD</a>
 - **JS/AMD:** <a href="https://nodejs.org/">Node</a> 20 + <a href="https://gruntjs.com/">Grunt</a> (uglify, watch)
 - **JS Tooling:** <a href="https://eslint.org/">ESLint</a> (with <a href="https://github.com/gajus/eslint-plugin-jsdoc">JSDoc</a>, <a href="https://github.com/xjamundx/eslint-plugin-promise">Promise</a>, <a href="https://babel.dev/docs/eslint-plugin-babel">Babel</a>, <a href="https://eslint.org/docs/latest/use/configure/migration-guide">Globals</a>) · <a href="https://stylelint.io/">Stylelint</a> (+ <a href="https://github.com/stylelint-stylistic/stylelint-stylistic">Stylistic plugin</a> · <a href="https://github.com/stylelint/stylelint-config-standard">Config Standard</a>)
 

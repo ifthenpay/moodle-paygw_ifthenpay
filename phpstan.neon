@@ -3,7 +3,7 @@ includes:
 
 parameters:
   moodle:
-    rootDirectory: /workspace/bitnami/moodle
+    rootDirectory: /var/www/html
 
   level: max
 

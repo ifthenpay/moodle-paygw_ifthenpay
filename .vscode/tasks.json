@@ -1,0 +1,89 @@
+{
+  "version": "2.0.0",
+  "options": {
+    "cwd": "/workspace/plugin",
+    "env": { "XDEBUG_MODE": "off" }
+  },
+  "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+  "tasks": [
+    {
+      "label": "QA: lint + analyse",
+      "detail": "phpcs (Moodle standard), eslint, stylelint, then PHPStan",
+      "type": "shell",
+      "command": "mdl qa",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "PHP: lint (phpcs)",
+      "type": "shell",
+      "command": "composer lint",
+      "problemMatcher": []
+    },
+    {
+      "label": "PHP: fix (phpcbf)",
+      "type": "shell",
+      "command": "composer lint:fix",
+      "problemMatcher": []
+    },
+    {
+      "label": "PHP: analyse (PHPStan)",
+      "type": "shell",
+      "command": "composer analyse",
+      "problemMatcher": []
+    },
+    {
+      "label": "JS/CSS: lint",
+      "type": "shell",
+      "command": "npm run lint",
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "AMD: build",
+      "type": "shell",
+      "command": "npm run build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "AMD: watch",
+      "detail": "Rebuild AMD modules on save (JS caching is off in dev mode)",
+      "type": "shell",
+      "command": "npm run watch",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Moodle: purge caches",
+      "type": "shell",
+      "command": "mdl purge",
+      "problemMatcher": []
+    },
+    {
+      "label": "Moodle: run upgrades",
+      "detail": "Installs plugin version bumps (src/version.php) into the database",
+      "type": "shell",
+      "command": "mdl upgrade",
+      "problemMatcher": []
+    },
+    {
+      "label": "Moodle: environment info",
+      "type": "shell",
+      "command": "mdl info",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: PHPUnit (plugin)",
+      "type": "shell",
+      "command": "mdl phpunit",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: initialise PHPUnit",
+      "detail": "One-off per Moodle version: installs core dev deps and the test DB",
+      "type": "shell",
+      "command": "mdl phpunit-init",
+      "problemMatcher": []
+    }
+  ]
+}

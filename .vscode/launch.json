@@ -2,31 +2,46 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "🪲 Listen for Xdebug (Moodle web)",
+      // Start this, then load a page. With XDEBUG_START=trigger (default) the
+      // request must carry the trigger: use a browser extension, append
+      // ?XDEBUG_TRIGGER=1, or set XDEBUG_START=yes in .env to break on every
+      // request.
+      "name": "🪲 Xdebug: Moodle (web)",
       "type": "php",
       "request": "launch",
+      "hostname": "0.0.0.0",
       "port": 9003,
-      "log": true,
+      "pathMappings": {
+        // The plugin is edited in the repository, served from inside core.
+        "/var/www/html/public/payment/gateway/ifthenpay": "/workspace/plugin/src",
+        // Core is mounted at the same path in this container.
+        "/var/www/html": "/var/www/html"
+      },
       "xdebugSettings": {
         "max_children": 256,
         "max_data": 512,
         "max_depth": 5
       },
-      "pathMappings": {
-        "/bitnami": "/workspace/bitnami",
-        "/bitnami/moodle/payment/gateway/ifthenpay": "/workspace/plugin/src",
-        "/opt/dev/ifthenpay": "/workspace/plugin/src"
-      }
+      "ignore": ["**/vendor/**"],
+      // On, deliberately: shows the DBGp connection handshake in the Debug
+      // Console, so a broken connection (wrong host/port, nothing listening)
+      // is visible without digging into /tmp/xdebug.log first.
+      "log": true
     },
     {
-      "name": "🪲 Listen for Xdebug (CLI in dev)",
+      // For CLI runs inside the dev container:
+      //   XDEBUG_MODE=debug XDEBUG_TRIGGER=1 mdl cli purge_caches
+      //   XDEBUG_MODE=debug XDEBUG_TRIGGER=1 mdl phpunit
+      "name": "🪲 Xdebug: CLI (dev container)",
       "type": "php",
       "request": "launch",
+      "hostname": "0.0.0.0",
       "port": 9003,
-      "log": false,
       "pathMappings": {
-        "/workspace": "/workspace"
-      }
+        "/workspace/plugin": "/workspace/plugin",
+        "/var/www/html": "/var/www/html"
+      },
+      "log": true
     }
   ]
 }

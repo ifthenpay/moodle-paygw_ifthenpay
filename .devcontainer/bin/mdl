@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# `mdl` — everything you need for day-to-day work on paygw_ifthenpay, from the
+# dev container's terminal. Moodle core and moodledata are mounted here at the
+# same paths as in the app container, so CLI scripts run natively (no
+# `docker exec` required).
+#
+# Run `mdl` with no arguments for a status overview, or `mdl help`.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+DIRROOT="${MOODLE_DIRROOT:-/var/www/html}"
+DATAROOT="${MOODLE_DATAROOT:-/var/www/moodledata}"
+REPO="${PLUGIN_REPO:-/workspace/plugin}"
+COMPONENT="${PLUGIN_COMPONENT:-paygw_ifthenpay}"
+DEV_SETUP="${REPO}/.devcontainer/lib/dev-setup.php"
+APP_HOST="${APP_HOST:-ifthenpay-app}"
+
+# Xdebug stays out of the way unless the caller asks for it.
+export XDEBUG_MODE="${XDEBUG_MODE:-off}"
+
+bold=$'\033[1m'; dim=$'\033[2m'; cyan=$'\033[1;36m'; green=$'\033[1;32m'
+yellow=$'\033[1;33m'; red=$'\033[1;31m'; reset=$'\033[0m'
+
+info() { printf '%s\n' "$*"; }
+warn() { printf '%s%s%s\n' "${yellow}" "$*" "${reset}" >&2; }
+fail() { printf '%s%s%s\n' "${red}" "$*" "${reset}" >&2; exit 1; }
+
+require_config() {
+    [ -f "${DIRROOT}/config.php" ] || fail "Moodle is not installed yet (${DIRROOT}/config.php missing).
+Check the app container: docker compose logs -f ifthenpay-app"
+}
+
+moodle_cli() {
+    require_config
+    local script="$1"; shift
+    [ -f "${DIRROOT}/admin/cli/${script}" ] || fail "No such CLI script: admin/cli/${script}"
+    php "${DIRROOT}/admin/cli/${script}" "$@"
+}
+
+db() {
+    MYSQL_PWD="${MOODLE_DBPASS:-userpass}" mysql \
+        -h"${MOODLE_DBHOST:-ifthenpay-db}" \
+        -u"${MOODLE_DBUSER:-moodleuser}" \
+        --skip-ssl "$@" "${MOODLE_DBNAME:-moodle}"
+}
+
+php_value() { # php_value <file> <variable>  → prints the assigned literal
+    sed -nE "s/.*${2}[[:space:]]*=[[:space:]]*'?([^';]*)'?;.*/\1/p" "$1" | head -1
+}
+
+cmd_info() {
+    local release plugin_src plugin_db enabled health
+    release="$(php_value "${DIRROOT}/public/version.php" '\$release' 2>/dev/null || true)"
+    plugin_src="$(php_value "${REPO}/src/version.php" '\$plugin->release' 2>/dev/null || true)"
+    plugin_db="$(db -N -B -e \
+        "SELECT value FROM mdl_config_plugins WHERE plugin='${COMPONENT}' AND name='version';" \
+        2>/dev/null || true)"
+    enabled="$(db -N -B -e \
+        "SELECT value FROM mdl_config WHERE name='paygw_plugins_sortorder';" 2>/dev/null || true)"
+    health="$(curl -s -o /dev/null -w '%{http_code}' "http://${APP_HOST}/" 2>/dev/null || echo '---')"
+
+    printf '\n%sifthenpay Moodle dev environment%s\n\n' "${bold}" "${reset}"
+    printf '  %-18s %s\n' 'Site'        "${MOODLE_WWWROOT:-http://localhost:8080}  ${dim}(HTTP ${health} from the dev container)${reset}"
+    printf '  %-18s %s / %s\n' 'Login'  "${MOODLE_ADMIN_USER:-admin}" "${MOODLE_ADMIN_PASS:-adminpass}"
+    printf '  %-18s %s\n' 'phpMyAdmin'  "http://localhost:${PMA_PORT:-8081}"
+    printf '\n'
+    printf '  %-18s %s\n' 'Moodle'      "${release:-unknown}  ${dim}${DIRROOT}${reset}"
+    printf '  %-18s %s\n' 'Plugin (src)' "${plugin_src:-unknown}  ${dim}${REPO}/src${reset}"
+    printf '  %-18s %s\n' 'Plugin (db)'  "${plugin_db:-not installed}"
+    case "${enabled}" in
+        *ifthenpay*) printf '  %-18s %s\n' 'Gateway'  "${green}enabled${reset}" ;;
+        *)           printf '  %-18s %s\n' 'Gateway'  "${yellow}disabled${reset} ${dim}(Site administration → Plugins → Payment gateways)${reset}" ;;
+    esac
+    printf '  %-18s app: %s (start_with_request=%s)   dev CLI: %s\n' 'Xdebug' \
+        "${APP_XDEBUG_MODE:-debug,develop}" "${XDEBUG_START:-trigger}" "${XDEBUG_MODE}"
+    printf '\n  %sRun `mdl help` for the available commands.%s\n\n' "${dim}" "${reset}"
+}
+
+cmd_help() {
+    cat <<TXT
+
+${bold}mdl${reset} — ifthenpay Moodle dev helper
+
+  ${cyan}mdl${reset}                        Status overview (same as ${cyan}mdl info${reset})
+
+ ${bold}Moodle${reset}
+  ${cyan}mdl purge${reset}                  Purge all caches
+  ${cyan}mdl upgrade${reset}                Install/upgrade pending core + plugin versions
+  ${cyan}mdl cli <script> [args]${reset}    Run any admin/cli script (${cyan}mdl cli${reset} lists them)
+  ${cyan}mdl cfg [args]${reset}             Read/write core config (admin/cli/cfg.php)
+  ${cyan}mdl sql [query]${reset}            MySQL shell, or run one query
+  ${cyan}mdl logs${reset}                   Tail the Moodle/PHP error log
+
+ ${bold}Plugin${reset}
+  ${cyan}mdl reinstall${reset}              Uninstall the plugin, then reinstall it (drops its data)
+
+ ${bold}Quality${reset}
+  ${cyan}mdl lint${reset}                   phpcs (Moodle standard) + eslint + stylelint
+  ${cyan}mdl fix${reset}                    phpcbf + eslint --fix + stylelint --fix
+  ${cyan}mdl analyse${reset}                PHPStan
+  ${cyan}mdl qa${reset}                     lint + analyse
+  ${cyan}mdl build${reset}                  Build the AMD modules
+  ${cyan}mdl watch${reset}                  Rebuild AMD modules on change
+
+ ${bold}Tests${reset}
+  ${cyan}mdl phpunit-init${reset}           Prepare Moodle's PHPUnit environment (once per core version)
+  ${cyan}mdl phpunit [args]${reset}         Run the plugin's PHPUnit tests
+
+TXT
+}
+
+cmd_cli() {
+    if [ $# -eq 0 ]; then
+        info "Available admin/cli scripts:"
+        ls -1 "${DIRROOT}/admin/cli" | sed 's/^/  /'
+        return
+    fi
+    local script="$1"; shift
+    case "${script}" in
+        *.php) ;;
+        *) script="${script}.php" ;;
+    esac
+    moodle_cli "${script}" "$@"
+}
+
+cmd_reinstall() {
+    require_config
+    warn "This drops all ${COMPONENT} data (tables, settings, payment records)."
+    read -r -p "Continue? [y/N] " answer
+    [ "${answer}" = "y" ] || [ "${answer}" = "Y" ] || { info "Aborted."; return; }
+    moodle_cli uninstall_plugins.php --plugins="${COMPONENT}" --run
+    moodle_cli upgrade.php --non-interactive
+    php "${DEV_SETUP}"
+    moodle_cli purge_caches.php
+}
+
+cmd_phpunit_init() {
+    require_config
+    info "${cyan}Installing Moodle's dev dependencies (this takes a few minutes the first time)…${reset}"
+    (cd "${DIRROOT}" && composer install --no-interaction --no-progress)
+    info "${cyan}Initialising the PHPUnit test database…${reset}"
+    php "${DIRROOT}/public/admin/tool/phpunit/cli/init.php"
+    info "${green}Done. Run: mdl phpunit${reset}"
+}
+
+cmd_phpunit() {
+    require_config
+    [ -x "${DIRROOT}/vendor/bin/phpunit" ] || fail "PHPUnit is not set up yet — run: mdl phpunit-init"
+    if [ ! -d "${REPO}/src/tests" ]; then
+        warn "${REPO}/src/tests does not exist yet — the plugin has no PHPUnit tests."
+    fi
+    cd "${DIRROOT}"
+    if [ $# -gt 0 ]; then
+        php vendor/bin/phpunit "$@"
+    else
+        php vendor/bin/phpunit --testsuite "${COMPONENT}_testsuite"
+    fi
+}
+
+cmd_lint() {
+    (cd "${REPO}" && composer lint && npm run --silent lint)
+}
+
+cmd_fix() {
+    (cd "${REPO}" && composer lint:fix && npm run --silent lint:fix)
+}
+
+main() {
+    local command="${1:-info}"
+    [ $# -gt 0 ] && shift || true
+
+    case "${command}" in
+        info|'')          cmd_info ;;
+        help|-h|--help)   cmd_help ;;
+        purge)            moodle_cli purge_caches.php "$@" ;;
+        upgrade)          moodle_cli upgrade.php --non-interactive "$@" ;;
+        cli)              cmd_cli "$@" ;;
+        cfg)              moodle_cli cfg.php "$@" ;;
+        sql)
+            if [ $# -gt 0 ]; then db -e "$*"; else db; fi ;;
+        logs)
+            [ -r /var/log/apache2/error.log ] \
+                || fail "Apache's log is not readable here. On the host: docker compose logs -f ifthenpay-app"
+            tail -n 100 -f /var/log/apache2/error.log ;;
+        reinstall)        cmd_reinstall ;;
+        lint)             cmd_lint ;;
+        fix)              cmd_fix ;;
+        analyse|analyze)  (cd "${REPO}" && composer analyse) ;;
+        qa)               cmd_lint && (cd "${REPO}" && composer analyse) ;;
+        build)            (cd "${REPO}" && npm run --silent build) ;;
+        watch)            (cd "${REPO}" && npm run --silent watch) ;;
+        phpunit-init)     cmd_phpunit_init ;;
+        phpunit)          cmd_phpunit "$@" ;;
+        *)                warn "Unknown command: ${command}"; cmd_help; exit 1 ;;
+    esac
+}
+
+main "$@"

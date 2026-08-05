@@ -7,3 +7,11 @@ composer.phar
 /node_modules
 .phpcs-cache
 /.phpstan-cache
+.phpunit.result.cache
+
+# Local dev environment configuration (see .env.example)
+/.env
+
+# Claude Code session state rescued from a container rebuild (local only)
+/.claude-session-backup/
+/DEV-ENV-HANDOFF.md

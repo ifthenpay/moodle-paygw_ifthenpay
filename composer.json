@@ -24,10 +24,7 @@
     "lint": "XDEBUG_MODE=off vendor/bin/phpcs --standard=phpcs.xml --cache=.phpcs-cache src",
     "lint:fix": "XDEBUG_MODE=off vendor/bin/phpcbf --standard=phpcs.xml src",
     "analyse": "XDEBUG_MODE=off php -d memory_limit=1G vendor/bin/phpstan analyse --configuration=phpstan.neon src",
-    "qa": [
-      "@lint",
-      "@analyse"
-    ]
+    "qa": "composer lint; s=$?; composer analyse; t=$?; [ \"$s\" -eq 0 ] && [ \"$t\" -eq 0 ]"
   },
   "minimum-stability": "dev",
   "prefer-stable": true

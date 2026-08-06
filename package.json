@@ -21,8 +21,8 @@
     "lint:js:fix": "eslint src/amd/src --ext .js --fix",
     "lint:css": "stylelint \"src/**/*.css\"",
     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
-    "lint": "npm run lint:js && npm run lint:css",
-    "lint:fix": "npm run lint:js:fix && npm run lint:css:fix",
+    "lint": "npm run lint:js; s=$?; npm run lint:css; t=$?; [ \"$s\" -eq 0 ] && [ \"$t\" -eq 0 ]",
+    "lint:fix": "npm run lint:js:fix; s=$?; npm run lint:css:fix; t=$?; [ \"$s\" -eq 0 ] && [ \"$t\" -eq 0 ]",
     "build": "grunt build-amd",
     "watch": "grunt watch-amd"
   }

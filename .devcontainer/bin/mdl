@@ -158,11 +158,24 @@ cmd_phpunit() {
 }
 
 cmd_lint() {
-    (cd "${REPO}" && composer lint && npm run --silent lint)
+    local status=0
+    (cd "${REPO}" && composer lint) || status=1
+    (cd "${REPO}" && npm run --silent lint) || status=1
+    return "${status}"
 }
 
 cmd_fix() {
-    (cd "${REPO}" && composer lint:fix && npm run --silent lint:fix)
+    local status=0
+    (cd "${REPO}" && composer lint:fix) || status=1
+    (cd "${REPO}" && npm run --silent lint:fix) || status=1
+    return "${status}"
+}
+
+cmd_qa() {
+    local status=0
+    cmd_lint || status=1
+    (cd "${REPO}" && composer analyse) || status=1
+    return "${status}"
 }
 
 main() {
@@ -189,7 +202,7 @@ main() {
         lint)             cmd_lint ;;
         fix)              cmd_fix ;;
         analyse|analyze)  (cd "${REPO}" && composer analyse) ;;
-        qa)               cmd_lint && (cd "${REPO}" && composer analyse) ;;
+        qa)               cmd_qa ;;
         build)            (cd "${REPO}" && npm run --silent build) ;;
         watch)            (cd "${REPO}" && npm run --silent watch) ;;
 

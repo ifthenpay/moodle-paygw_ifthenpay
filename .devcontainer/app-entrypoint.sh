@@ -2,6 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Moodle container boot sequence. Idempotent: safe to run on every start.
 #
+#   0. rewrite Xdebug's ini and Apache's error.log from the environment
 #   1. sync the pinned Moodle release from the image into the shared volume
 #   2. wait for the database
 #   3. install Moodle (first boot) or reuse the existing config.php
@@ -45,7 +46,7 @@ moodle_cli() {
     as_web php "${DIRROOT}/admin/cli/${script}" "$@"
 }
 
-# ── 0. Xdebug ────────────────────────────────────────────────────────────────
+# ── 0. Runtime config (Xdebug, error log) ────────────────────────────────────
 # Xdebug does not honour the XDEBUG_MODE / XDEBUG_CONFIG environment variables
 # once xdebug.mode is already set in php.ini, so the ini file itself has to be
 # rewritten from the environment on every start (same reasoning as the
@@ -66,6 +67,27 @@ configure_xdebug() {
 
 rm -f "${READY_FLAG}"
 [ "$(id -u)" = "0" ] || die "The entrypoint must run as root (it drops to www-data itself)."
+
+# The base image symlinks error.log to /dev/stderr, which resolves per-process
+# — fine for `docker compose logs`, but `mdl logs` tails the same path from the
+# dev container and would just read its own unrelated stderr. A real, shared
+# file is needed instead.
+#
+# Keep it root-owned (only chgrp, never chown): on this host, once a file's
+# OWNER changes away from root, root can no longer write to it (not even via
+# chmod 666) — that broke Apache's own error log the first time this was
+# tried. Group-write for www-data (PHP) plus world-read (`mdl logs`) is enough
+# and doesn't hit that quirk.
+fix_apache_error_log() {
+    local error_log=/var/log/apache2/error.log
+    if [ -L "${error_log}" ] || [ "$(stat -c '%U:%G:%a' "${error_log}" 2>/dev/null)" != "root:www-data:664" ]; then
+        rm -f "${error_log}"
+        touch "${error_log}"
+        chgrp www-data "${error_log}"
+        chmod 0664 "${error_log}"
+        log "Apache error.log is now a real file (mdl logs works from the dev container)."
+    fi
+}
 
 # ── 1. Core files ────────────────────────────────────────────────────────────
 sync_core() {
@@ -252,6 +274,7 @@ purge_caches() {
 
 # ── Run ──────────────────────────────────────────────────────────────────────
 configure_xdebug
+fix_apache_error_log
 sync_core
 ensure_dirs
 wait_for_db

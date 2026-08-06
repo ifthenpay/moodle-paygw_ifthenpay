@@ -5,7 +5,6 @@
 #   ifthenpay-app   Apache + PHP 8.3 + Xdebug, serves Moodle (pinned release)
 #   phpmyadmin      Database UI
 #   dev             VS Code dev container (tooling only)
-#   cloudflared     Optional public tunnel for webhook testing (profile: tunnel)
 #
 # Moodle core lives in the `moodle_core` volume, mounted at the SAME path
 # (/var/www/html) in both the app and the dev container, so every Moodle CLI
@@ -164,19 +163,6 @@ services:
       - ./src:/var/www/html/public/payment/gateway/ifthenpay
     working_dir: /workspace/plugin
     command: ["sleep", "infinity"]
-
-  # Public HTTPS URL for webhook/callback testing:
-  #   docker compose --profile tunnel up -d cloudflared
-  #   docker compose logs cloudflared     # copy the https://*.trycloudflare.com URL
-  #   put it in .env as MOODLE_WWWROOT, then: docker compose up -d ifthenpay-app
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: ifthenpay-tunnel
-    profiles: ["tunnel"]
-    depends_on:
-      - ifthenpay-app
-    command: tunnel --no-autoupdate --url http://ifthenpay-app:80
-    restart: unless-stopped
 
 volumes:
   mysql_data: {}

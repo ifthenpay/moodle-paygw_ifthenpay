@@ -37,13 +37,13 @@ Ifthenpay payment gateway plugin for <a href="https://moodle.org/">Moodle</a> wi
 - **Dev Environment:** <a href="https://code.visualstudio.com/docs/devcontainers/containers">VS Code Dev Containers</a> + <a href="https://docs.docker.com/compose/">Docker Compose</a>
 - **PHP Tooling:**
   - <a href="https://getcomposer.org/">Composer</a>
-  - <a href="https://github.com/squizlabs/PHP_CodeSniffer">PHPCS 3.10</a> + <a href="https://github.com/moodlehq/moodle-cs">Moodle CS 4.0</a>
-  - <a href="https://phpstan.org/">PHPStan 2.2</a> + <a href="https://github.com/micaherne/phpstan-moodle">Moodle Extension 1.2</a>
-  - <a href="https://phpmd.org/">PHPMD 2.16</a>
-- **JS/AMD:** <a href="https://nodejs.org/">Node.js 22 LTS</a> + <a href="https://gruntjs.com/">Grunt 1.7</a> (uglify, watch, sourcemaps)
+  - <a href="https://github.com/squizlabs/PHP_CodeSniffer">PHPCS 3.13</a> + <a href="https://github.com/moodlehq/moodle-cs">Moodle CS 3.7</a>
+  - <a href="https://phpstan.org/">PHPStan 2.2</a> + <a href="https://github.com/micaherne/phpstan-moodle">Moodle Extension 1.1</a>
+  - <a href="https://phpmd.org/">PHPMD 2.15</a>
+- **JS/AMD:** <a href="https://nodejs.org/">Node.js 22 LTS</a> + <a href="https://gruntjs.com/">Grunt 1.6</a> (uglify, watch, sourcemaps)
 - **JS Tooling:**
-  - <a href="https://eslint.org/">ESLint 9.45</a> (flat config) with JSDoc 56, Promise 7.3, Babel 7.28
-  - <a href="https://stylelint.io/">Stylelint 17.0</a> + Stylistic 5.0 + Config Standard 40.0
+  - <a href="https://eslint.org/">ESLint 9.39</a> (flat config) with JSDoc 50, Promise 7.3, Babel 7.29
+  - <a href="https://stylelint.io/">Stylelint 16.26</a> + Stylistic 3.1 + Config Standard 36.0
 
 ---
 
@@ -89,7 +89,7 @@ Everything is driven by a single `.env` file (created automatically from
 |---|---|---|
 | `MOODLE_VERSION` / `MOODLE_BRANCH` | `5.1.5` / `stable501` | Pinned Moodle release. Change + rebuild to test another version; core files and DB upgrade themselves on the next start. |
 | `MOODLE_PORT` / `PMA_PORT` | `8080` / `8081` | Published ports. |
-| `MOODLE_WWWROOT` | `http://localhost:8080` | Public base URL. Point it at a tunnel for webhook tests — `config.php` is rewritten and caches purged on start. |
+| `MOODLE_WWWROOT` | `http://localhost:8080` | Public base URL. `config.php` is rewritten and caches purged on start when it changes. |
 | `MOODLE_DEV_MODE` | `1` | DEVELOPER debug level, JS/template/lang caches off, mail disabled, password policy off. |
 | `MOODLE_AUTO_UPGRADE` | `1` | Runs pending core/plugin upgrades on every start. |
 | `PLUGIN_AUTO_ENABLE` | `1` | Enables the gateway on every start, so the dev site is usable immediately (set `0` to manage it, and the Backoffice Key, yourself in Site administration). |
@@ -114,7 +114,7 @@ Apply changes with `docker compose up -d` (rebuild only for `MOODLE_VERSION`, `A
 │  ├─ post-create.sh           # .env, permissions, composer install, npm install
 │  ├─ post-start.sh            # Health checks + environment summary
 │  ├─ bin/mdl                  # Helper CLI (see `mdl help`)
-│  └─ lib/dev-setup.php        # Enables/configures the gateway on the dev site
+│  └─ lib/dev-setup.php        # Enables the gateway on the dev site
 │
 ├─ .github/
 │  └─ workflows/               # GitHub Actions CI/CD workflows
@@ -171,7 +171,6 @@ Apply changes with `docker compose up -d` (rebuild only for `MOODLE_VERSION`, `A
 | **ifthenpay-db** | `mysql:8.4` | MySQL 8.4 LTS database | internal `3306` |
 | **ifthenpay-dev** | `mcr.microsoft.com/vscode/devcontainers/php:8.3` | Editor tooling **and** Moodle CLI | – |
 | **phpmyadmin** | `phpmyadmin:5.2` | Database UI | `${PMA_PORT}:80` |
-| **ifthenpay-tunnel** | `cloudflare/cloudflared` | Optional public URL (profile `tunnel`) | – |
 
 **Volumes**
 
@@ -238,27 +237,6 @@ Prettier, EditorConfig.
 
 ---
 
-## 🌐 Webhooks & callbacks (public URL)
-
-ifthenpay's servers must reach `webhook.php`, which they cannot do on `localhost`. Start the bundled
-tunnel and point the site at it:
-
-```bash
-docker compose --profile tunnel up -d cloudflared
-docker compose logs cloudflared          # copy the https://<random>.trycloudflare.com URL
-```
-
-Put that URL in `.env` as `MOODLE_WWWROOT`, then:
-
-```bash
-docker compose up -d ifthenpay-app       # rewrites config.php + purges caches
-```
-
-Set `MOODLE_WWWROOT` back to `http://localhost:8080` when you are done. (Quick tunnels get a new
-URL on every start; that is a cloudflared limitation, not a setup step you can skip.)
-
----
-
 ## 🛠️ Commands
 
 ### PHP (Composer)
@@ -314,7 +292,6 @@ docker compose down                # Stop
 docker compose down -v             # Stop + wipe volumes (fresh install on next up)
 docker compose ps
 docker compose logs -f ifthenpay-app
-docker compose --profile tunnel up -d cloudflared   # Public URL for webhooks
 ```
 
 ### Tests (PHPUnit)

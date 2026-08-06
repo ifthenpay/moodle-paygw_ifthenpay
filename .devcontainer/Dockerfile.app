@@ -80,6 +80,8 @@ RUN { \
         echo 'max_input_vars = 5000'; \
         echo 'memory_limit = 512M'; \
         echo 'opcache.revalidate_freq = 0'; \
+        echo 'log_errors = On'; \
+        echo 'error_log = /var/log/apache2/error.log'; \
     } > /usr/local/etc/php/conf.d/zz-moodle.ini \
     && a2enmod rewrite expires headers \
     && sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' \

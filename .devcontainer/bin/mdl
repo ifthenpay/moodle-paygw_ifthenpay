@@ -10,7 +10,6 @@
 set -euo pipefail
 
 DIRROOT="${MOODLE_DIRROOT:-/var/www/html}"
-DATAROOT="${MOODLE_DATAROOT:-/var/www/moodledata}"
 REPO="${PLUGIN_REPO:-/workspace/plugin}"
 COMPONENT="${PLUGIN_COMPONENT:-paygw_ifthenpay}"
 DEV_SETUP="${REPO}/.devcontainer/lib/dev-setup.php"
@@ -173,6 +172,7 @@ main() {
     case "${command}" in
         info|'')          cmd_info ;;
         help|-h|--help)   cmd_help ;;
+
         purge)            moodle_cli purge_caches.php "$@" ;;
         upgrade)          moodle_cli upgrade.php --non-interactive "$@" ;;
         cli)              cmd_cli "$@" ;;
@@ -183,15 +183,19 @@ main() {
             [ -r /var/log/apache2/error.log ] \
                 || fail "Apache's log is not readable here. On the host: docker compose logs -f ifthenpay-app"
             tail -n 100 -f /var/log/apache2/error.log ;;
+
         reinstall)        cmd_reinstall ;;
+
         lint)             cmd_lint ;;
         fix)              cmd_fix ;;
         analyse|analyze)  (cd "${REPO}" && composer analyse) ;;
         qa)               cmd_lint && (cd "${REPO}" && composer analyse) ;;
         build)            (cd "${REPO}" && npm run --silent build) ;;
         watch)            (cd "${REPO}" && npm run --silent watch) ;;
+
         phpunit-init)     cmd_phpunit_init ;;
         phpunit)          cmd_phpunit "$@" ;;
+
         *)                warn "Unknown command: ${command}"; cmd_help; exit 1 ;;
     esac
 }

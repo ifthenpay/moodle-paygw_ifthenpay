@@ -13,7 +13,7 @@ ARG NODE_VERSION=22
 
 USER root
 
-# Node (AMD build via Grunt) + CLI conveniences + Moodle's PHP build deps.
+# 1) Node (AMD build via Grunt) + CLI conveniences + Moodle's PHP build deps.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
       curl \
@@ -38,16 +38,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && npm -g install grunt-cli \
     && rm -rf /var/lib/apt/lists/*
 
-# Moodle's PHPUnit environment hardcodes en_AU.UTF-8 to test locale-switching
-# (lib/phpunit/classes/util.php::get_locale_name()) — `mdl phpunit-init` fails
-# without it. en_US.UTF-8 alongside it for anything that assumes a US locale.
+# 2) Moodle's PHPUnit environment hardcodes en_AU.UTF-8 to test locale-switching
+#    (lib/phpunit/classes/util.php::get_locale_name()) — `mdl phpunit-init`
+#    fails without it. en_US.UTF-8 alongside it for anything assuming a US locale.
 RUN sed -i \
         -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' \
         -e 's/# en_AU.UTF-8 UTF-8/en_AU.UTF-8 UTF-8/' \
         /etc/locale.gen \
     && locale-gen
 
-# Same extension set as the app container, so CLI behaviour matches the web run.
+# 3) Same extension set as the app container, so CLI behaviour matches the web run.
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         dom \
@@ -61,8 +61,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         xml \
         zip
 
-# CLI PHP: generous limits for PHPStan/PHPUnit, and Xdebug opt-in per command
-# (XDEBUG_MODE comes from the environment; `trigger` keeps plain calls silent).
+# 4) CLI PHP: generous limits for PHPStan/PHPUnit, and Xdebug opt-in per command
+#    (XDEBUG_MODE comes from the environment; `trigger` keeps plain calls silent).
 RUN { \
         echo 'memory_limit = 1G'; \
         echo 'max_execution_time = 0'; \
@@ -76,8 +76,10 @@ RUN { \
         echo 'xdebug.log_level=0'; \
     } > /usr/local/etc/php/conf.d/zz-xdebug-dev.ini
 
-# Align the dev user with the host user (and therefore with Apache), so the
-# bind-mounted repository stays writable from every side.
+# 5) Align the dev user with the host user (and therefore with Apache), so the
+#    bind-mounted repository stays writable from every side. Matching APP_GID
+#    with the app container is also why `mdl logs` can read Apache's error
+#    log: same gid, group-read, no supplementary group needed.
 RUN set -eux; \
     if [ "$(id -u vscode)" != "${APP_UID}" ] || [ "$(id -g vscode)" != "${APP_GID}" ]; then \
         groupmod -o -g "${APP_GID}" vscode; \
@@ -85,11 +87,10 @@ RUN set -eux; \
         chown -R "${APP_UID}:${APP_GID}" /home/vscode; \
         [ -d /usr/local/share/nvm ] && chown -R "${APP_UID}:${APP_GID}" /usr/local/share/nvm || true; \
     fi; \
-    usermod -aG adm vscode; \
     mkdir -p /workspace/plugin /var/www/html /var/www/moodledata /var/www/phpunitdata; \
     chown "${APP_UID}:${APP_GID}" /workspace /workspace/plugin
 
-# Project binaries and the `mdl` helper on PATH (live from the repo mount).
+# 6) Project binaries and the `mdl` helper on PATH (live from the repo mount).
 ENV PATH="/workspace/plugin/.devcontainer/bin:/workspace/plugin/vendor/bin:/workspace/plugin/node_modules/.bin:${PATH}"
 
 USER vscode

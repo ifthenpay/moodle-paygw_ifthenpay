@@ -207,8 +207,12 @@ is.
 - JavaScript: ESLint (flat config), auto-fix on save.
 - CSS: Stylelint auto-fix on save. JSON/Markdown: Prettier.
 
-**Tasks** (<kbd>F1</kbd> → *Run Task*): lint, fix, PHPStan, AMD build/watch, purge caches, run
-upgrades, PHPUnit.
+**Tasks** (<kbd>F1</kbd> → *Run Task*)
+- Quality: `QA: lint + analyse` (default test task) · `PHP: lint (phpcs)` · `PHP: fix (phpcbf)` ·
+  `PHP: analyse (PHPStan)` · `JS/CSS: lint` · `JS/CSS: fix` · `Fix: phpcbf + eslint + stylelint`
+- AMD: `AMD: build` (default build task) · `AMD: watch`
+- Moodle: `Moodle: purge caches` · `Moodle: run upgrades` · `Moodle: environment info`
+- Tests: `Tests: PHPUnit (plugin)` · `Tests: initialise PHPUnit`
 
 **Pre-installed extensions:** Intelephense, PHP Debug, phpsab, PHP snippets, ESLint, Stylelint,
 Prettier, EditorConfig.
@@ -270,7 +274,7 @@ mdl                        # Status: URLs, Moodle/plugin versions, gateway state
 mdl purge                  # Purge all caches
 mdl upgrade                # Install/upgrade pending core + plugin versions
 mdl cli <script> [args]    # Any admin/cli script (run `mdl cli` to list them)
-mdl cfg --name=debug --set=32767
+mdl cfg --name=noreplyaddress --set=noreply@example.com
 mdl sql                    # MySQL shell (or: mdl sql "SELECT ...")
 mdl logs                   # Tail Apache/PHP errors
 
@@ -282,6 +286,11 @@ mdl phpunit [args]         # Run the plugin's PHPUnit tests
 ```
 
 `mdl` runs Moodle CLI natively in the dev container — no `docker exec`, no Docker socket.
+
+`mdl cfg --set` cannot change `debug`, `debugdisplay`, `cachejs`, `cachetemplates`,
+`langstringcache`, `noemailever` or `passwordpolicy` — those are forced from `MOODLE_DEV_MODE` in
+`config.php` on every start (see `app-entrypoint.sh`'s managed block) and win over anything written
+to the database. Set `MOODLE_DEV_MODE=0` in `.env` first if you need to change one of them.
 
 ### Docker (host terminal)
 

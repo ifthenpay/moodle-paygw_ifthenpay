@@ -39,6 +39,19 @@
       "problemMatcher": ["$eslint-stylish"]
     },
     {
+      "label": "JS/CSS: fix",
+      "type": "shell",
+      "command": "npm run lint:fix",
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "Fix: phpcbf + eslint + stylelint",
+      "detail": "PHP: fix (phpcbf) + JS/CSS: fix, combined (same as `mdl fix`)",
+      "type": "shell",
+      "command": "mdl fix",
+      "problemMatcher": []
+    },
+    {
       "label": "AMD: build",
       "type": "shell",
       "command": "npm run build",

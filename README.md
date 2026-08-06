@@ -37,7 +37,7 @@ Ifthenpay payment gateway plugin for <a href="https://moodle.org/">Moodle</a> wi
 - **Dev Environment:** <a href="https://code.visualstudio.com/docs/devcontainers/containers">VS Code Dev Containers</a> + <a href="https://docs.docker.com/compose/">Docker Compose</a>
 - **PHP Tooling:**
   - <a href="https://getcomposer.org/">Composer</a>
-  - <a href="https://github.com/squizlabs/PHP_CodeSniffer">PHPCS 3.13</a> + <a href="https://github.com/moodlehq/moodle-cs">Moodle CS 3.7</a>
+  - <a href="https://github.com/PHPCSStandards/PHP_CodeSniffer">PHPCS 3.13</a> + <a href="https://github.com/moodlehq/moodle-cs">Moodle CS 3.7</a>
   - <a href="https://phpstan.org/">PHPStan 2.2</a> + <a href="https://github.com/micaherne/phpstan-moodle">Moodle Extension 1.1</a>
   - <a href="https://phpmd.org/">PHPMD 2.15</a>
 - **JS/AMD:** <a href="https://nodejs.org/">Node.js 22 LTS</a> + <a href="https://gruntjs.com/">Grunt 1.6</a> (uglify, watch, sourcemaps)

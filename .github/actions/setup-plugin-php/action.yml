@@ -1,0 +1,27 @@
+name: Setup plugin PHP toolchain
+description: >
+  Sets up PHP 8.3 and installs this plugin's own Composer dependencies
+  (phpcs, PHPStan, etc). Shared by lint-php.yml and analyse-php.yml, which
+  both need exactly this before running their respective composer script.
+
+runs:
+  using: composite
+  steps:
+    - name: 🐘 Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "8.3"
+        tools: composer
+        coverage: none
+        extensions: mbstring, intl, curl, json
+
+    - name: 📦 Composer cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/composer/files
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+
+    - name: 📥 Composer install (plugin)
+      shell: bash
+      run: composer install --no-interaction --no-progress --prefer-dist

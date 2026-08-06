@@ -1,0 +1,40 @@
+name: 🐘 PHP Lint (PHPCS)
+
+on:
+  workflow_call:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "phpcs.xml"
+      - "composer.json"
+      - "composer.lock"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "phpcs.xml"
+      - "composer.json"
+      - "composer.lock"
+
+concurrency:
+  group: lint-php-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint-php:
+    name: PHPCS (Moodle CS)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🐘 Setup PHP + plugin dependencies
+        uses: ./.github/actions/setup-plugin-php
+
+      - name: ✅ Run PHPCS
+        run: composer run lint

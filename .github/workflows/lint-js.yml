@@ -1,0 +1,58 @@
+name: 🔍 JS/CSS Lint (ESLint + Stylelint)
+
+on:
+  workflow_call:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/amd/**"
+      - "src/**/*.css"
+      - "eslint.config.cjs"
+      - "stylelint.config.cjs"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches: [main]
+    paths:
+      - "src/amd/**"
+      - "src/**/*.css"
+      - "eslint.config.cjs"
+      - "stylelint.config.cjs"
+      - "package.json"
+      - "package-lock.json"
+
+concurrency:
+  group: lint-js-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint-js:
+    name: ESLint + Stylelint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 📥 NPM ci
+        run: npm ci
+
+      - name: 🔎 Run ESLint + Stylelint
+        run: npm run lint
+
+      - name: 🧱 Verify amd/build/ matches amd/src/
+        run: |
+          npm run --silent build
+          if ! git diff --exit-code --stat -- src/amd/build; then
+            echo "::error::src/amd/build/ is out of date with src/amd/src/. Run 'npm run build' (or 'mdl build') and commit the result."
+            exit 1
+          fi

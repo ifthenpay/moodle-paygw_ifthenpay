@@ -1,3 +1,12 @@
+# NOT an orchestrator: lint-php.yml, lint-js.yml, analyse-php.yml and
+# test-phpunit.yml each already have their own pull_request/push triggers with
+# path filters, so they run independently (and in parallel) as their own PR
+# checks without any wrapper needed here — calling them via `uses:` on the
+# same events would just run each of them a second time. This file only
+# covers what those four don't: the convenience source-artifact upload.
+# release.yml is the one place that *does* reuse them via `uses:`, gated
+# sequentially — that's fine because a tag push never overlaps with a branch
+# push/PR event, so there's no double-run there either.
 name: CI
 
 on:
@@ -10,55 +19,18 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  lint:
+  upload-source:
+    name: ⬆️ Upload plugin source
     runs-on: ubuntu-latest
-
     steps:
-      - name: 🛎️ Checkout
-        uses: actions/checkout@v4
-
-      # ---- PHP / Composer ----
-      - name: 🐘 Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          tools: composer
-          coverage: none
-          extensions: mbstring, intl, curl, json
-
-      - name: 📦 Composer cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/composer/files
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: 📥 Composer install
-        run: composer install --no-interaction --no-progress --prefer-dist
-
-      - name: ✅ PHPCS (Moodle CS)
-        run: composer run lint
-
-      # ---- Node / JS lint only ----
-      - name: 🟢 Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: 📦 NPM ci
-        run: npm ci
-
-      - name: 🔍 ESLint (JS)
-        run: npm run lint:js -- --max-warnings=0
-
-      - name: 🎨 Stylelint (CSS)
-        run: npm run lint:css
-
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
       - name: ⬆️ Upload plugin source
-        if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: plugin-src-${{ github.sha }}-${{ github.run_number }}
           path: |

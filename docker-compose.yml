@@ -1,99 +1,172 @@
-version: "3.8"
+# ─────────────────────────────────────────────────────────────────────────────
+# ifthenpay Moodle plugin — local development stack.
+#
+#   ifthenpay-db    MySQL 8.4
+#   ifthenpay-app   Apache + PHP 8.3 + Xdebug, serves Moodle (pinned release)
+#   phpmyadmin      Database UI
+#   dev             VS Code dev container (tooling only)
+#
+# Moodle core lives in the `moodle_core` volume, mounted at the SAME path
+# (/var/www/html) in both the app and the dev container, so every Moodle CLI
+# script can be run straight from the dev container's terminal.
+#
+# All settings come from .env — see .env.example. Defaults below keep the stack
+# working without one.
+# ─────────────────────────────────────────────────────────────────────────────
+name: ifthenpay-moodle
 
 services:
-  # 1) MySQL database for Moodle
   ifthenpay-db:
-    image: mysql:8.0
+    image: mysql:8.4
     container_name: ifthenpay-db
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: moodle
-      MYSQL_USER: moodleuser
-      MYSQL_PASSWORD: userpass
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-rootpass}
+      MYSQL_DATABASE: ${DB_NAME:-moodle}
+      MYSQL_USER: ${DB_USER:-moodleuser}
+      MYSQL_PASSWORD: ${DB_PASS:-userpass}
     command:
       [
-        "--default-authentication-plugin=mysql_native_password",
         "--character-set-server=utf8mb4",
         "--collation-server=utf8mb4_unicode_ci",
         "--innodb-file-per-table=1",
+        "--max-allowed-packet=64M",
       ]
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASS:-rootpass}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
     restart: unless-stopped
 
-  # 2) Bitnami Moodle app with Xdebug (builds from .devcontainer/Dockerfile.app)
   ifthenpay-app:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile.app
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+        MOODLE_BRANCH: ${MOODLE_BRANCH:-stable501}
+        MOODLE_VERSION: ${MOODLE_VERSION:-5.1.5}
+        XDEBUG_VERSION: ${XDEBUG_VERSION:-3.4.0}
     container_name: ifthenpay-app
     depends_on:
-      - ifthenpay-db
+      ifthenpay-db:
+        condition: service_healthy
     environment:
-      ALLOW_EMPTY_PASSWORD: "yes"
-      MOODLE_DATABASE_TYPE: mysqli
-      MOODLE_DATABASE_HOST: ifthenpay-db
-      MOODLE_DATABASE_NAME: moodle
-      MOODLE_DATABASE_USER: moodleuser
-      MOODLE_DATABASE_PASSWORD: userpass
-      MOODLE_SITE_NAME: ifthenpay Dev Academy
-      MOODLE_LANG: en
-      MOODLE_USERNAME: admin
-      MOODLE_PASSWORD: adminpass
-      MOODLE_EMAIL: admin@ifthenpay.local
+      # Moodle layout — identical paths in the dev container.
+      MOODLE_DIRROOT: /var/www/html
+      MOODLE_DATAROOT: /var/www/moodledata
+      MOODLE_PHPUNIT_DATAROOT: /var/www/phpunitdata
+      # Database.
+      MOODLE_DBHOST: ifthenpay-db
+      MOODLE_DBNAME: ${DB_NAME:-moodle}
+      MOODLE_DBUSER: ${DB_USER:-moodleuser}
+      MOODLE_DBPASS: ${DB_PASS:-userpass}
+      # Site.
+      MOODLE_WWWROOT: ${MOODLE_WWWROOT:-http://localhost:${MOODLE_PORT:-8080}}
+      MOODLE_SITE_FULLNAME: ${MOODLE_SITE_FULLNAME:-ifthenpay Dev Academy}
+      MOODLE_SITE_SHORTNAME: ${MOODLE_SITE_SHORTNAME:-ifthenpay}
+      MOODLE_ADMIN_USER: ${MOODLE_ADMIN_USER:-admin}
+      MOODLE_ADMIN_PASS: ${MOODLE_ADMIN_PASS:-adminpass}
+      MOODLE_ADMIN_EMAIL: ${MOODLE_ADMIN_EMAIL:-admin@ifthenpay.local}
+      MOODLE_LANG: ${MOODLE_LANG:-en}
+      # Automation.
+      MOODLE_DEV_MODE: ${MOODLE_DEV_MODE:-1}
+      MOODLE_AUTO_UPGRADE: ${MOODLE_AUTO_UPGRADE:-1}
+      PLUGIN_AUTO_ENABLE: ${PLUGIN_AUTO_ENABLE:-1}
+      # Xdebug — connects back to the dev container, which listens on 9003.
+      # zz-xdebug.ini is rewritten from these two on every start (see
+      # app-entrypoint.sh, configure_xdebug); XDEBUG_CONFIG is not used, this
+      # Xdebug build does not honour it as a runtime override.
+      PHP_IDE_CONFIG: serverName=moodle-xdebug
+      XDEBUG_MODE: ${XDEBUG_MODE:-debug,develop}
+      XDEBUG_START: ${XDEBUG_START:-trigger}
     ports:
-      - "8080:8080"
+      - "${MOODLE_PORT:-8080}:80"
     volumes:
-      # Persist Moodle core + moodledata as Bitnami expects
-      - bitnami:/bitnami
-      # Mount ONLY the plugin source into a neutral path to avoid installer conflicts
-      - ./src:/opt/dev/ifthenpay:ro
-    # Installer finished + dataroot writable + plugin dir parent exists
+      - moodle_core:/var/www/html
+      - moodle_data:/var/www/moodledata
+      - phpunit_data:/var/www/phpunitdata
+      # Apache/PHP error log, readable from the dev container (`mdl logs`).
+      - app_logs:/var/log/apache2
+      # The plugin under development, live from the repo.
+      - ./src:/var/www/html/public/payment/gateway/ifthenpay
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "set -eu; test -f /bitnami/moodle/config.php && test -d /bitnami/moodle/payment/gateway && test -w /bitnami/moodledata",
-        ]
+      # Ready = entrypoint finished (install/upgrade/config) *and* Apache answers.
+      test: ["CMD-SHELL", "test -f /run/moodle-ready && curl -fsS -o /dev/null http://localhost/"]
       interval: 5s
-      timeout: 3s
-      retries: 120
-      start_period: 30s
+      timeout: 5s
+      retries: 180
+      start_period: 20s
     restart: unless-stopped
 
-  # 3) phpMyAdmin for convenience
   phpmyadmin:
     image: phpmyadmin:5.2
     container_name: phpmyadmin
     depends_on:
-      - ifthenpay-db
+      ifthenpay-db:
+        condition: service_healthy
     ports:
-      - "8081:80"
+      - "${PMA_PORT:-8081}:80"
     environment:
       PMA_HOST: ifthenpay-db
       PMA_USER: root
-      PMA_PASSWORD: rootpass
+      PMA_PASSWORD: ${DB_ROOT_PASS:-rootpass}
+      UPLOAD_LIMIT: 128M
     restart: unless-stopped
 
-  # 4) VS Code Dev Container
   dev:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile.dev
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
     container_name: ifthenpay-dev
     depends_on:
       ifthenpay-app:
         condition: service_healthy
     user: vscode
-    # No published ports needed; app connects to dev over Docker network
+    environment:
+      MOODLE_DIRROOT: /var/www/html
+      MOODLE_DATAROOT: /var/www/moodledata
+      MOODLE_PHPUNIT_DATAROOT: /var/www/phpunitdata
+      MOODLE_DBHOST: ifthenpay-db
+      MOODLE_DBNAME: ${DB_NAME:-moodle}
+      MOODLE_DBUSER: ${DB_USER:-moodleuser}
+      MOODLE_DBPASS: ${DB_PASS:-userpass}
+      MOODLE_WWWROOT: ${MOODLE_WWWROOT:-http://localhost:${MOODLE_PORT:-8080}}
+      MOODLE_ADMIN_USER: ${MOODLE_ADMIN_USER:-admin}
+      MOODLE_ADMIN_PASS: ${MOODLE_ADMIN_PASS:-adminpass}
+      MOODLE_PORT: ${MOODLE_PORT:-8080}
+      PMA_PORT: ${PMA_PORT:-8081}
+      PLUGIN_REPO: /workspace/plugin
+      PLUGIN_COMPONENT: paygw_ifthenpay
+      COMPOSER_MEMORY_LIMIT: "-1"
+      # CLI debugging is opt-in per command: XDEBUG_MODE=debug XDEBUG_TRIGGER=1 php ...
+      XDEBUG_MODE: ${DEV_XDEBUG_MODE:-off}
+      XDEBUG_CONFIG: client_host=localhost client_port=9003 start_with_request=trigger
+      # Shown by `mdl info` — what the app container is doing with Xdebug.
+      APP_XDEBUG_MODE: ${XDEBUG_MODE:-debug,develop}
+      XDEBUG_START: ${XDEBUG_START:-trigger}
     volumes:
-      # Project repo for editing, tools, composer, etc.
       - ./:/workspace/plugin:cached
-      # Share Bitnami volume for CLI tools, logs, config, etc.
-      - bitnami:/workspace/bitnami:cached
-    working_dir: /workspace
-    restart: unless-stopped
+      # Same paths as the app container, so Moodle CLI works from here.
+      - moodle_core:/var/www/html
+      - moodle_data:/var/www/moodledata
+      - phpunit_data:/var/www/phpunitdata
+      - app_logs:/var/log/apache2:ro
+      - ./src:/var/www/html/public/payment/gateway/ifthenpay
+    working_dir: /workspace/plugin
+    command: ["sleep", "infinity"]
 
 volumes:
   mysql_data: {}
-  bitnami: {}
+  moodle_core: {}
+  moodle_data: {}
+  phpunit_data: {}
+  app_logs: {}

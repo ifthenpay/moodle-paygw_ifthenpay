@@ -1,0 +1,55 @@
+name: 🧪 PHPUnit
+
+on:
+  workflow_call:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+
+concurrency:
+  group: test-phpunit-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-phpunit:
+    name: PHPUnit (plugin)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🔎 Detect PHPUnit tests
+        id: detect
+        run: |
+          if find src/tests -type f -name '*_test.php' 2>/dev/null | grep -q .; then
+            echo "has_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: ⏭️ Skipping PHPUnit
+        if: steps.detect.outputs.has_tests != 'true'
+        run: echo "✓ No PHPUnit tests in src/tests yet. Skipping."
+
+      # Getting Moodle core into the runner isn't the missing piece — that
+      # part is already solved in analyse-php.yml (download + cache by
+      # version). Running PHPUnit for real needs more than that: a live
+      # MySQL service, a full admin/cli/install.php run, then
+      # admin/tool/phpunit/cli/init.php (see .devcontainer/bin/mdl's
+      # phpunit-init/phpunit commands for the local equivalent). That's
+      # deliberately not built out while src/tests/ is empty — revisit this
+      # job when the first test lands.
+      - name: 🚧 Tests detected but CI wiring is not built yet
+        if: steps.detect.outputs.has_tests == 'true'
+        run: |
+          echo "::error::src/tests has test files, but this workflow doesn't run them yet — wire up MySQL + a full Moodle install/phpunit-init here (see mdl phpunit-init/mdl phpunit for the local equivalent)."
+          exit 1

@@ -2,78 +2,110 @@
   "name": "ifthenpay Moodle Dev",
   "dockerComposeFile": ["../docker-compose.yml"],
   "service": "dev",
-  "workspaceFolder": "/workspace",
-  "shutdownAction": "none",
+  // Bring the whole stack up, not just the dev container's dependencies.
+  "runServices": ["ifthenpay-db", "ifthenpay-app", "phpmyadmin", "dev"],
+  "workspaceFolder": "/workspace/plugin",
+  "remoteUser": "vscode",
+  // Stop the stack when VS Code closes. Use "none" to keep Moodle running
+  // (handy while waiting for ifthenpay webhooks).
+  "shutdownAction": "stopCompose",
+
+  // Ports are published by docker-compose (MOODLE_PORT / PMA_PORT in .env),
+  // so VS Code must not also forward them from this container.
+  "forwardPorts": [],
+
+  "postCreateCommand": "bash /workspace/plugin/.devcontainer/post-create.sh",
+  "postStartCommand": "bash /workspace/plugin/.devcontainer/post-start.sh",
+
   "customizations": {
     "vscode": {
       "settings": {
-        // PHP validation & IntelliSense
+        // ── PHP / IntelliSense ────────────────────────────────────────────
         "php.validate.enable": true,
         "php.validate.executablePath": "/usr/local/bin/php",
-        "intelephense.environment.phpVersion": "8.2",
-        "intelephense.format.enable": true,
+        "php.suggest.basic": false,
+        "intelephense.environment.phpVersion": "8.3",
+        // Moodle core is not part of the workspace, but Intelephense resolves
+        // core classes through these paths.
+        "intelephense.environment.includePaths": [
+          "/var/www/html/public",
+          "/var/www/html/public/lib",
+          "/var/www/html/lib"
+        ],
+        // The plugin is bind-mounted inside Moodle core as well; indexing it
+        // twice would duplicate every class in "Go to definition".
+        "intelephense.files.exclude": [
+          "/var/www/html/public/payment/gateway/ifthenpay/**",
+          "/var/www/moodledata/**",
+          "/var/www/phpunitdata/**",
+          "**/.git/**",
+          "**/node_modules/**",
+          "**/amd/build/**",
+          "**/vendor/**/{Tests,tests}/**"
+        ],
+        "intelephense.maxMemory": 4096,
+        "intelephense.files.maxSize": 3000000,
+        // Formatting is phpcbf's job (same rules as `composer lint`).
+        "intelephense.format.enable": false,
 
-        // Formatting (global defaults)
+        // ── PHPCS / PHPCBF (valeryan.vscode-phpsab) ───────────────────────
+        "phpsab.executablePathCS": "/workspace/plugin/vendor/bin/phpcs",
+        "phpsab.executablePathCBF": "/workspace/plugin/vendor/bin/phpcbf",
+        "phpsab.standard": "/workspace/plugin/phpcs.xml",
+        "phpsab.composerJsonPath": "/workspace/plugin/composer.json",
+        "phpsab.snifferEnable": true,
+        "phpsab.snifferMode": "onSave",
+        "phpsab.snifferShowSources": true,
+        "phpsab.fixerEnable": true,
+
+        // ── Formatters ────────────────────────────────────────────────────
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "[php]": {
-          "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
-        },
-
-        // Avoid formatter conflicts: let ESLint/Stylelint handle JS/CSS fixes
-        "[javascript]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        // CSS: rely on Stylelint code actions instead of Prettier formatting
-        "[css]": {
-          "editor.formatOnSave": false
-        },
-        // Keep Prettier for non-code docs
+        "[php]": { "editor.defaultFormatter": "valeryan.vscode-phpsab" },
+        "[javascript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+        "[css]": { "editor.formatOnSave": false },
         "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+        "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
         "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-
-        // Auto-fix on save (ESLint + Stylelint + imports)
         "editor.codeActionsOnSave": {
           "source.fixAll.eslint": "always",
-          "source.fixAll.stylelint": "always",
-          "source.organizeImports": "always"
+          "source.fixAll.stylelint": "always"
         },
 
-        // ESLint & Stylelint integration
+        // ── ESLint / Stylelint ────────────────────────────────────────────
         "eslint.validate": ["javascript"],
-        "eslint.format.enable": true,
         "eslint.useFlatConfig": true,
+        "eslint.format.enable": true,
+        "eslint.workingDirectories": [{ "mode": "auto" }],
         "stylelint.validate": ["css"],
 
-        // PHPCS, PHPStan, PHPMD via phpsab
-        "phpSniffer.enable": true,
-        "phpSniffer.executablePath": "${workspaceFolder}/vendor/bin/phpcs",
-        "phpSniffer.standard": "phpcs.xml",
+        // ── Noise reduction ───────────────────────────────────────────────
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/vendor/**": true,
+          "/var/www/html/**": true,
+          "/var/www/moodledata/**": true
+        },
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/vendor": true,
+          "**/src/amd/build": true
+        },
 
-        // Terminal
         "terminal.integrated.defaultProfile.linux": "bash",
-        "php.suggest.basic": false,
         "editor.snippetSuggestions": "top"
       },
       "extensions": [
-        // Linters & formatters
         "dbaeumer.vscode-eslint",
         "stylelint.vscode-stylelint",
         "esbenp.prettier-vscode",
-
-        // PHP tooling
         "bmewburn.vscode-intelephense-client",
         "xdebug.php-debug",
         "valeryan.vscode-phpsab",
         "hakcorp.php-awesome-snippets",
-
-        // Utilities
         "editorconfig.editorconfig",
-        "ms-azuretools.vscode-docker"
+        "imgildev.vscode-moodle-snippets"
       ]
     }
-  },
-  "forwardPorts": [8080, 8081, 9003],
-  "postCreateCommand": "cd plugin && composer install --no-interaction && npm install",
-  "postStartCommand": "bash plugin/.devcontainer/post-start.sh"
+  }
 }

@@ -1,0 +1,2197 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Binary operation "\." between ''mailto\:'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$amount on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$component on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$currency on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$itemid on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$paymentarea on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$state on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$supportemail on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$timemodified on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot access property \$token on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method footer\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method get_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method header\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method notification\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method set_context\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method set_heading\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method set_title\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method set_url\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method update_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#1 \$component of static method core_payment\\helper\:\:get_success_url\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strtoupper expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#1 \$var of function s expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#1 \(mixed\) of echo cannot be converted to string\.$#'
+			identifier: echo.nonString
+			count: 4
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#2 \$paymentarea of static method core_payment\\helper\:\:get_success_url\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#3 \$itemid of static method core_payment\\helper\:\:get_success_url\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: src/classes/adminsetting/backofficekey.php
+
+		-
+			message: '#^Call to an undefined method object\:\:setAttributes\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Call to an undefined method object\:\:setPersistantFreeze\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Call to an undefined method object\:\:updateAttributes\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot access offset '''' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot access offset ''enabled'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot access offset ''image'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot access offset ''label'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot access offset ''tooltip'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot access offset mixed on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 3
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot access offset non\-empty\-string on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot access property \$requires on mixed\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot call method css\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot call method data_for_js\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot call method js_call_amd\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 9
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:build_initial_state\(\) has parameter \$ordered with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:build_initial_state\(\) has parameter \$saved with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:build_initial_state\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:get_saved_config\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:render_gateway_section\(\) has parameter \$gkmap with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:render_other_section\(\) has parameter \$methods with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:render_other_section\(\) has parameter \$saved with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:render_payment_section\(\) has parameter \$accounts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:render_payment_section\(\) has parameter \$methods with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:render_payment_section\(\) has parameter \$ordered with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:render_payment_section\(\) has parameter \$saved with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:validate_gateway_form\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\gateway\:\:validate_gateway_form\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_filter expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_key_first expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#1 \$key of function array_key_exists expects int\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#1 \$methodsrich of function paygw_ifthenpay_order_method_keys expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#1 \$var of function s expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#2 \$gkmap of static method paygw_ifthenpay\\gateway\:\:render_gateway_section\(\) expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#2 \$methods of static method paygw_ifthenpay\\gateway\:\:render_other_section\(\) expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#2 \$methods of static method paygw_ifthenpay\\gateway\:\:render_payment_section\(\) expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Parameter \#4 \$accounts of static method paygw_ifthenpay\\gateway\:\:render_payment_section\(\) expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Part \$methodkey \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 7
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Possibly invalid array key type mixed\.$#'
+			identifier: offsetAccess.invalidOffset
+			count: 2
+			path: src/classes/gateway.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''Alias'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''Conta'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''DescriptionEN'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''Entidade'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''Entity'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''GatewayKey'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''IsVisible'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''Method'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''Position'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''SmallImageUrl'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access offset ''position'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access property \$enabled on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 2
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 6
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\local\\data_formatter\:\:build_pay_by_link_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\local\\data_formatter\:\:format_available_payment_methods\(\) has parameter \$raw with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\local\\data_formatter\:\:format_available_payment_methods\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\local\\data_formatter\:\:format_gateway_keys\(\) has parameter \$raw with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\local\\data_formatter\:\:format_gateway_keys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\local\\data_formatter\:\:format_payment_accounts\(\) has parameter \$accounts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\local\\data_formatter\:\:format_payment_accounts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Possibly invalid array key type mixed\.$#'
+			identifier: offsetAccess.invalidOffset
+			count: 5
+			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$accountid on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$amount on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$component on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$currency on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$gateway_key on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$id on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$itemid on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$paymentarea on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$paymentid on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$redirect_url on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$state on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$timecreated on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$timemodified on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$token on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access property \$transaction_id on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot call method delete_records\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot call method delete_records_select\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot call method get_in_or_equal\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot call method get_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot call method get_records\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot call method record_exists\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot use array destructuring on mixed\.$#'
+			identifier: offsetAccess.nonArray
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\privacy\\provider\:\:delete_data_for_payment_sql\(\) has parameter \$paymentparams with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Method paygw_ifthenpay\\privacy\\provider\:\:export_payment_data\(\) has parameter \$subcontext with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Parameter \#1 \$datetime of static method core_privacy\\local\\request\\transform\:\:datetime\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Part \$in \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_http_request_failed'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_http_status'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_invalid_json_get'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_invalid_json_post'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_invalid_pbl_response'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_unsupported_method'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:nobackofficekey_error'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api_heading'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''backoffice_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''backoffice_key_desc'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''behavior_desc'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''behavior_heading'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''error_invalid_backoffice_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''error_invalidformat'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''error_missing_backoffice_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:default_method'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:default_method_help'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:default_method_none'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:description'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:description_help'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_callback_activation'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_default_not_enabled'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_default_unknown'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_maxchars'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_no_methods_enabled'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_state_missing'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:gateway_configuration'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:gateway_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:gateway_key_help'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:missing_backoffice_key_inline'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:missing_gateway_keys_inline'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:noaccounts'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:other_configuration'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:payment_configuration'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:payment_configuration_reqnote'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''gatewaydescription'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''gatewayname'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''modal\:pleasewait'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''modal\:redirectingtoifthenpay'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''onboarding_html'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''onboarding_title'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''pluginname'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:accountid'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:amount'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:component'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:currency'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:gateway_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:itemid'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:paymentarea'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:paymentid'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:redirect_url'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:state'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:timecreated'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:timemodified'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:token'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:transaction_id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:userid'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:amount'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:btn_contact_support'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:btn_go_to_courses'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:btn_retry'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:btn_try_again'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:cancel_desc_cancel'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:cancel_desc_error'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:cancel_title'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:error_missing_redirect'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:missing_ifthenpay_state'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:not_found'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:order_reference'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:return_title'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:status_canceled'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:status_error'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:transaction_id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:waiting'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:waiting_hint'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/en/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_http_request_failed'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_http_status'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_invalid_json_get'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_invalid_json_post'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_invalid_pbl_response'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:error_unsupported_method'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api\:nobackofficekey_error'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''api_heading'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''backoffice_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''backoffice_key_desc'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''behavior_desc'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''behavior_heading'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''error_invalid_backoffice_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''error_invalidformat'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''error_missing_backoffice_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:default_method'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:default_method_help'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:default_method_none'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:description'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:description_help'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_callback_activation'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_default_not_enabled'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_default_unknown'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_maxchars'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_no_methods_enabled'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:error_state_missing'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:gateway_configuration'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:gateway_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:gateway_key_help'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:missing_backoffice_key_inline'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:missing_gateway_keys_inline'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:noaccounts'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:other_configuration'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:payment_configuration'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''form\:payment_configuration_reqnote'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''gatewaydescription'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''gatewayname'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''modal\:pleasewait'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''modal\:redirectingtoifthenpay'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''onboarding_html'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''onboarding_title'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''pluginname'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:accountid'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:amount'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:component'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:currency'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:gateway_key'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:itemid'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:paymentarea'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:paymentid'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:redirect_url'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:state'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:timecreated'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:timemodified'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:token'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:transaction_id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''privacy\:metadata\:ifthenpay_tx\:userid'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:amount'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:btn_contact_support'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:btn_go_to_courses'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:btn_retry'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:btn_try_again'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:cancel_desc_cancel'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:cancel_desc_error'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:cancel_title'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:error_missing_redirect'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:missing_ifthenpay_state'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:not_found'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:order_reference'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:return_title'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:status_canceled'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:status_error'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:transaction_id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:waiting'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Cannot access offset ''process\:waiting_hint'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lang/pt/paygw_ifthenpay.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access offset ''id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access offset ''position'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access offset mixed on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access offset string on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$accountid on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$amount on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$component on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$currency on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$gateway_key on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$itemid on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$lang on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$paymentarea on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$paymentid on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$state on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$timemodified on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$userid on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/lib.php
+
+		-
+			message: '#^Cannot call method get_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot call method update_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot cast mixed to float\.$#'
+			identifier: cast.double
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 3
+			path: src/lib.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 11
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_as_map\(\) has parameter \$list with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_as_map\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_build_full_admin_dataset\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_build_optgroups_for_method\(\) has parameter \$dataset with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_build_optgroups_for_method\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_decode_state\(\) has parameter \$cfg with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_decode_state\(\) should return stdClass but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_get_accounts_by_gateway_map\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_get_gateway_keys_map\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_get_methods_rich\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_order_method_keys\(\) has parameter \$methodsrich with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_order_method_keys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Parameter \#1 \$component of static method core_payment\\helper\:\:deliver_order\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Parameter \#1 \$list of function paygw_ifthenpay_as_map expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Parameter \#2 \$paymentarea of static method core_payment\\helper\:\:deliver_order\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Parameter \#3 \$itemid of static method core_payment\\helper\:\:deliver_order\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Parameter \#5 \$userid of static method core_payment\\helper\:\:deliver_order\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Variable \$fmt on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Cannot access property \$id on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Cannot call method get_manager\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Cannot call method insert_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Cannot call method table_exists\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#1 \$component of static method core_payment\\helper\:\:get_gateway_configuration\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#1 \$component of static method core_payment\\helper\:\:get_payable\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#1 \$gatewaykey of method paygw_ifthenpay\\local\\api_client\:\:create_pay_by_link\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#1 \$string of function urldecode expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#1 \$url of class core\\url constructor expects core\\url\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#2 \$paymentarea of static method core_payment\\helper\:\:get_gateway_configuration\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#2 \$paymentarea of static method core_payment\\helper\:\:get_payable\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#3 \$itemid of static method core_payment\\helper\:\:get_gateway_configuration\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Parameter \#3 \$itemid of static method core_payment\\helper\:\:get_payable\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Variable \$cfg in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: src/pay.php
+
+		-
+			message: '#^Cannot access property \$amount on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$component on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$currency on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$gateway_key on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$itemid on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$paymentarea on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$requires on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$state on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$timemodified on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$token on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$transaction_id on mixed\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method data_for_js\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method footer\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method get_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method header\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method js_call_amd\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method set_context\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method set_heading\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method set_title\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method set_url\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot call method update_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 6
+			path: src/return.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Parameter \#1 \$component of static method core_payment\\helper\:\:get_success_url\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Parameter \#1 \$txid of method paygw_ifthenpay\\local\\api_client\:\:get_transaction_status\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Parameter \#1 \$var of function s expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/return.php
+
+		-
+			message: '#^Parameter \#1 \(mixed\) of echo cannot be converted to string\.$#'
+			identifier: echo.nonString
+			count: 2
+			path: src/return.php
+
+		-
+			message: '#^Parameter \#2 \$paymentarea of static method core_payment\\helper\:\:get_success_url\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Parameter \#3 \$itemid of static method core_payment\\helper\:\:get_success_url\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/return.php
+
+		-
+			message: '#^Cannot access property \$fulltree on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/settings.php
+
+		-
+			message: '#^Cannot call method add\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: src/settings.php
+
+		-
+			message: '#^Parameter \#1 \$settings of static method core_payment\\helper\:\:add_common_gateway_settings\(\) expects admin_settingpage, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/settings.php
+
+		-
+			message: '#^Cannot access property \$component on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/version.php
+
+		-
+			message: '#^Cannot access property \$maturity on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/version.php
+
+		-
+			message: '#^Cannot access property \$release on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/version.php
+
+		-
+			message: '#^Cannot access property \$requires on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/version.php
+
+		-
+			message: '#^Cannot access property \$version on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/version.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: src/webhook.php
+
+		-
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/webhook.php

@@ -1,0 +1,43 @@
+# The image builds only need .devcontainer/ — everything else is bind-mounted
+# at runtime, so keep the build context small.
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!.devcontainer/*.md
+LICENSE
+
+# Local environment (never bake secrets into an image layer)
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules
+npm-debug.log
+
+# PHP
+vendor
+composer.lock
+
+# Build artifacts
+src/amd/build
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,72 @@
+name: 🛡️ PHPStan Analysis
+
+on:
+  workflow_call:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "phpstan.neon"
+      - "phpstan-baseline.neon"
+      - "composer.json"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "phpstan.neon"
+      - "phpstan-baseline.neon"
+      - "composer.json"
+
+concurrency:
+  group: analyse-php-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  MOODLE_BRANCH: stable501
+  MOODLE_VERSION: 5.1.5
+
+jobs:
+  analyse-php:
+    name: PHPStan (moodle-cs extension)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🐘 Setup PHP + plugin dependencies
+        uses: ./.github/actions/setup-plugin-php
+
+      # phpstan-moodle needs a real Moodle core checkout (moodle.rootDirectory
+      # in phpstan.neon) to resolve core classes/globals — cached by version
+      # so this is only slow on the first run or when MOODLE_VERSION bumps.
+      - name: 📦 Moodle core cache
+        id: moodle-core-cache
+        uses: actions/cache@v6
+        with:
+          path: /var/www/html
+          key: moodle-core-${{ env.MOODLE_BRANCH }}-${{ env.MOODLE_VERSION }}
+
+      - name: 📥 Download Moodle core
+        if: steps.moodle-core-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /var/www/html
+          sudo chown "$(id -u):$(id -g)" /var/www/html
+          base="https://packaging.moodle.org/${MOODLE_BRANCH}/moodle-${MOODLE_VERSION}.tgz"
+          curl -fsSL -o /tmp/moodle.tgz "$base"
+          curl -fsSL -o /tmp/moodle.tgz.sha256 "$base.sha256"
+          expected="$(sed -E 's/.*=[[:space:]]*//' /tmp/moodle.tgz.sha256 | tr -d '[:space:]')"
+          echo "${expected}  /tmp/moodle.tgz" | sha256sum -c -
+          tar -xzf /tmp/moodle.tgz -C /var/www/html --strip-components=1
+          rm -f /tmp/moodle.tgz /tmp/moodle.tgz.sha256
+
+      - name: 📥 Composer install (Moodle core)
+        if: steps.moodle-core-cache.outputs.cache-hit != 'true'
+        run: composer install --no-interaction --no-progress --working-dir=/var/www/html
+
+      - name: 🔍 Run PHPStan
+        run: composer run analyse

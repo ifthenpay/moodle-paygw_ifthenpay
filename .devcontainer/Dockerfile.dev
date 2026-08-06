@@ -1,21 +1,98 @@
-FROM mcr.microsoft.com/vscode/devcontainers/php:8.2
+# ─────────────────────────────────────────────────────────────────────────────
+# VS Code dev container: the tooling box.
+#
+# It carries the same PHP extensions as the app container and mounts Moodle core
+# and moodledata at the same paths, so every `admin/cli/*.php` script — and
+# PHPUnit — can be run straight from the integrated terminal.
+# ─────────────────────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/vscode/devcontainers/php:8.3
 
-# Align with Bitnami runtime UID/GID to avoid permission issues on the shared volume
+ARG APP_UID=1000
+ARG APP_GID=1000
+ARG NODE_VERSION=22
+
 USER root
-ARG TARGET_UID=1001
-ARG TARGET_GID=1001
-RUN (getent group ${TARGET_GID} || groupadd -g ${TARGET_GID} bitnami) \
-  && usermod -u ${TARGET_UID} -g ${TARGET_GID} vscode \
-  && chown -R ${TARGET_UID}:${TARGET_GID} /home/vscode
 
-# Node 20 LTS + grunt-cli for JS builds
-RUN apt-get update \
-  && apt-get install -y curl ca-certificates gnupg \
-  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-  && apt-get install -y nodejs \
-  && npm -g config set fund false audit false \
-  && npm -g install grunt-cli \
-  && rm -rf /var/lib/apt/lists/*
+# 1) Node (AMD build via Grunt) + CLI conveniences + Moodle's PHP build deps.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      default-mysql-client \
+      gnupg \
+      jq \
+      less \
+      libfreetype6-dev \
+      libicu-dev \
+      libjpeg-dev \
+      libonig-dev \
+      libpng-dev \
+      libxml2-dev \
+      libzip-dev \
+      locales \
+      nano \
+      rsync \
+      vim \
+    && curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm -g config set fund false audit false \
+    && npm -g install grunt-cli \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2) Moodle's PHPUnit environment hardcodes en_AU.UTF-8 to test locale-switching
+#    (lib/phpunit/classes/util.php::get_locale_name()) — `mdl phpunit-init`
+#    fails without it. en_US.UTF-8 alongside it for anything assuming a US locale.
+RUN sed -i \
+        -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' \
+        -e 's/# en_AU.UTF-8 UTF-8/en_AU.UTF-8 UTF-8/' \
+        /etc/locale.gen \
+    && locale-gen
+
+# 3) Same extension set as the app container, so CLI behaviour matches the web run.
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" \
+        dom \
+        exif \
+        gd \
+        intl \
+        mysqli \
+        pdo_mysql \
+        simplexml \
+        soap \
+        xml \
+        zip
+
+# 4) CLI PHP: generous limits for PHPStan/PHPUnit, and Xdebug opt-in per command
+#    (XDEBUG_MODE comes from the environment; `trigger` keeps plain calls silent).
+RUN { \
+        echo 'memory_limit = 1G'; \
+        echo 'max_execution_time = 0'; \
+        echo 'max_input_vars = 5000'; \
+    } > /usr/local/etc/php/conf.d/zz-dev.ini \
+    && { \
+        echo 'xdebug.mode=off'; \
+        echo 'xdebug.start_with_request=trigger'; \
+        echo 'xdebug.client_host=localhost'; \
+        echo 'xdebug.client_port=9003'; \
+        echo 'xdebug.log_level=0'; \
+    } > /usr/local/etc/php/conf.d/zz-xdebug-dev.ini
+
+# 5) Align the dev user with the host user (and therefore with Apache), so the
+#    bind-mounted repository stays writable from every side. Matching APP_GID
+#    with the app container is also why `mdl logs` can read Apache's error
+#    log: same gid, group-read, no supplementary group needed.
+RUN set -eux; \
+    if [ "$(id -u vscode)" != "${APP_UID}" ] || [ "$(id -g vscode)" != "${APP_GID}" ]; then \
+        groupmod -o -g "${APP_GID}" vscode; \
+        usermod  -o -u "${APP_UID}" -g "${APP_GID}" vscode; \
+        chown -R "${APP_UID}:${APP_GID}" /home/vscode; \
+        [ -d /usr/local/share/nvm ] && chown -R "${APP_UID}:${APP_GID}" /usr/local/share/nvm || true; \
+    fi; \
+    mkdir -p /workspace/plugin /var/www/html /var/www/moodledata /var/www/phpunitdata; \
+    chown "${APP_UID}:${APP_GID}" /workspace /workspace/plugin
+
+# 6) Project binaries and the `mdl` helper on PATH (live from the repo mount).
+ENV PATH="/workspace/plugin/.devcontainer/bin:/workspace/plugin/vendor/bin:/workspace/plugin/node_modules/.bin:${PATH}"
 
 USER vscode
-WORKDIR /workspace
+WORKDIR /workspace/plugin
+CMD ["sleep", "infinity"]

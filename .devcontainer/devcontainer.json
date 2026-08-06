@@ -96,19 +96,15 @@
         "editor.snippetSuggestions": "top"
       },
       "extensions": [
-        // Linters & formatters
         "dbaeumer.vscode-eslint",
         "stylelint.vscode-stylelint",
         "esbenp.prettier-vscode",
-
-        // PHP tooling
         "bmewburn.vscode-intelephense-client",
         "xdebug.php-debug",
         "valeryan.vscode-phpsab",
         "hakcorp.php-awesome-snippets",
-
-        // Utilities
-        "editorconfig.editorconfig"
+        "editorconfig.editorconfig",
+        "imgildev.vscode-moodle-snippets"
       ]
     }
   }

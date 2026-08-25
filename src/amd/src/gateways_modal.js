@@ -24,12 +24,12 @@
 /* eslint-disable promise/always-return */
 /* eslint-disable no-empty-function */
 
-define(["core/templates", "core/modal_factory"], function(
+define(["core/templates", "core/modal"], function(
   Templates,
-  ModalFactory
+  Modal
 ) {
   const showModalWithPlaceholder = function() {
-    return ModalFactory.create({
+    return Modal.create({
       body: Templates.render(
         "paygw_ifthenpay/ifthenpay_button_placeholder",
         {}

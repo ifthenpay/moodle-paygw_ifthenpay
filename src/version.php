@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'paygw_ifthenpay';
 $plugin->version   = 2026012300;
-$plugin->requires  = 2023042400;
+$plugin->requires  = 2022112800;
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.1.3';

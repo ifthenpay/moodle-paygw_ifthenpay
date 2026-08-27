@@ -24,11 +24,12 @@
 
 namespace paygw_ifthenpay\adminsetting;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../../lib.php');
+
 /**
- * Behaviour:
- * - Accepts empty values (does not block installation or explicit clearing).
- * - Validates format locally (####-####-####-####).
- * - Performs remote validation only when the value changes.
+ * Backoffice Key setting, validated against ifthenpay before it is stored.
  */
 class backofficekey extends \admin_setting_configpasswordunmask
 {
@@ -36,48 +37,48 @@ class backofficekey extends \admin_setting_configpasswordunmask
     protected $apitimeout = 5;
 
     /**
-     * Validate data before storage.
+     * Validate the key before it is saved.
      *
-     * Rules:
-     *  - Allow empty (installation / explicit clear).
-     *  - Enforce local format ####-####-####-####.
-     *  - If changed, attempt remote validation via api_client (constructor).
-     *    Only a recognised invalid-key error blocks save; technical failures do not.
+     * An empty value is allowed, so the setting can be cleared. A non-empty one must match
+     * ####-####-####-#### and be recognised by ifthenpay. Only an outright rejection blocks the
+     * save; if the API is unreachable the key is stored anyway, so an outage cannot lock an admin
+     * out of the settings page.
      *
      * @param mixed $data Raw value from the settings form.
-     * @return bool|string True if valid, or a language string for the error.
+     * @return bool|string True if valid, or an error message to show.
      */
     public function validate($data) {
-        // Normalise.
         $data = is_string($data) ? trim($data) : $data;
 
-        // 0) Allow empty (do not block installation / allow explicit clear).
         if ($data === '' || $data === null) {
             return true;
         }
 
-        // 1) Local format validation: 1234-5678-9012-3456.
         if (!is_string($data) || !preg_match('/^\d{4}(?:-\d{4}){3}$/', $data)) {
             return get_string('error_invalidformat', 'paygw_ifthenpay');
         }
 
-        // 2) Remote validation only if the value actually changed.
-        $current = (string) get_config('paygw_ifthenpay', 'backoffice_key');
-        if ($current === $data) {
-            return true;
-        }
-
-        // 3) Remote validation (api_client validates in its constructor).
+        /*
+         * This is the only place a Backoffice Key is verified, and it runs on every save: a key can
+         * be revoked after it was stored, and CLI writes skip this method entirely, so "already in
+         * the database" proves nothing.
+         *
+         * verify_backoffice_key() is the right check. get_gateway_keys() is not, because it returns
+         * an empty list both for a new customer with no Moodle Gateway Keys and for a key belonging
+         * to nobody. Having no Gateway Keys yet is a normal state — the onboarding steps tell
+         * admins to enter this key before requesting one — so the settings page reports it
+         * separately rather than blocking the save here.
+         */
         try {
-            new \paygw_ifthenpay\local\api_client($data, $this->apitimeout);
-            // If we got here, the API recognised the key.
-        } catch (\moodle_exception $e) {
-            if (!empty($e->errorcode) && $e->errorcode === 'error_invalid_backoffice_key') {
+            if (!\paygw_ifthenpay_key_is_recognised($data, $this->apitimeout)) {
                 return get_string('error_invalid_backoffice_key', 'paygw_ifthenpay');
             }
-            // Other moodle_exception cases (transport/JSON/etc.) do NOT block save.
+        } catch (\moodle_exception $e) {
+            if ($e->errorcode === 'api:error_unauthorized') {
+                return get_string('error_invalid_backoffice_key', 'paygw_ifthenpay');
+            }
+            // Transport and JSON errors say nothing about the key, so they do not block the save.
         } catch (\Throwable $e) {
-            // Technical failures must not block saving the setting.
             debugging('[ifthenpay] Backoffice Key validation error: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
 

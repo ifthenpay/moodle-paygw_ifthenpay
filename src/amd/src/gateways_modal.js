@@ -44,11 +44,13 @@ define(["core/templates", "core/modal"], function(
       window.location.href =
         // eslint-disable-next-line no-undef
         M.cfg.wwwroot + "/payment/gateway/ifthenpay/pay.php?"
-        + "component=" + component
-        + "&paymentarea=" + paymentArea
-        + "&itemid=" + itemId
-        + "&description=" + description;
-      // Keep promise pending to avoid UI race conditions.
+        // Every value is encoded: an item named "Maths & Physics" would otherwise break the
+        // query string apart, and a "#" would truncate everything after it.
+        + "component=" + encodeURIComponent(component)
+        + "&paymentarea=" + encodeURIComponent(paymentArea)
+        + "&itemid=" + encodeURIComponent(itemId)
+        + "&description=" + encodeURIComponent(description);
+      // Never resolves: the modal stays up until the browser leaves for ifthenpay.
       return new Promise(function() {});
     });
   };

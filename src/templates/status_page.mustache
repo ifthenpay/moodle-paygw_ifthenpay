@@ -1,0 +1,95 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template paygw_ifthenpay/status_page
+
+    Outcome card shown after checkout, shared by the return and cancel pages.
+
+    The state is said once: a status icon (or the spinner, while the return page is still waiting)
+    beside the heading, and a single sentence below explaining it.
+
+    That sentence doubles as the live region — the return page rewrites it as polling progresses —
+    so the card needs no second status line.
+
+    Context variables required for this template:
+    * title - Heading; the one-line statement of what happened.
+    * intro - Sentence under the heading.
+    * rows - List of {label, value, strong} describing the order; strong emphasises the value.
+    * actions - List of {url, text, primary} links.
+
+    Optional context variables:
+    * icon - Rendered pix icon shown beside the heading.
+    * spinner - Show a spinner instead of an icon (the return page polls).
+    * spinnerid / statusid - Ids the AMD module uses to update the card.
+    * loadinglabel - Accessible name for the spinner.
+    * retry - {id, text} button whose behaviour the AMD module owns.
+
+    Example context (json):
+    {
+        "title": "Payment not completed",
+        "intro": "You canceled the payment before it was completed.",
+        "rows": [
+            {"label": "Order reference", "value": "AbCd1234"},
+            {"label": "Amount", "value": "24.50 EUR", "strong": true}
+        ],
+        "actions": [
+            {"url": "https://example.com", "text": "Try again", "primary": true}
+        ]
+    }
+}}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex align-items-center mb-2">
+                        {{! me-*/mr-* and visually-hidden/sr-only are the Bootstrap 5 and 4
+                            spellings of the same thing; both are emitted so the layout holds on
+                            Moodle 4.3-4.5 and on 5.x, where the BS4 name is deprecated. }}
+                        {{#spinner}}
+                            <span id="{{spinnerid}}" class="spinner-border spinner-border-sm text-primary me-2 mr-2 flex-shrink-0"
+                                  role="status">
+                                <span class="visually-hidden sr-only">{{loadinglabel}}</span>
+                            </span>
+                        {{/spinner}}
+                        {{#icon}}
+                            <span class="me-2 mr-2 flex-shrink-0" aria-hidden="true">{{{.}}}</span>
+                        {{/icon}}
+                        <h2 class="h4 mb-0">{{title}}</h2>
+                    </div>
+                    <p id="{{statusid}}" class="text-muted" {{#spinner}}aria-live="polite"{{/spinner}}>{{intro}}</p>
+                    <dl class="row small mb-4">
+                        {{#rows}}
+                            <dt class="col-sm-5 text-muted font-weight-normal fw-normal">{{label}}</dt>
+                            <dd class="col-sm-7">{{#strong}}<strong>{{/strong}}{{value}}{{#strong}}</strong>{{/strong}}</dd>
+                        {{/rows}}
+                    </dl>
+                    <div class="d-flex flex-wrap align-items-center">
+                        {{#retry}}
+                            {{! Deliberately not the primary action: the page checks by itself, so a
+                                prominent button would suggest the customer has to do something. }}
+                            <button type="button" id="{{id}}" class="btn btn-outline-secondary btn-sm me-2 mr-2">{{text}}</button>
+                        {{/retry}}
+                        {{#actions}}
+                            <a href="{{url}}" class="btn me-2 mr-2 {{#primary}}btn-primary{{/primary}}{{^primary}}btn-link{{/primary}}">{{text}}</a>
+                        {{/actions}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

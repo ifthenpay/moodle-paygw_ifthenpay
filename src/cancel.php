@@ -25,32 +25,32 @@
 use core_payment\helper;
 
 require(__DIR__ . '/../../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 require_login();
 
-$token = required_param('token', PARAM_ALPHANUMEXT);
+$token = (string) required_param('token', PARAM_ALPHANUMEXT);
 $type  = required_param('type', PARAM_ALPHA);        // CANCEL or ERROR.
 
-global $DB, $CFG, $PAGE, $OUTPUT;
+global $USER, $CFG, $PAGE, $OUTPUT;
 
-// Fetch transaction.
-$rec = $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
+// Fetch the transaction, and treat someone else's as absent: a token in a URL is not a credential.
+$rec = paygw_ifthenpay_tx_get($token);
+if ($rec && (int) $rec->userid !== (int) $USER->id) {
+    $rec = null;
+}
 
-// Strings (single fetch, then reuse).
 $str = (object)[
-    'title'        => get_string('process:cancel_title', 'paygw_ifthenpay'),
-    'desc_cancel'  => get_string('process:cancel_desc_cancel', 'paygw_ifthenpay'),
-    'desc_error'   => get_string('process:cancel_desc_error', 'paygw_ifthenpay'),
-    'status_cancel' => get_string('process:status_canceled', 'paygw_ifthenpay'),
-    'status_error' => get_string('process:status_error', 'paygw_ifthenpay'),
-    'ref'          => get_string('process:order_reference', 'paygw_ifthenpay'),
-    'amount'       => get_string('process:amount', 'paygw_ifthenpay'),
-    'tryagain'     => get_string('process:btn_try_again', 'paygw_ifthenpay'),
-    'support'      => get_string('process:btn_contact_support', 'paygw_ifthenpay'),
-    'notfound'     => get_string('process:not_found', 'paygw_ifthenpay'),
+    'title'       => get_string('process:cancel_title', 'paygw_ifthenpay'),
+    'desccancel'  => get_string('process:cancel_desc_cancel', 'paygw_ifthenpay'),
+    'descerror'   => get_string('process:cancel_desc_error', 'paygw_ifthenpay'),
+    'ref'         => get_string('process:order_reference', 'paygw_ifthenpay'),
+    'amount'      => get_string('process:amount', 'paygw_ifthenpay'),
+    'tryagain'    => get_string('process:btn_try_again', 'paygw_ifthenpay'),
+    'support'     => get_string('process:btn_contact_support', 'paygw_ifthenpay'),
+    'notfound'    => get_string('process:not_found', 'paygw_ifthenpay'),
 ];
 
-// Page basics.
 $params = ['token' => $token, 'type' => $type];
 $PAGE->set_url(new moodle_url('/payment/gateway/ifthenpay/cancel.php', $params));
 $PAGE->set_context(context_system::instance());
@@ -69,55 +69,47 @@ if (!$rec) {
     exit;
 }
 
-// Persist state (idempotent).
-if ((string)$rec->state !== 'PAID') {
-    $rec->state = (strtoupper($type) === 'ERROR') ? 'ERROR' : 'CANCELED';
+// Persist the outcome. The "not already paid" condition lives in the UPDATE, so a webhook that
+// settles the payment while this page is open cannot be overwritten.
+$newstate = (strtoupper($type) === 'ERROR') ? 'ERROR' : 'CANCELED';
+if ((string) $rec->state !== 'PAID' && (string) $rec->state !== $newstate) {
+    paygw_ifthenpay_tx_set_unpaid_state((int) $rec->id, $newstate);
 }
-$rec->timemodified = time();
-$DB->update_record('paygw_ifthenpay_tx', $rec);
 
-// Variants.
-$iserror   = (strtoupper($type) === 'ERROR');
-$badge     = $iserror ? $str->status_error : $str->status_cancel;
-$desc      = $iserror ? $str->desc_error : $str->desc_cancel;
-$badgecls  = $iserror ? 'bg-danger' : 'bg-warning';
+/*
+ * Re-read before rendering. A Multibanco payment can settle while this redirect is in flight — the
+ * UPDATE above correctly refuses to overwrite PAID, but showing "Payment not completed" to someone
+ * who has just been enrolled would be alarming and wrong.
+ */
+$fresh = paygw_ifthenpay_tx_get($token, 'id,state,component,paymentarea,itemid');
+if ($fresh && (string) $fresh->state === 'PAID') {
+    redirect(helper::get_success_url($fresh->component, $fresh->paymentarea, $fresh->itemid));
+}
 
-$backurl = helper::get_success_url($rec->component, $rec->paymentarea, $rec->itemid);
-$support = !empty($CFG->supportemail)
-    ? html_writer::link(new moodle_url('mailto:' . $CFG->supportemail), $str->support, ['class' => 'btn btn-link'])
-    : '';
+$iserror = ($newstate === 'ERROR');
+$actions = [[
+    'url' => helper::get_success_url($rec->component, $rec->paymentarea, $rec->itemid)->out(false),
+    'text' => $str->tryagain,
+    'primary' => true,
+]];
+if (!empty($CFG->supportemail)) {
+    $actions[] = ['url' => 'mailto:' . $CFG->supportemail, 'text' => $str->support, 'primary' => false];
+}
 
-// Already formatted upstream.
-$amount = s((string)$rec->amount) . ' ' . s($rec->currency);
-$ref    = s($rec->token);
-
-// Render (core Bootstrap only).
-echo html_writer::start_div('container my-5');
-echo html_writer::start_div('row justify-content-center');
-echo html_writer::start_div('col-md-8 col-lg-7');
-
-echo html_writer::start_div('card shadow-sm rounded-3');
-echo html_writer::start_div('card-body p-4 p-md-5');
-
-echo html_writer::div(html_writer::span($badge, 'badge ' . $badgecls), 'mb-3');
-echo html_writer::tag('h2', $str->title, ['class' => 'h4 mb-2']);
-echo html_writer::tag('p', $desc, ['class' => 'text-muted mb-4']);
-
-$dl  = html_writer::start_tag('dl', ['class' => 'row small mb-4']);
-$dl .= html_writer::tag('dt', $str->ref, ['class' => 'col-sm-4']) . html_writer::tag('dd', $ref, ['class' => 'col-sm-8']);
-$dl .= html_writer::tag('dt', $str->amount, ['class' => 'col-sm-4']) . html_writer::tag('dd', $amount, ['class' => 'col-sm-8']);
-$dl .= html_writer::end_tag('dl');
-echo $dl;
-
-echo html_writer::start_div('d-flex gap-2');
-echo html_writer::link($backurl, $str->tryagain, ['class' => 'btn btn-primary']);
-echo $support;
-echo html_writer::end_div(); // Actions.
-
-echo html_writer::end_div(); // Card-body.
-echo html_writer::end_div(); // Card.
-echo html_writer::end_div(); // Col.
-echo html_writer::end_div(); // Row.
-echo html_writer::end_div(); // Container.
+echo $OUTPUT->render_from_template('paygw_ifthenpay/status_page', [
+    'title' => $str->title,
+    'intro' => $iserror ? $str->descerror : $str->desccancel,
+    'icon' => $OUTPUT->pix_icon(
+        $iserror ? 'i/invalid' : 'i/warning',
+        '',
+        'core',
+        ['class' => 'icon ' . ($iserror ? 'text-danger' : 'text-warning')]
+    ),
+    'rows' => [
+        ['label' => $str->ref, 'value' => $rec->token],
+        ['label' => $str->amount, 'value' => $rec->amount . ' ' . $rec->currency, 'strong' => true],
+    ],
+    'actions' => $actions,
+]);
 
 echo $OUTPUT->footer();

@@ -22,8 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 function xmldb_paygw_ifthenpay_uninstall(): bool {
-    // Core will drop all tables defined in db/install.xml automatically.
-    // Just remove any plugin config.
+    // Core drops the tables in db/install.xml on its own; only the config is left to clear.
     unset_all_config_for_plugin('paygw_ifthenpay');
     return true;
 }

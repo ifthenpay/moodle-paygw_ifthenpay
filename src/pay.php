@@ -32,58 +32,50 @@ require_login();
 $component = required_param('component', PARAM_ALPHANUMEXT);
 $paymentarea = required_param('paymentarea', PARAM_ALPHANUMEXT);
 $itemid = required_param('itemid', PARAM_INT);
-$description = urldecode(required_param('description', PARAM_TEXT));
-$sessionid = optional_param('session_id', null, PARAM_TEXT);
+// PHP has already decoded the query string; decoding again would reinstate characters PARAM_TEXT
+// just cleaned out.
+$description = required_param('description', PARAM_TEXT);
 
-// 1) Resolve amount/currency/account from the component (server-side, canonical).
+// Amount, currency and account come from the component, never from the request.
 $payable   = helper::get_payable($component, $paymentarea, $itemid);
 $surcharge = helper::get_gateway_surcharge('ifthenpay');
 $cost      = helper::get_rounded_cost($payable->get_amount(), $payable->get_currency(), $surcharge);
 
-// 2) Get this account’s gateway config (from your gateway form).
 $cfg = helper::get_gateway_configuration($component, $paymentarea, $itemid, 'ifthenpay');
-
-// Check if $cfg exists, contains 'ifthenpay_state', and is not empty.
 if (!isset($cfg) || !is_array($cfg) || !array_key_exists('ifthenpay_state', $cfg) || empty($cfg['ifthenpay_state'])) {
     throw new moodle_exception('process:missing_ifthenpay_state', 'paygw_ifthenpay');
 }
 
-// 3) Build transaction token (short, 8 chars, base64url)
-$token = substr(rtrim(strtr(base64_encode(random_bytes(6)), '+/', '-_'), '='), 0, 8);
+$token = random_string(8);
 
-// 4) Build the PinPay payload
-$state   = \paygw_ifthenpay_decode_state($cfg);
+$state = \paygw_ifthenpay_decode_state($cfg);
+if (empty($state->gatewaykey) || empty($state->methods)) {
+    throw new moodle_exception('process:missing_ifthenpay_state', 'paygw_ifthenpay');
+}
 $payload = \paygw_ifthenpay\local\data_formatter::build_pay_by_link_payload($cost, $state, $token, $description);
 
-// 5) Generate PinPay order
 $client = paygw_ifthenpay_api();
 $order  = $client->create_pay_by_link($state->gatewaykey, $payload);
 
-// 6) (Optional, recommended) Persist for diagnostics/idempotency (minimal fields).
-if ($DB->get_manager()->table_exists('paygw_ifthenpay_tx')) {
-    $rec = (object)[
-        'timecreated'   => time(),
-        'timemodified'  => time(),
-        'token'         => $token,
-        'userid'        => $USER->id,
-        'component'     => $component,
-        'paymentarea'   => $paymentarea,
-        'itemid'        => $itemid,
-        'accountid'     => $payable->get_account_id(),
-        'amount'        => $cost,
-        'currency'      => $payable->get_currency(),
-        'gateway_key'   => $state->gatewaykey,
-        'redirect_url'  => $order->redirect_url ?? $order->RedirectUrl ?? '',
-        'paymentid'     => null,
-        'transaction_id' => null,
-        'state'         => 'PENDING',
-    ];
-    $DB->insert_record('paygw_ifthenpay_tx', $rec);
-}
-
-// 7) Off you go to ifthenpay checkout.
-$redirect = $order->redirect_url ?? $order->RedirectUrl ?? '';
+$redirect = (string) $order->redirect_url;
 if ($redirect === '') {
     throw new moodle_exception('process:error_missing_redirect', 'paygw_ifthenpay');
 }
+
+// The webhook matches on this record to finalise the payment and deliver the order, so it is
+// written before the customer is sent anywhere. Failing here is better than taking money for
+// something that could never be delivered.
+paygw_ifthenpay_tx_create([
+    'token'        => $token,
+    'userid'       => $USER->id,
+    'component'    => $component,
+    'paymentarea'  => $paymentarea,
+    'itemid'       => $itemid,
+    'accountid'    => $payable->get_account_id(),
+    'amount'       => $cost,
+    'currency'     => $payable->get_currency(),
+    'gateway_key'  => $state->gatewaykey,
+    'redirect_url' => $redirect,
+]);
+
 redirect(new moodle_url($redirect));

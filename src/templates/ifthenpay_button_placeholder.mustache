@@ -17,6 +17,9 @@
     * none
     Data attributes required for JS:
     * none
+    Shown for the moment between choosing ifthenpay and arriving at their hosted checkout: a
+    spinner and one sentence, since a "Please wait" line would only repeat the spinner.
+
     Context variables required for this template:
     * none
     Example context (json):
@@ -24,11 +27,6 @@
 
 }}
 <div class="text-center p-4" role="status" aria-live="polite">
-    <div class="spinner-border mb-3" role="presentation" aria-hidden="true"></div>
-    <p class="lead mb-0">
-        {{#str}} modal:redirectingtoifthenpay, paygw_ifthenpay {{/str}}
-    </p>
-    <small class="text-muted">
-        {{#str}} modal:pleasewait, paygw_ifthenpay {{/str}}
-    </small>
+    <div class="spinner-border text-primary mb-3" aria-hidden="true"></div>
+    <p class="mb-0">{{#str}} modal:redirectingtoifthenpay, paygw_ifthenpay {{/str}}</p>
 </div>

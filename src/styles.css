@@ -1,37 +1,59 @@
-/* Force row layout: left group + right select */
-.ifp-row fieldset > .d-flex {
-    display: flex;
-    justify-content: space-between; /* space out left and right */
-    align-items: center;
-    flex-wrap: nowrap; /* prevent breaking */
-}
-
-/* Left section (checkbox + logo + label) */
-.ifp-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Logo size */
-.ifp-logo img {
-    height: 18px;
+/* Payment gateway chooser.
+ *
+ * Core renders each gateway's pix/img.svg through the {{#pix}} helper (payment/templates/
+ * gateway.mustache), so themes size it as an icon — 20x16 in Boost — and the ifthenpay logo is a
+ * wordmark, unreadable at that size. Core owns the template, so CSS is the only lever. Scoped to
+ * this plugin's own option: core sets class="form-check {{shortname}}".
+ */
+.form-check.ifthenpay .icon {
     width: auto;
-    display: block;
-}
+    height: 2.25rem;
 
-/* Label */
-.ifp-label {
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-/* Right section: dropdown */
-.ifp-select {
-    margin-left: auto; /* push all the way right */
-}
-
-.ifp-select select.custom-select {
-    width: 260px; /* fixed uniform width */
+    /* Boost caps icons at max-height: 24px, which would clamp the height above. */
     max-width: 100%;
+    max-height: none;
+    vertical-align: middle;
+}
+
+/* The same option's label, on a dark colour scheme.
+ *
+ * payment/templates/gateway.mustache hardcodes `bg-light` on the label but pins no foreground, so
+ * under [data-bs-theme=dark] the surface stays near-white while the text inherits the theme's light
+ * grey — grey-on-white. It is core's markup and affects every gateway; scoping the repair to
+ * `.form-check.ifthenpay` fixes ours without reaching into anyone else's.
+ *
+ * Fixed colours are deliberate, not a lapse: the background is itself fixed, so a foreground that
+ * followed the theme is what caused the problem. Bootstrap's custom properties are no use for the
+ * same reason — --bs-emphasis-color resolves to near-white in dark mode. These are Boost's
+ * $gray-900 and $gray-600 as literals.
+ *
+ * .h3 and .content are named explicitly because Bootstrap gives headings their own colour from
+ * --bs-heading-color rather than inheriting from the label.
+ */
+.form-check.ifthenpay .form-check-label.bg-light,
+.form-check.ifthenpay .form-check-label.bg-light .h3,
+.form-check.ifthenpay .form-check-label.bg-light .content {
+    color: #1d2125;
+}
+
+.form-check.ifthenpay .form-check-label.bg-light .text-muted {
+    /*
+     * A shade darker than Boost's $gray-600 (#6c757d), which lands at 4.45:1 against this label's
+     * fixed #f8f9fa — just under the WCAG AA minimum, on small text. #697178 measures 4.71:1.
+     *
+     * stylelint-disable-next-line declaration-no-important -- beats Bootstrap's own !important.
+     */
+    color: #697178 !important;
+}
+
+/* Payment method logos, on the settings summary and the gateway configuration form.
+ *
+ * Third-party bitmaps served from ifthenpay's CDN at whatever intrinsic size they happen to have,
+ * so something must constrain them. A class rather than a style attribute on each <img>: the
+ * sizing is one decision, and inlining it would repeat the rule in two files and put presentation
+ * back into PHP.
+ */
+.ifthenpay-method-logo {
+    height: 20px;
+    width: auto;
 }

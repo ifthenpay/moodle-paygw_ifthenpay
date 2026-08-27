@@ -24,38 +24,68 @@
 
 // Default.
 $string['pluginname'] = 'ifthenpay';
-$string['gatewayname'] = 'ifthenpay | Payment Gateway';
-$string['gatewaydescription'] = '
-Autorizada como prestadora de serviços de pagamento para processar pagamentos com
-<strong>Credit Cards</strong>, <strong>Cofidis Pay</strong>, <strong>Apple Pay</strong>,
-<strong>Google Pay</strong>, <strong>MB WAY</strong>, <strong>Bizum</strong>, <strong>Pix</strong>,
-<strong>Multibanco</strong> and <strong>Payshop</strong>.
-';
+// Ver a nota na versão inglesa: o logótipo já identifica a marca, por isso a descrição indica
+// apenas as formas de pagamento disponíveis.
+$string['gatewayname'] = 'ifthenpay';
+$string['gatewaydescription'] =
+    '<span class="d-block mb-1">Pague com seguran&ccedil;a por cart&atilde;o, Apple Pay, Google Pay, MB WAY, Multibanco, ' .
+    'Payshop ou Pix.</span>' .
+    '<span class="d-block small text-muted">Os m&eacute;todos dispon&iacute;veis dependem dos que o seu fornecedor ativou.</span>';
 
 
 // Modal (moustache).
-$string['modal:redirectingtoifthenpay'] = 'Rederecionando para ifthenpay | Payment Gateway';
-$string['modal:pleasewait'] = 'Por favor aguarde...';
-
-
+$string['modal:redirectingtoifthenpay'] = 'A encaminhá-lo para a ifthenpay para concluir o pagamento…';
 // Settings / headings.
-$string['onboarding_title'] = 'Subscrição gratuita do serviço';
 $string['api_heading'] = 'Ligação à ifthenpay';
 $string['behavior_heading'] = 'Comportamento do pagamento';
 $string['behavior_desc'] = 'Definições opcionais que afetam como esta gateway é apresentada aos utilizadores.';
-$string['onboarding_html'] = '
-  <ul>
-    <li>Visite o site e <a href="https://ifthenpay.com/aderir/" target="_blank" rel="noopener">subscreva</a>.</li>
-    <li>Faça download e preencha o contrato.</li>
-    <li>Anexe os documentos solicitados.</li>
-    <li>Solicite a criação da Gateway Key.</li>
-    <li>Envie os documentos para <a href="mailto:ifthenpay@ifthenpay.com">ifthenpay@ifthenpay.com</a>.</li>
-  </ul>
-  <p><strong>Nota:</strong> Caso já tenha contrato com a ifthenpay, basta solicitar a criação da Gateway Key.</p>
-  <p>Para mais informações visite <a href="https://ifthenpay.com" target="_blank" rel="noopener">ifthenpay.com</a>.</p>
-';
+// Onboarding e dicas. A estrutura (lista, numeração, badges) vive no template steps — estas
+// strings têm apenas texto, para que um tradutor nunca tenha de preservar classes Bootstrap.
+$string['onboarding_step1'] =
+    '<a href="https://ifthenpay.com/aderir/" target="_blank" rel="noopener">Subscreva e assine o contrato</a>, ' .
+    'selecionando os métodos de pagamento que pretende aceitar.';
+$string['onboarding_step2'] = 'Após a contratação, receberá automaticamente uma Backoffice Key — insira-a em baixo.';
+$string['onboarding_step3'] =
+    'Solicite ao <a href="mailto:suporte@ifthenpay.com">suporte da ifthenpay</a> uma Gateway Key ' .
+    '<strong>para Moodle</strong>, com os métodos de pagamento escolhidos ativados.';
+$string['onboarding_step4'] = 'Todo o resto é configurado aqui no Moodle.';
+$string['onboarding_more_info'] =
+    'Já tem contrato? Basta solicitar a Gateway Key. Mais informação em ' .
+    '<a href="https://ifthenpay.com" target="_blank" rel="noopener">ifthenpay.com</a>.';
+$string['moodle_payment_tips_title'] = 'Novo nos pagamentos do Moodle?';
+$string['moodle_tip1'] =
+    'Crie uma Conta de Pagamento: <em>Administração do site → Pagamentos → Contas de pagamento → ' .
+    'Criar conta de pagamento</em>.';
+$string['moodle_tip2'] = 'Ative a gateway ifthenpay nessa conta (em baixo).';
+$string['moodle_tip3'] =
+    'Ative a <em>Inscrição mediante pagamento</em>: <em>Administração do site → Extensões → Inscrições → ' .
+    'Gerir extensões de inscrição</em>.';
+$string['moodle_tip4'] =
+    'Adicione-a a uma disciplina: <em>Disciplina → Participantes → Métodos de inscrição → Adicionar método</em>.';
+$string['moodle_tips_links'] =
+    '<a href="https://docs.moodle.org/501/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
+    '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
+    '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
 $string['backoffice_key_desc'] = 'Utilizada para autenticar chamadas à API e webhooks.';
+$string['methods_showcase_title'] = 'Métodos de pagamento suportados';
+$string['status_unconfigured_title'] = 'Ainda não ligado';
+$string['status_unconfigured_desc'] =
+    'A ifthenpay é um serviço gratuito. Quatro passos para começar a aceitar pagamentos.';
+$string['status_connected_title'] = 'Ligado ao ifthenpay';
+$string['status_connected_desc'] =
+    'A sua Backoffice Key está configurada e o ifthenpay está pronto para aceitar pagamentos. Precisa de ativar outro ' .
+    'método de pagamento? <a href="mailto:suporte@ifthenpay.com">Contacte o suporte ifthenpay</a>.';
+$string['onboarding_toggle'] = 'Mostrar passos de subscrição';
+$string['status_nomoodlekeys_title'] = 'Ainda sem Gateway Key para Moodle';
+$string['status_nomoodlekeys_desc'] =
+    'A sua Backoffice Key é válida, mas ainda não tem associada nenhuma Gateway Key com contexto Moodle, pelo que não há ' .
+    'nada para selecionar no formulário da conta de pagamento. <a href="mailto:suporte@ifthenpay.com">Solicite uma ao ' .
+    'suporte ifthenpay</a>, com os métodos de pagamento pretendidos ativados.';
+$string['status_rejected_title'] = 'Backoffice Key rejeitada';
+$string['status_rejected_desc'] =
+    'A ifthenpay não reconheceu a Backoffice Key configurada em baixo, pelo que não é possível processar pagamentos. ' .
+    'Verifique-a no seu backoffice ifthenpay ou <a href="mailto:suporte@ifthenpay.com">contacte o suporte ifthenpay</a>.';
 
 // Validation / messages.
 $string['error_invalidformat'] = 'Formato inválido. Use 1234-5678-9012-3456.';
@@ -70,20 +100,25 @@ $string['api:error_invalid_json_get'] = 'Resposta JSON inválida no pedido GET: 
 $string['api:error_invalid_json_post'] = 'Resposta JSON inválida no pedido POST.';
 $string['api:error_http_request_failed'] = 'Falha na chamada HTTP: {$a}';
 $string['api:error_http_status'] = 'Erro HTTP da API: {$a}';
-$string['api:error_unsupported_method'] = 'Ação não suportada: {$a}';
+$string['api:error_unauthorized'] = 'A API rejeitou as credenciais: {$a}';
 
 
 // Form – sections & labels.
-$string['form:gateway_configuration'] = 'Definições da gateway';
 $string['form:gateway_key'] = 'Gateway Key';
 $string['form:gateway_key_help'] = 'Precisa de outra key? <a href="mailto:suporte@ifthenpay.com">Contacte o suporte ifthenpay</a>. Novas keys e contas surgem automaticamente após ativação.';
 
 $string['form:payment_configuration'] = 'Métodos de pagamento';
 $string['form:payment_configuration_reqnote'] = '<strong>Obrigatório:</strong> Ative pelo menos um método de pagamento.';
-$string['form:noaccounts'] = 'Sem contas disponíveis';
+$string['form:method_not_activated'] = 'Não ativado para esta Gateway Key &mdash; <a href="mailto:suporte@ifthenpay.com">solicite ao suporte ifthenpay</a> que o adicione.';
+$string['form:gateway_key_no_methods'] = 'Esta Gateway Key não tem métodos de pagamento suportados por esta extensão, pelo que nenhum pode ser ativado em baixo. Escolha outra Gateway Key ou <a href="mailto:suporte@ifthenpay.com">solicite ao suporte ifthenpay</a> que lhe adicione métodos.';
+$string['form:col_method'] = 'Método';
+$string['form:col_account'] = 'Conta';
+$string['form:col_default'] = 'Predefinido';
 
-$string['form:other_configuration'] = 'Definições adicionais';
 $string['form:default_method'] = 'Método predefinido (Opcional)';
+$string['form:enable_method'] = 'Ativar {$a}';
+$string['form:set_default_method'] = 'Definir {$a} como método predefinido';
+$string['form:default_unsupported'] = 'Este método de pagamento não pode ser pré-selecionado no checkout.';
 $string['form:default_method_help'] =
     'Opcional. Se ativo, este método será o pré-selecionado no checkout quando multiplicos métodos estão ativos. Selecione "Nenhum" para que o cliente escolha sem a pré-seleção.';
 $string['form:default_method_none'] = 'Nenhum';
@@ -91,10 +126,12 @@ $string['form:description'] = 'Descrição do checkout (Opcional)';
 $string['form:description_help'] = 'Texto opcional, até 150 caracteres, apresentado no checkout.';
 
 $string['form:missing_backoffice_key_inline'] = 'A Backoffice Key não está configurada. <a href="{$a}">Abrir definições</a>.';
+$string['form:rejected_backoffice_key_inline'] = 'A ifthenpay não reconheceu a Backoffice Key configurada. <a href="{$a}">Abrir definições</a> para a corrigir.';
 $string['form:missing_gateway_keys_inline'] =
     'Não existe nenhuma Gateway Key configurada para o Moodle no seu backoffice da ifthenpay. Por favor, <a href="mailto:suporte@ifthenpay.com">contacte o suporte ifthenpay</a> para criar uma Gateway Key para o Moodle e atribuir os métodos de pagamento que pretende aceitar. Depois de criada, volte aqui e selecione-a.';
 
 // Validation / messages.
+$string['form:error_unavailable_enable'] = 'Esta gateway não pode ser ativada enquanto não existir uma Gateway Key para Moodle. Desmarque esta opção para guardar, o que desativa a gateway e mantém a restante configuração.';
 $string['form:error_state_missing'] = 'Faltam dados de configuração. Por favor, tente guardar novamente.';
 $string['form:error_no_methods_enabled'] = 'Ative pelo menos um método de pagamento.';
 $string['form:error_default_not_enabled'] = 'O método predefinido "{$a}" tem de estar ativado nos métodos de pagamento.';
@@ -108,24 +145,27 @@ $string['process:missing_ifthenpay_state'] = 'Não foram encontrados dados de co
 $string['process:error_missing_redirect']  = 'Falta a URL de redirecionamento da ifthenpay. Por favor, contacte o administrador do site.';
 
 // Proccessing => cancel/error page.
-$string['process:cancel_title']        = 'Pagamento não concluído';
-$string['process:cancel_desc_cancel']  = 'O pagamento foi cancelado. Pode tentar novamente ou contactar o suporte.';
-$string['process:cancel_desc_error']   = 'Ocorreu um erro ao processar o pagamento. Pode tentar novamente ou contactar o suporte.';
-$string['process:status_canceled']     = 'Cancelado';
-$string['process:status_error']        = 'Erro';
-$string['process:btn_try_again']       = 'Tentar novamente';
-$string['process:btn_contact_support'] = 'Contactar o suporte';
-$string['process:not_found']           = 'Tentativa de pagamento não encontrada.';
+$string['process:cancel_title']            = 'Pagamento não concluído';
+$string['process:cancel_desc_cancel']      = 'Cancelou o pagamento antes de o concluir. Não foi cobrado qualquer valor.';
+$string['process:cancel_desc_error']       = 'Ocorreu um problema ao confirmar o pagamento. Não foi cobrado qualquer valor.';
+$string['process:btn_try_again']           = 'Tentar novamente';
+$string['process:btn_contact_support']     = 'Contactar o suporte';
+$string['process:not_found']               = 'Tentativa de pagamento não encontrada.';
 
 // Processing => return page.
-$string['process:return_title']       = 'A confirmar o seu pagamento';
-$string['process:waiting']            = 'A verificar o estado…';
-$string['process:waiting_hint']       = 'Esta verificação pode demorar alguns segundos. Pode tentar novamente uma vez ou regressar aos seus cursos.';
-$string['process:order_reference']    = 'Referência da encomenda';
-$string['process:transaction_id']     = 'ID da transação';
-$string['process:amount']             = 'Montante';
-$string['process:btn_retry']          = 'Tentar novamente';
-$string['process:btn_go_to_courses']  = 'Ir para os meus cursos';
+$string['process:return_title']            = 'A confirmar o seu pagamento';
+$string['process:waiting_hint']            = 'Normalmente demora alguns segundos.';
+$string['process:loading']                 = 'A verificar';
+$string['process:waiting_timeout']         = 'Ainda a processar. Pode fechar esta página em segurança — a inscrição fica concluída automaticamente assim que a ifthenpay confirmar o pagamento.';
+$string['process:order_reference']         = 'Referência da encomenda';
+$string['process:transaction_id']          = 'ID da transação';
+$string['process:amount']                  = 'Montante';
+$string['process:btn_retry']               = 'Verificar novamente';
+$string['process:btn_go_to_courses']       = 'Ir para os meus cursos';
+
+
+// Events.
+$string['event:payment_problem'] = 'Problema no pagamento ifthenpay';
 
 
 // Privacy strings.
@@ -140,7 +180,6 @@ $string['privacy:metadata:ifthenpay_tx:itemid'] = 'Identificador do item na áre
 $string['privacy:metadata:ifthenpay_tx:accountid'] = 'Conta ifthenpay mapeada utilizada neste pagamento.';
 $string['privacy:metadata:ifthenpay_tx:amount'] = 'Montante do pagamento.';
 $string['privacy:metadata:ifthenpay_tx:currency'] = 'Moeda do pagamento.';
-$string['privacy:metadata:ifthenpay_tx:gateway_key'] = 'Gateway Key utilizada no pedido.';
 $string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'URL de retorno utilizado no fluxo de pagamento.';
 $string['privacy:metadata:ifthenpay_tx:transaction_id'] = 'Identificador de transação devolvido pela ifthenpay (se existir).';
 $string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Ligação ao registo de pagamento do core.';

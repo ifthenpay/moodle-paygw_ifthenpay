@@ -29,15 +29,9 @@ use core_privacy\local\request\writer;
 /**
  * Privacy Subsystem implementation for paygw_ifthenpay.
  *
- * This provider:
- *  - Describes data stored by the plugin (metadata).
- *  - Supports export and erasure for user-linked rows in the plugin table.
- *  - Integrates with the payment subsystem to export/delete per-payment data.
- *
- * Note: We do not call {@see collection::add_external_location_link()} because
- * this plugin does not send personal data to third parties; the outbound
- * payloads contain only a random token, amount, non-personal description,
- * language code, configured account identifiers, and return URLs.
+ * {@see collection::add_external_location_link()} is deliberately not called: nothing personal
+ * leaves the site. The outbound payloads carry a random token, an amount, a non-personal
+ * description, a language code, configured account identifiers and return URLs.
  *
  * @package    paygw_ifthenpay
  * @copyright  2025 ifthenpay <geral@ifthenpay.com>
@@ -50,7 +44,12 @@ class provider implements
     \core_privacy\local\request\userlist_provider
 {
     /**
-     * Returns metadata about this plugin.
+     * Describe the personal data this plugin stores.
+     *
+     * gateway_key is deliberately absent. It is merchant configuration, identical for every user,
+     * so it is not personal data — and it is the shared secret the webhook authenticates with
+     * (the anti-phishing key is base64(gateway_key)). Exporting it would let any data subject
+     * settle arbitrary pending payments for this merchant.
      *
      * @param collection $collection The initialised collection to add items to.
      * @return collection A listing of user data stored in this plugin.
@@ -67,7 +66,6 @@ class provider implements
             'accountid'      => 'privacy:metadata:ifthenpay_tx:accountid',
             'amount'         => 'privacy:metadata:ifthenpay_tx:amount',
             'currency'       => 'privacy:metadata:ifthenpay_tx:currency',
-            'gateway_key'    => 'privacy:metadata:ifthenpay_tx:gateway_key',
             'redirect_url'   => 'privacy:metadata:ifthenpay_tx:redirect_url',
             'transaction_id' => 'privacy:metadata:ifthenpay_tx:transaction_id',
             'paymentid'      => 'privacy:metadata:ifthenpay_tx:paymentid',
@@ -126,7 +124,6 @@ class provider implements
                 'accountid'      => $r->accountid,
                 'amount'         => $r->amount,
                 'currency'       => $r->currency,
-                'gateway_key'    => $r->gateway_key,
                 'redirect_url'   => $r->redirect_url,
                 'transaction_id' => $r->transaction_id,
                 'paymentid'      => $r->paymentid,
@@ -206,7 +203,7 @@ class provider implements
      * Exports gateway data for a specific payment (called by core_payment).
      *
      * @param \context $context Context of the payment.
-     * @param array $subcontext Subpath within the context to export under.
+     * @param array<int, string> $subcontext Subpath within the context to export under.
      * @param stdClass $payment The core payment record.
      * @return void
      */
@@ -228,7 +225,6 @@ class provider implements
                 'currency'       => $tx->currency,
                 'state'          => $tx->state,
                 'transaction_id' => $tx->transaction_id,
-                'gateway_key'    => $tx->gateway_key,
                 'redirect_url'   => $tx->redirect_url,
             ]
         );
@@ -238,7 +234,7 @@ class provider implements
      * Deletes gateway data for the given payments (called by core_payment).
      *
      * @param string $paymentsql SQL selecting payment.id of the payments.
-     * @param array $paymentparams Params for $paymentsql.
+     * @param array<array-key, mixed> $paymentparams Params for $paymentsql.
      * @return void
      */
     public static function delete_data_for_payment_sql(string $paymentsql, array $paymentparams): void {

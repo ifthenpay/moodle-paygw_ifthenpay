@@ -21,8 +21,10 @@ This plugin currently supports the following languages:
 
 - 🇬🇧 **English** — `en`
 - 🇵🇹 **Portuguese (Portugal)** — `pt`
+- 🇪🇸 **Spanish** — `es`
+- 🇫🇷 **French** — `fr`
 
-The plugin will automatically adapt its text and interface to match the language configured in your Moodle settings, ensuring a seamless experience for both admins and customers.
+The plugin will automatically adapt its text and interface to match the language configured in your Moodle settings, ensuring a seamless experience for both admins and customers. The ifthenpay checkout page itself follows the same language.
 
 ## Support & Maintenance 🛠️
 

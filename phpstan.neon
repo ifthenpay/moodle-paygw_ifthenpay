@@ -14,21 +14,29 @@ parameters:
   bootstrapFiles:
     - vendor/autoload.php
 
-  # A baseline that partially covers this file (26 of its findings are
-  # baseline-able) while 12 others aren't (non-ignorable "return statement is
-  # missing" on methods that plainly return on every path) makes
-  # phpstan-moodle misreport those 12 as real. Confirmed by isolating every
-  # other variable: not the extension alone (removing it drops these errors
-  # to zero too, but so does every real error), not parallelism (a red
-  # herring from earlier, confounded testing), not baseline presence in
-  # general (a tiny baseline for an unrelated file doesn't trigger it) —
-  # specifically a baseline with *partial* coverage of this file's own path.
-  # Excluding it from analysis (not from scanning, so call sites elsewhere
-  # still type-check against it) avoids that partial-coverage condition
-  # entirely, which is why this is the fix rather than just a workaround.
+  # Language packs are excluded from analysis. They are declarative data — a bare
+  # `$string['key'] = '...';` sequence with no declaration — so PHPStan has nothing useful to say
+  # about them, and used to need a blanket ignoreErrors rule to swallow one error per string
+  # (400 of them across four packs). Worse, their presence in the file set changed the analysis of
+  # unrelated class files: adding the es and fr packs turned api_client.php from clean into six
+  # non-ignorable, provably false "return statement is missing" errors on methods that visibly
+  # return. Excluding them removes the trigger and the 400-error special case, and costs no
+  # coverage — every file with logic in it is still analysed.
   excludePaths:
-    analyse:
-      - src/classes/local/api_client.php
+    analyseAndScan:
+      - src/lang/*/paygw_ifthenpay.php
+
+  # A related phantom-error family, same extension: a plugin class file that references another
+  # class under paygw_ifthenpay\local\ directly draws non-ignorable "return statement is missing"
+  # errors. Verified case by case: config_form -> data_formatter and adminsetting\backofficekey ->
+  # api_client both trigger it, so those two calls go through the global functions in lib.php
+  # instead. Referencing config_form itself does not, so gateway.php calls it directly.
+
+  # One entry from ifthenpay's method catalog (/gateway/methods/available), as
+  # data_formatter::format_available_payment_methods() returns it. Aliased because the shape is
+  # threaded through lib.php and the gateway form, and spelling it out at each hop is unreadable.
+  typeAliases:
+    MethodMeta: 'array{position: int, image: string, tooltip: string, label: string}'
 
   tmpDir: ./.phpstan-cache
   inferPrivatePropertyTypeFromConstructor: true

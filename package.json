@@ -19,8 +19,8 @@
   "scripts": {
     "lint:js": "eslint src/amd/src --ext .js --max-warnings=0",
     "lint:js:fix": "eslint src/amd/src --ext .js --fix",
-    "lint:css": "stylelint \"src/**/*.css\"",
-    "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
+    "lint:css": "stylelint \"src/**/*.css\" --allow-empty-input",
+    "lint:css:fix": "stylelint \"src/**/*.css\" --allow-empty-input --fix",
     "lint": "npm run lint:js; s=$?; npm run lint:css; t=$?; [ \"$s\" -eq 0 ] && [ \"$t\" -eq 0 ]",
     "lint:fix": "npm run lint:js:fix; s=$?; npm run lint:css:fix; t=$?; [ \"$s\" -eq 0 ] && [ \"$t\" -eq 0 ]",
     "build": "grunt build-amd",

@@ -37,10 +37,15 @@ final class gateway extends \core_payment\gateway
     /**
      * Supported currencies.
      *
+     * BRL is offered because PIX settles in Brazilian reais; every other method ifthenpay exposes
+     * here settles in euros. The Pay-by-Link payload carries no currency field — ifthenpay derives
+     * it from the accounts on the Gateway Key — so pairing a currency with methods that cannot
+     * settle in it is a merchant configuration question this plugin cannot decide.
+     *
      * @return string[] List of ISO currency codes.
      */
     public static function get_supported_currencies(): array {
-        return ['EUR'];
+        return ['EUR', 'BRL'];
     }
 
     /**

@@ -1,0 +1,119 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template paygw_ifthenpay/settings_status
+
+    The connection summary at the top of the ifthenpay settings page.
+
+    One card holds everything informational: the state of the Backoffice Key, the payment methods
+    ifthenpay offers, and two collapsed sections of instructions. It is deliberately not interleaved
+    with the settings below it — Moodle renders admin_setting_heading descriptions full-width but
+    form rows in an indented two-column layout, so alternating them makes the page zigzag.
+
+    Expand/collapse uses core's .icons-collapse-expand convention — Bootstrap toggles .collapsed on
+    the control and the theme swaps which chevron is visible — so the affordance costs no plugin CSS.
+
+    Context variables required for this template:
+    * title - Status headline.
+    * description - Supporting sentence; may contain inline links.
+    * icon - Rendered pix icon for the status.
+
+    Optional context variables:
+    * alertlevel - Bootstrap contextual suffix ("danger", "warning") to present the status as an alert.
+    * steps - Steps context rendered directly in the card body (used on first run).
+    * methodstitle / methods - Row of supported payment methods, each {label, image}.
+    * disclosures - Collapsed sections, each {id, label, steps, expandedicon, collapsedicon}.
+
+    Example context (json):
+    {
+        "title": "Connected to ifthenpay",
+        "description": "Your Backoffice Key is configured.",
+        "icon": "<i class=\"icon fa fa-check\"></i>",
+        "methodstitle": "Supported payment methods",
+        "methods": [{"label": "MB WAY", "image": "https://example.com/mbway.png"}],
+        "disclosures": [
+            {
+                "id": "ifp-steps",
+                "label": "Show subscription steps",
+                "steps": {
+                    "badgeclass": "bg-primary text-white",
+                    "steps": [{"number": 1, "text": "Subscribe."} ]
+                }
+            }
+        ]
+    }
+}}
+<div class="card">
+    <div class="card-body">
+        {{#alertlevel}}
+            <div class="alert alert-{{alertlevel}} mb-0" role="alert">
+        {{/alertlevel}}
+        <div class="d-flex align-items-start">
+            <span class="me-2 mr-2 flex-shrink-0" aria-hidden="true">{{{icon}}}</span>
+            <div>
+                <strong>{{title}}</strong>
+                <div class="{{^alertlevel}}text-muted {{/alertlevel}}small mt-1">{{{description}}}</div>
+            </div>
+        </div>
+        {{#alertlevel}}
+            </div>
+        {{/alertlevel}}
+        {{#steps}}
+            <div class="mt-3">
+                {{> paygw_ifthenpay/steps }}
+            </div>
+        {{/steps}}
+    </div>
+    <ul class="list-group list-group-flush">
+        {{#methods.0}}
+            <li class="list-group-item">
+                <span class="d-block text-uppercase text-muted small mb-2">{{methodstitle}}</span>
+                <ul class="list-inline mb-0">
+                    {{#methods}}
+                        <li class="list-inline-item d-inline-flex align-items-center me-3 mr-3">
+                            {{! A constant white tile behind the mark: these are third-party logos
+                                drawn in dark ink, and bg-white is one of the few Bootstrap colours
+                                that stays fixed in either colour mode. Invisible on a light card,
+                                legible on a dark one. }}
+                            <span class="bg-white rounded d-inline-flex align-items-center p-1 me-1 mr-1">
+                                {{! Decorative: the method name is rendered immediately after it. }}
+                                <img src="{{image}}" alt="" class="ifthenpay-method-logo">
+                            </span>
+                            <span class="small text-muted">{{label}}</span>
+                        </li>
+                    {{/methods}}
+                </ul>
+            </li>
+        {{/methods.0}}
+        {{#disclosures}}
+            <li class="list-group-item">
+                <a class="d-inline-flex align-items-center icons-collapse-expand collapsed"
+                   data-toggle="collapse" data-bs-toggle="collapse" href="#{{id}}"
+                   role="button" aria-expanded="false" aria-controls="{{id}}">
+                    <span class="expanded-icon me-1 mr-1" aria-hidden="true">{{{expandedicon}}}</span>
+                    <span class="collapsed-icon me-1 mr-1" aria-hidden="true">{{{collapsedicon}}}</span>
+                    {{label}}
+                </a>
+                <div class="collapse mt-2" id="{{id}}">
+                    {{#steps}}
+                        {{> paygw_ifthenpay/steps }}
+                    {{/steps}}
+                </div>
+            </li>
+        {{/disclosures}}
+    </ul>
+</div>

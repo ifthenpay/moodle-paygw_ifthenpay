@@ -29,15 +29,21 @@ require_once(__DIR__ . '/lib.php');
 
 require_login();
 
-$token  = required_param('token', PARAM_ALPHANUMEXT);
-$txid   = required_param('txid', PARAM_RAW_TRIMMED);
+$token  = (string) required_param('token', PARAM_ALPHANUMEXT);
+// Written into transaction_id char(64); constrain it here rather than letting the database
+// reject it, which on the AJAX path would return HTML where the browser expects JSON.
+$txid   = substr(required_param('txid', PARAM_ALPHANUMEXT), 0, 64);
 $sk     = optional_param('sk', '', PARAM_RAW_TRIMMED);
 $action = optional_param('action', '', PARAM_ALPHA);   // For AJAX polling.
 
-global $DB, $PAGE, $OUTPUT;
+global $USER, $PAGE, $OUTPUT;
 
-// Fetch record or bail to courses.
-$rec = $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], '*', IGNORE_MISSING);
+// Fetch the record and confirm it belongs to the person asking: tokens travel in URLs, browser
+// history and support tickets, so possession of one is not proof of ownership.
+$rec = paygw_ifthenpay_tx_get($token);
+if ($rec && (int) $rec->userid !== (int) $USER->id) {
+    $rec = null;
+}
 if (!$rec) {
     if ($action === 'verify') {
         @header('Content-Type: application/json; charset=utf-8');
@@ -47,58 +53,36 @@ if (!$rec) {
     redirect(new moodle_url('/my/courses.php'));
 }
 
-// Persist txid once.
+// Record the transaction id once, as a single field: rewriting the whole row from this snapshot
+// could undo a state the webhook set between the read above and this write.
 if (empty($rec->transaction_id)) {
-    $rec->transaction_id = $txid;
-    $rec->timemodified   = time();
-    $DB->update_record('paygw_ifthenpay_tx', $rec);
+    paygw_ifthenpay_tx_set_transaction_id((int) $rec->id, $txid);
 }
 
-$successurl = helper::get_success_url($rec->component, $rec->paymentarea, $rec->itemid);
-
-// AJAX verify endpoint (15s polling).
+/*
+ * AJAX verify endpoint, polled by amd/src/return.js while the customer waits.
+ *
+ * It only reports what the database already says. It must never mark a payment as paid, because
+ * the only evidence available here is a txid from the browser's own URL, and ifthenpay's status
+ * endpoint answers "was that transaction paid" — not "was it paid for this order". Trusting it
+ * would let anyone settle their own pending order with a txid taken from any paid payment.
+ *
+ * webhook.php is the sole writer: there the amount and anti-phishing key arrive from ifthenpay
+ * and are checked against the stored record, so they can actually fail.
+ */
 if ($action === 'verify') {
     @header('Content-Type: application/json; charset=utf-8');
-
-    $client   = paygw_ifthenpay_api();
-    $deadline = time() + 15;
-
-    $ispaid = function () use ($DB, $token): bool {
-        $fresh = $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], 'id,state', IGNORE_MISSING);
-        return $fresh && (string)$fresh->state === 'PAID';
-    };
-
-    if ($ispaid()) {
-        echo json_encode(['paid' => true]);
-        exit;
-    }
-
-    while (time() < $deadline) {
-        try {
-            if ($client->get_transaction_status($txid) === true) {
-                // Directly call the shared processor (no self-HTTP).
-                paygw_ifthenpay_process_webhook(
-                    $token,
-                    (string)$rec->amount,
-                    base64_encode((string)$rec->gateway_key)
-                );
-            }
-        } catch (\Throwable $e) {
-            // Ignore API errors here, we'll just retry until deadline.
-            debugging('[ifthenpay] Transaction status check error: ' . $e->getMessage(), DEBUG_DEVELOPER);
-        }
-
-        if ($ispaid()) {
-            echo json_encode(['paid' => true]);
-            exit;
-        }
-
-        usleep(1000000); // 1s.
-    }
-
-    echo json_encode(['paid' => false]);
+    $fresh = paygw_ifthenpay_tx_get($token, 'id,state');
+    echo json_encode(['paid' => $fresh && (string) $fresh->state === 'PAID']);
     exit;
 }
+
+/*
+ * Only the rendered page needs this, and building it hits the database. Deriving it after the
+ * verify branch keeps that work off every poll, and stops a failure here turning a JSON
+ * endpoint into an HTML error page.
+ */
+$successurl = helper::get_success_url($rec->component, $rec->paymentarea, $rec->itemid);
 
 // Already paid? Go straight to success.
 if ((string)$rec->state === 'PAID') {
@@ -106,11 +90,10 @@ if ((string)$rec->state === 'PAID') {
 }
 
 // Normal page (UI).
-$params = array_filter([
-    'token' => $token,
-    'txid'  => $txid,
-    'sk'    => $sk !== '' ? $sk : null,
-]);
+$params = ['token' => $token, 'txid' => $txid];
+if ($sk !== '') {
+    $params['sk'] = $sk;
+}
 
 $PAGE->set_url(new moodle_url('/payment/gateway/ifthenpay/return.php', $params));
 $PAGE->set_context(context_system::instance());
@@ -118,8 +101,9 @@ $PAGE->set_context(context_system::instance());
 // Strings.
 $str = (object)[
     'title'   => get_string('process:return_title', 'paygw_ifthenpay'),
-    'waiting' => get_string('process:waiting', 'paygw_ifthenpay'),
     'hint'    => get_string('process:waiting_hint', 'paygw_ifthenpay'),
+    'timeout' => get_string('process:waiting_timeout', 'paygw_ifthenpay'),
+    'loading' => get_string('process:loading', 'paygw_ifthenpay'),
     'ref'     => get_string('process:order_reference', 'paygw_ifthenpay'),
     'txid'    => get_string('process:transaction_id', 'paygw_ifthenpay'),
     'amount'  => get_string('process:amount', 'paygw_ifthenpay'),
@@ -130,73 +114,36 @@ $str = (object)[
 $PAGE->set_title($str->title);
 $PAGE->set_heading(get_string('gatewayname', 'paygw_ifthenpay'));
 
-// JS dataset + AMD boot (same pattern as admin form).
-$verifyurl   = (new moodle_url('/payment/gateway/ifthenpay/return.php', $params + ['action' => 'verify']))->out(false);
-$coursesurl  = (new moodle_url('/my/courses.php'))->out(false);
-$successurls = $successurl->out(false);
+// JS dataset + AMD boot. The same $selectors drive the template's ids, so the markup and the
+// module cannot drift apart.
+$coursesurl = (new moodle_url('/my/courses.php'))->out(false);
+$selectors = (object) ['spinner' => 'ifp-spinner', 'status' => 'ifp-status', 'retry' => 'ifp-retry'];
 
-$PAGE->requires->data_for_js('ifthenpay', (object)[
-    'verifyUrl'  => $verifyurl,
-    'successUrl' => $successurls,
+$PAGE->requires->data_for_js('ifthenpay', (object) [
+    'verifyUrl'  => (new moodle_url('/payment/gateway/ifthenpay/return.php', $params + ['action' => 'verify']))->out(false),
+    'successUrl' => $successurl->out(false),
     'coursesUrl' => $coursesurl,
 ]);
-
-$selectors = (object)[
-    'spinner' => 'ifp-spinner',
-    'status'  => 'ifp-status',
-    'retry'   => 'ifp-retry',
-];
-$i18n = (object)[
-    'verifying' => $str->waiting,
-];
-
-$PAGE->requires->js_call_amd('paygw_ifthenpay/return', 'init', [$selectors, $i18n]);
+$PAGE->requires->js_call_amd('paygw_ifthenpay/return', 'init', [$selectors, (object) ['timeout' => $str->timeout]]);
 
 echo $OUTPUT->header();
 
-// Already formatted upstream.
-$amount = s((string)$rec->amount) . ' ' . s($rec->currency);
-$ref    = s($rec->token);
-$txids  = s((string)$txid);
-
-// UI (spinner shows only while verifying; retry is single-use via AMD).
-echo html_writer::start_div('container my-5');
-echo html_writer::start_div('row justify-content-center');
-echo html_writer::start_div('col-md-8 col-lg-7');
-
-echo html_writer::start_div('card shadow-sm rounded-3');
-echo html_writer::start_div('card-body p-4 p-md-5');
-
-echo html_writer::start_div('mb-3 d-flex align-items-center', ['style' => 'gap:1rem']);
-echo html_writer::tag('span', '', [
-    'id' => 'ifp-spinner',
-    'class' => 'spinner-border spinner-border-sm',
-    'role' => 'status',
-    'aria-hidden' => 'true',
-    'style' => 'display:none',
+echo $OUTPUT->render_from_template('paygw_ifthenpay/status_page', [
+    'title' => $str->title,
+    // The explanation doubles as the live region: the AMD module rewrites it if the wait runs long,
+    // rather than the card carrying a second status line that just repeated the heading.
+    'intro' => $str->hint,
+    'spinner' => true,
+    'spinnerid' => $selectors->spinner,
+    'statusid' => $selectors->status,
+    'loadinglabel' => $str->loading,
+    'rows' => [
+        ['label' => $str->ref, 'value' => $rec->token],
+        ['label' => $str->txid, 'value' => $txid],
+        ['label' => $str->amount, 'value' => $rec->amount . ' ' . $rec->currency, 'strong' => true],
+    ],
+    'retry' => ['id' => $selectors->retry, 'text' => $str->retry],
+    'actions' => [['url' => $coursesurl, 'text' => $str->courses, 'primary' => false]],
 ]);
-echo html_writer::span($str->waiting, 'fw-semibold mb-0', ['id' => 'ifp-status']);
-echo html_writer::end_div();
-
-echo html_writer::tag('h2', $str->title, ['class' => 'h4 mb-2']);
-echo html_writer::tag('p', $str->hint, ['class' => 'text-muted mb-4']);
-
-$dl  = html_writer::start_tag('dl', ['class' => 'row small mb-4']);
-$dl .= html_writer::tag('dt', $str->ref, ['class' => 'col-sm-4']) . html_writer::tag('dd', $ref, ['class' => 'col-sm-8']);
-$dl .= html_writer::tag('dt', $str->txid, ['class' => 'col-sm-4']) . html_writer::tag('dd', $txids, ['class' => 'col-sm-8']);
-$dl .= html_writer::tag('dt', $str->amount, ['class' => 'col-sm-4']) . html_writer::tag('dd', $amount, ['class' => 'col-sm-8']);
-$dl .= html_writer::end_tag('dl');
-echo $dl;
-
-echo html_writer::start_div('d-flex gap-2');
-echo html_writer::tag('button', $str->retry, ['class' => 'btn btn-primary', 'id' => 'ifp-retry', 'type' => 'button']);
-echo html_writer::link(new moodle_url('/my/courses.php'), $str->courses, ['class' => 'btn btn-link']);
-echo html_writer::end_div();
-
-echo html_writer::end_div(); // Card-body.
-echo html_writer::end_div(); // Card.
-echo html_writer::end_div(); // Col.
-echo html_writer::end_div(); // Row.
-echo html_writer::end_div(); // Container.
 
 echo $OUTPUT->footer();

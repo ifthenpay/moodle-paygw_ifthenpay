@@ -29,13 +29,11 @@ require_once(__DIR__ . '/lib.php');
 
 @header('Content-Type: text/plain; charset=utf-8');
 
-// Query params.
 $amount   = required_param('amount', PARAM_RAW_TRIMMED);
 $token    = required_param('reference', PARAM_ALPHANUMEXT);
 $apk      = required_param('apk', PARAM_RAW_TRIMMED);
 
-// Delegate to the shared processor (idempotent).
+// Idempotent: ifthenpay retries, and a retry of a settled payment must still answer OK.
 $ok = paygw_ifthenpay_process_webhook($token, (string)$amount, (string)$apk);
 
-// Keep provider contract simple.
 echo $ok ? 'OK' : 'INVALID';

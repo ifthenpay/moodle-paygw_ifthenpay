@@ -14,8 +14,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This module is responsible for handling the interectativity of the return
- * page (post-checkout)
+ * Interactivity for the post-checkout return page.
  *
  * @module     paygw_ifthenpay/return
  * @copyright  2025 ifthenpay <geral@ifthenpay.com>
@@ -25,8 +24,12 @@
 define([], function() {
   "use strict";
 
+  // Stop polling after this long. The webhook still confirms the order afterwards; this only
+  // bounds how long the page keeps asking.
+  const MAX_WAIT_MS = 90000;
+
   /**
-   * Get element by ID (self-contained).
+   * Get an element by id.
    *
    * @param {string} id
    */
@@ -35,7 +38,7 @@ define([], function() {
   }
 
   /**
-   * Retry Button toggle.
+   * Toggle the disabled state of the retry button.
    *
    * @param {HTMLElement} btn
    * @param {boolean} yes
@@ -68,48 +71,101 @@ define([], function() {
       this.retry = $(this.s.retry);
 
       this.busy = false;
-      this.retried = false;
+      this.attempt = 0;
+      this.elapsed = 0;
     }
 
     /**
-     * Initialise the module (attach events, etc).
+     * Start polling and wire the retry button.
      */
     init() {
       if (!this.ds.verifyUrl || !this.retry || !this.spinner || !this.status) {
         return;
       }
-      // Auto-verify once on load.
-      this.verifyOnce();
+      // Keep asking until the payment lands or we give up, so the order confirms as soon as
+      // ifthenpay knows about it rather than waiting for the webhook.
+      this.poll();
 
-      // Single-use retry.
       this.retry.addEventListener("click", (e) => {
         e.preventDefault();
-        if (this.retried || this.busy) {
+        if (this.busy) {
           return;
         }
-        this.retried = true;
-        this.verifyOnce();
+        this.attempt = 0;
+        this.poll();
       });
     }
 
     /**
+     * Delay before the next attempt, in milliseconds.
+     *
+     * Backs off from 1s to 5s: a payment usually confirms within the first few seconds, so the
+     * early checks are close together, while a slow one stops hammering the status API.
+     *
+     * @param {number} attempt Zero-based attempt number already made.
+     * @returns {number} Milliseconds to wait.
+     */
+    delayFor(attempt) {
+      return Math.min(1000 * (attempt + 1), 5000);
+    }
+
+    /**
+     * Check now, then schedule the next check until PAID or the deadline passes.
+     */
+    async poll() {
+      if (await this.verifyOnce()) {
+        return;
+      }
+
+      this.elapsed += this.delayFor(this.attempt);
+      if (this.elapsed >= MAX_WAIT_MS) {
+        // The webhook still completes the order on its own; say so rather than stopping silently.
+        this.giveUp();
+        return;
+      }
+
+      const wait = this.delayFor(this.attempt);
+      this.attempt += 1;
+      window.setTimeout(() => this.poll(), wait);
+    }
+
+    /**
      * Set busy state (spinner + disable retry button).
+     *
+     * Toggles Bootstrap's d-none rather than writing an inline display value, so the theme keeps
+     * control of the spinner's layout. The explanation line is left alone: it is the card's live
+     * region, and rewriting it on every poll would repeat the same sentence to a screen reader.
      *
      * @param {boolean} on
      */
     setBusy(on) {
       this.busy = !!on;
       if (this.spinner) {
-        this.spinner.style.display = on ? "" : "none";
+        this.spinner.classList.toggle("d-none", !on);
       }
-      if (this.status && this.t.verifying) {
-        this.status.textContent = this.t.verifying;
-      }
-      disable(this.retry, on || this.retried); // Lock after first click
+      disable(this.retry, on);
     }
 
     /**
-     * Ajax call to verify payment status.
+     * Say what happens next once polling has given up.
+     *
+     * The payment is not lost — the webhook still completes the order — and a customer paying by
+     * Multibanco may legitimately be hours away from that, so the card says so and releases them
+     * from the page rather than leaving a stalled spinner behind.
+     *
+     * @returns {void}
+     */
+    giveUp() {
+      this.setBusy(false);
+      if (this.status && this.t.timeout) {
+        this.status.textContent = this.t.timeout;
+      }
+    }
+
+    /**
+     * Ask the server once whether the payment has landed.
+     *
+     * @returns {Promise<boolean>} True when paid (and the redirect has been started).
      */
     async verifyOnce() {
       this.setBusy(true);
@@ -120,22 +176,17 @@ define([], function() {
         const data = await res.json();
         if (data && data.paid) {
           window.location.assign(this.ds.successUrl);
-          return;
+          return true;
         }
       } catch {
-        /* Ignore */
+        /* Ignore: a failed check just means we try again. */
       }
-      this.setBusy(false);
-
-      // If this was the retry and still not paid, go to courses.
-      if (this.retried) {
-        window.location.assign(this.ds.coursesUrl);
-      }
+      return false;
     }
   }
 
   /**
-   * AMD entry point (same contract as admin module).
+   * AMD entry point.
    *
    * @param {Object} selectors
    * @param {Object} i18n

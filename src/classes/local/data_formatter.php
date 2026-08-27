@@ -24,35 +24,105 @@
 
 namespace paygw_ifthenpay\local;
 
-use moodle_url;
 use stdClass;
 
 /**
  * Formatters and payload constructors for the ifthenpay integration.
  *
- * Provides static helpers to format gateway keys, payment methods, accounts,
- * and amounts for use within the plugin.
+ * Pure formatting and payload building: nothing here performs HTTP of its own.
  */
 class data_formatter
 {
     /**
-     * Format gateway keys into an associative array [GatewayKey => Alias].
+     * Fields on a /gateway/get row that describe the key itself rather than a payment method.
      *
-     * Input is the response from api_client::get_gateway_keys().
-     *
-     * @param array $raw Each row must include 'Alias' and 'GatewayKey'.
-     * @return array Map of GatewayKey => Alias.
+     * Every other field is a method, whose value is that method's account ('' when the method is
+     * not activated for the key).
      */
-    public static function format_gateway_keys(array $raw): array {
-        $out = [];
+    private const GATEWAY_METADATA_FIELDS = ['Alias', 'GatewayKey', 'Gateway_Tipo', 'Tipo', 'VatNumber'];
+
+    /** @var int Hard cap the Pay-by-Link API enforces on the description field. */
+    private const API_DESCRIPTION_MAX_LENGTH = 200;
+
+    /**
+     * Methods that Pay-by-Link can preselect at checkout, i.e. those with a selected_method code.
+     *
+     * The API defines codes for Multibanco, MB WAY, Payshop, Credit Card and PIX only; Google Pay
+     * and Apple Pay have none and cannot be a default. Kept as an allowlist rather than a list of
+     * exclusions so that a method added to ifthenpay's catalog later is simply not preselectable
+     * until it is added here — failing closed instead of sending an unsupported code.
+     */
+    public const PRESELECTABLE_METHODS = ['MB', 'MBWAY', 'PAYSHOP', 'CCARD', 'PIX'];
+
+    /**
+     * Format the /gateway/get response into gateway keys and their per-method accounts.
+     *
+     * One pass yields both halves, because the response already contains both: each row carries an
+     * account per method inline (e.g. "MBWAY": "MBWAY | ZWZ-568360", "" when not activated), which
+     * is byte-identical to the 'Conta' that GetAccountsByGatewayKey would return for the same key.
+     * Deriving them here is what lets the gateway form load with two requests instead of one per
+     * gateway key plus two.
+     *
+     * The method key comes from the value, not the field name: the text before ' | ' is the
+     * Entidade, bucketed by the same rule used for Multibanco's numeric entities. Field names do
+     * not match method keys ('Multibanco' here vs 'MB' from /gateway/methods/available), so
+     * deriving from the value avoids maintaining a translation table that could silently rot.
+     *
+     * @param array<array-key, mixed> $raw Response from api_client::get_gateway_keys().
+     * @return array{gatewaykeys: array<string, string>, accounts: array<string, array<string, string>>}
+     *         'gatewaykeys' maps GatewayKey => Alias; 'accounts' maps GatewayKey => method => account.
+     */
+    public static function format_gateway_dataset(array $raw): array {
+        $keys = [];
+        $accounts = [];
+
         foreach ($raw as $row) {
-            $alias = $row['Alias'] ?? null;
-            $gk    = $row['GatewayKey'] ?? null;
-            if ($alias && $gk) {
-                $out[$gk] = $alias;
+            if (!is_array($row)) {
+                continue;
+            }
+            $alias = (string) ($row['Alias'] ?? '');
+            $gk = (string) ($row['GatewayKey'] ?? '');
+            if ($alias === '' || $gk === '') {
+                continue;
+            }
+            $keys[$gk] = $alias;
+            $accounts[$gk] = [];
+
+            foreach ($row as $field => $value) {
+                if (in_array($field, self::GATEWAY_METADATA_FIELDS, true)) {
+                    continue;
+                }
+                $conta = is_string($value) ? trim($value) : '';
+                if ($conta === '') {
+                    // Method exists in the payload but is not activated for this gateway key.
+                    continue;
+                }
+                $method = self::account_method_key($conta);
+                if ($method === '') {
+                    continue;
+                }
+                $accounts[$gk][$method] = $conta;
             }
         }
-        return $out;
+
+        return ['gatewaykeys' => $keys, 'accounts' => $accounts];
+    }
+
+    /**
+     * Derive a payment method key from an account string such as "MB | HLP-000001" or "11687 | 991".
+     *
+     * Numeric entities are Multibanco, which the API expresses as an entity/subentity pair rather
+     * than a named prefix.
+     *
+     * @param string $conta Account string.
+     * @return string Method key, or '' if it cannot be determined.
+     */
+    private static function account_method_key(string $conta): string {
+        $entity = trim(explode('|', $conta, 2)[0]);
+        if ($entity === '') {
+            return '';
+        }
+        return is_numeric($entity) ? 'MB' : $entity;
     }
 
     /**
@@ -60,8 +130,8 @@ class data_formatter
      *
      * Input is the response from api_client::get_available_payment_methods().
      *
-     * @param array $raw Method rows from the API.
-     * @return array Map keyed by method entity.
+     * @param array<array-key, mixed> $raw Method rows from the API.
+     * @return array<string, MethodMeta> Map keyed by method entity.
      */
     public static function format_available_payment_methods(array $raw): array {
         $methods = [];
@@ -77,33 +147,8 @@ class data_formatter
                 'label'    => (string)($entry['Method'] ?? ''),
             ];
         }
-        // Ensure stable ordering by position.
         uasort($methods, fn ($a, $b) => $a['position'] <=> $b['position']);
         return $methods;
-    }
-
-    /**
-     * Convert payment accounts into a map: Entity => [Account => Alias].
-     *
-     * Numeric 'Entidade' values are bucketed under 'MB' (Multibanco).
-     *
-     * @param array $accounts Rows with 'Alias', 'Conta', 'Entidade', 'SubEntidade'.
-     * @return array Map of Entity => (Account => Alias).
-     */
-    public static function format_payment_accounts(array $accounts): array {
-        $result = [];
-        foreach ($accounts as $acct) {
-            $alias = $acct['Alias'] ?? '';
-            $conta = $acct['Conta'] ?? '';
-            if ($alias === '' || $conta === '') {
-                continue;
-            }
-            $ent = $acct['Entidade'] ?? '';
-            $bucket = is_numeric($ent) ? 'MB' : ($ent ?: 'OTHER');
-            $result[$bucket] ??= [];
-            $result[$bucket][$conta] = $alias;
-        }
-        return $result;
     }
 
     /**
@@ -119,15 +164,13 @@ class data_formatter
     /**
      * Build the payload to create an ifthenpay Pay-by-Link.
      *
-     * Notes:
-     * - Options (methods/accounts) are constrained by the admin form.
-     * - The default method is optional; when not set (“Noone”) we omit selected_method.
+     * The methods and accounts on offer were already constrained by the admin form.
      *
      * @param float     $cost          Raw payment amount.
      * @param \stdClass $state         Decoded ifthenpay_state (gateway form state).
      * @param string    $token         Unique token for this payment attempt.
      * @param string    $desccheckout  Optional checkout description.
-     * @return array    Payload for api_client::create_pay_by_link().
+     * @return array<string, mixed> Payload for api_client::create_pay_by_link().
      */
     public static function build_pay_by_link_payload(
         float $cost,
@@ -135,7 +178,7 @@ class data_formatter
         string $token,
         string $desccheckout
     ): array {
-        // Return URLs (token used for correlation; keep txid placeholder literal).
+        // The [TRANSACTIONID] placeholder stays literal: ifthenpay substitutes it on the way back.
         $success = (new \moodle_url('/payment/gateway/ifthenpay/return.php', [
             'token' => $token,
         ]))->out(false) . '&txid=[TRANSACTIONID]';
@@ -159,12 +202,15 @@ class data_formatter
             'success_url' => $success,
             'cancel_url'  => $cancel,
             'error_url'   => $error,
+            // One payment per link. Each checkout attempt mints its own link, so a link that has
+            // been paid should never be payable again — this states that rather than relying on
+            // it being the default. The schema types it as the string "true", not a boolean.
+            'otp'         => 'true',
         ];
 
-        // Only include selected_method when a default is chosen (not “Noone”).
         $index = self::compute_selected_method($state);
         if ($index !== null) {
-            $payload['selected_method'] = $index; // 1-based index in canonical ordering.
+            $payload['selected_method'] = $index;
         }
 
         return $payload;
@@ -181,16 +227,18 @@ class data_formatter
      * @return string
      */
     private static function make_description(stdClass $state, string $token, string $desccheckout): string {
-        $fromstate    = isset($state->description) ? trim((string)$state->description) : '';
-        $fromcheckout = trim((string)$desccheckout);
+        $suffix = trim((string) ($state->description ?? '')) ?: trim($desccheckout);
+        $description = 'Order #' . $token . ($suffix !== '' ? ' - ' . $suffix : '');
 
-        if ($fromstate !== '') {
-            return 'Order #' . $token . ' - ' . $fromstate;
-        }
-        if ($fromcheckout !== '') {
-            return 'Order #' . $token . ' - ' . $fromcheckout;
-        }
-        return 'Order #' . $token;
+        /*
+         * The Pay-by-Link API caps description at 200 characters. The gateway form limits its own
+         * field to 150, but the checkout description comes from the payable item (a course name,
+         * say) and is not bounded anywhere, so a long one would be rejected at payment time.
+         * Truncated with core_text so multibyte names are not cut mid-character.
+         */
+        return \core_text::strlen($description) > self::API_DESCRIPTION_MAX_LENGTH
+            ? \core_text::substr($description, 0, self::API_DESCRIPTION_MAX_LENGTH)
+            : $description;
     }
 
     /**
@@ -204,7 +252,7 @@ class data_formatter
      */
     private static function make_accounts(stdClass $state): string {
         $parts = [];
-        foreach ($state->methods as $method => $meta) {
+        foreach ($state->methods as $meta) {
             if (!empty($meta->enabled) && !empty($meta->account)) {
                 // Normalize spaces around the pipe, e.g. "MB | ADC-663833" → "MB|ADC-663833".
                 $parts[] = preg_replace('/\s*\|\s*/', '|', trim((string)$meta->account));
@@ -214,23 +262,24 @@ class data_formatter
     }
 
     /**
-     * Compute the 1-based position of the selected default method.
+     * Resolve the payment method code to preselect at checkout.
      *
-     * Uses paygw_ifthenpay_get_methods_rich() as the canonical ordering
-     * (methodKey => ['position' => int, ...]).
+     * Pay-by-Link's selected_method is a global method code, not an offset into the accounts
+     * string: per the API schema, 1 = MULTIBANCO, 2 = MB WAY, 3 = PAYSHOP, 4 = CREDIT CARD,
+     * 8 = PIX. Those are exactly the Position values returned by /gateway/methods/available, so
+     * the catalog's position is passed straight through.
      *
-     * Returns null when no default is set (“Noone”) or the key is unknown.
+     * Returns null when no default is set ("None") or the key is unknown.
      *
      * @param stdClass $state Decoded ifthenpay_state.
-     * @return int|null 1-based position or null when not applicable.
+     * @return int|null Method code, or null when no default applies.
      */
     private static function compute_selected_method(stdClass $state): ?int {
         $target = isset($state->defaultmethod) ? (string)$state->defaultmethod : '';
-        if ($target === '') {
+        if ($target === '' || !in_array($target, self::PRESELECTABLE_METHODS, true)) {
             return null;
         }
 
-        // Canonical map from lib.php.
         $methodsrich = paygw_ifthenpay_get_methods_rich();
         if (!isset($methodsrich[$target])) {
             return null;

@@ -1,0 +1,62 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template paygw_ifthenpay/steps
+
+    An ordered list of short instructions, each numbered by a badge.
+
+    Used for both the ifthenpay subscription steps and the Moodle payment-setup steps. The markup
+    lives here rather than in the language strings so that translators only ever see prose, and a
+    restyle touches one file instead of every language pack.
+
+    Marked up as a real <ol> so assistive technology announces the count and position. The number
+    badge is left readable rather than aria-hidden: list-style is removed for the custom marker,
+    and some screen readers drop list semantics when it is, so the visible number is the reliable
+    signal either way.
+
+    Context variables required for this template:
+    * badgeclass - Full Bootstrap colour pair for the number badge, background and foreground both,
+      e.g. "bg-primary text-white". Named in full rather than derived from the background: Boost's
+      $secondary is a light grey, so text-white on it measures 1.49:1.
+    * steps - List of {number, text}; text may contain inline links and emphasis.
+
+    Optional context variables:
+    * footer - Trailing HTML, e.g. a row of documentation links.
+
+    Example context (json):
+    {
+        "badgeclass": "bg-primary text-white",
+        "steps": [
+            {"number": 1, "text": "Subscribe and sign the contract."},
+            {"number": 2, "text": "Enter the Backoffice Key below."}
+        ],
+        "footer": "<a href=\"https://ifthenpay.com\">ifthenpay.com</a>"
+    }
+}}
+<ol class="list-unstyled mb-0">
+    {{#steps}}
+        <li class="d-flex align-items-start mb-2">
+            {{! me-*/mr-* are the Bootstrap 5 and 4 spelling of the same spacing; both are emitted
+                throughout this plugin so the layout holds on Moodle 4.3-4.5 and on 5.x. }}
+            <span class="badge {{badgeclass}} rounded-circle me-2 mr-2 flex-shrink-0">{{number}}</span>
+            <div>{{{text}}}</div>
+        </li>
+    {{/steps}}
+</ol>
+{{#footer}}
+    <p class="small text-muted mt-2 mb-0">{{{.}}}</p>
+{{/footer}}

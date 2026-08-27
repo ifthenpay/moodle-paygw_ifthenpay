@@ -15,6 +15,17 @@ To unlock the full potential of this integration, users must have an active ifth
 6. Enable **Enrolment on payment** for the Moodle courses you wish to offer with paid access.
 7. Configure the enrolment method for each course, specifying the currency you want to accept.
 
+## Currencies 💱
+
+| Currency | Payment methods that settle in it |
+| --- | --- |
+| 🇪🇺 **EUR** — Euro | Multibanco, MB WAY, Payshop, Visa/Mastercard, Apple Pay, Google Pay |
+| 🇧🇷 **BRL** — Brazilian Real | Pix |
+
+The currency is set per enrolment method, on the course. ifthenpay derives the currency it charges
+in from the accounts attached to your Gateway Key, so make sure the methods you enable can settle
+in the currency you priced the course in — a course priced in BRL should offer Pix.
+
 ## Language Support 🌍
 
 This plugin currently supports the following languages:

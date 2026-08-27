@@ -25,7 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'paygw_ifthenpay';
-$plugin->version   = 2026012300;
-$plugin->requires  = 2022112800;
+$plugin->version   = 2026082700;
+$plugin->requires  = 2023100900;        // Moodle 4.3: gateways_modal uses Modal.create(), which replaced
+                                        // core/modal_factory in 4.3 (deprecated there, absent before).
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.3';
+$plugin->release   = '1.2.0';

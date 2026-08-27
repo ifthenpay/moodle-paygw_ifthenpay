@@ -2,10 +2,15 @@
  *
  * Core renders each gateway's pix/img.svg through the {{#pix}} helper (payment/templates/
  * gateway.mustache), so themes size it as an icon — 20x16 in Boost — and the ifthenpay logo is a
- * wordmark, unreadable at that size. Core owns the template, so CSS is the only lever. Scoped to
- * this plugin's own option: core sets class="form-check {{shortname}}".
+ * wordmark, unreadable at that size. Core owns the template, so CSS is the only lever.
+ *
+ * Scoped to this plugin's own option, under both spellings core has used for the wrapper:
+ * Moodle 4.3-4.5 render "custom-control custom-radio {{shortname}}" (Bootstrap 4), and 5.x render
+ * "form-check {{shortname}}" (Bootstrap 5). Matching only one leaves the wordmark shrunk to icon
+ * size on the other.
  */
-.form-check.ifthenpay .icon {
+.form-check.ifthenpay .icon,
+.custom-control.ifthenpay .icon {
     width: auto;
     height: 2.25rem;
 

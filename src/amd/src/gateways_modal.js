@@ -30,10 +30,11 @@
 /* eslint-disable promise/always-return */
 /* eslint-disable no-empty-function */
 
-define(["core/templates", "core/modal", "core/modal_events"], function(
+define(["core/templates", "core/modal", "core/modal_events", "core/str"], function(
   Templates,
   Modal,
-  ModalEvents
+  ModalEvents,
+  Str
 ) {
   // A named target, so a second "open the checkout" reuses the tab instead of piling up new ones.
   const TAB_NAME = "ifthenpay_checkout";
@@ -47,38 +48,110 @@ define(["core/templates", "core/modal", "core/modal_events"], function(
     return M.cfg.wwwroot + "/payment/gateway/ifthenpay/" + file;
   };
 
-  const showModalWithPlaceholder = function() {
+  // URLSearchParams encodes every value: an item named "Maths & Physics" would otherwise break the
+  // query string apart, and a "#" would truncate everything after it.
+  const payUrl = function(params, component, paymentArea, itemId, description) {
+    return endpoint("pay.php?" + new URLSearchParams({
+      ...params,
+      component: component,
+      paymentarea: paymentArea,
+      itemid: itemId,
+      description: description,
+    }));
+  };
+
+  const sameTab = function(...payment) {
     return Modal.create({
-      body: Templates.render(
-        "paygw_ifthenpay/ifthenpay_button_placeholder",
-        {}
-      ),
+      body: Templates.render("paygw_ifthenpay/ifthenpay_button_placeholder", {}),
     }).then(function(modal) {
       modal.show();
-    });
-  };
-
-  // Every value is encoded: an item named "Maths & Physics" would otherwise break the query
-  // string apart, and a "#" would truncate everything after it.
-  const payQuery = function(component, paymentArea, itemId, description) {
-    return "component=" + encodeURIComponent(component)
-      + "&paymentarea=" + encodeURIComponent(paymentArea)
-      + "&itemid=" + encodeURIComponent(itemId)
-      + "&description=" + encodeURIComponent(description);
-  };
-
-  const sameTab = function(component, paymentArea, itemId, description) {
-    return showModalWithPlaceholder().then(function() {
-      window.location.href = endpoint("pay.php?")
-        + payQuery(component, paymentArea, itemId, description);
+      window.location.href = payUrl({}, ...payment);
       // Never resolves: the modal stays up until the browser leaves for ifthenpay.
       return new Promise(function() {});
     });
   };
 
-  const newTab = function(settings, component, paymentArea, itemId, description) {
-    const strings = settings.strings || {};
+  /**
+   * Ask the server until the payment reaches a final state.
+   *
+   * Checks right away when the page becomes visible: this page is in the background while the
+   * customer is in the checkout tab, and browsers stretch background timers to a minute or more,
+   * which would delay the redirect after the checkout tab closes itself.
+   *
+   * @param {String} token Payment attempt token.
+   * @param {Function} onDone Called once with PAID, CANCELED, ERROR, NOTFOUND or UNCONFIRMED.
+   * @returns {Function} Stops the watching.
+   */
+  const watchPayment = function(token, onDone) {
+    const startedAt = Date.now();
+    const url = endpoint("return.php?action=verify&token=" + encodeURIComponent(token));
+    let timer = null;
+    let inflight = false;
+    let stopped = false;
 
+    const stop = function() {
+      stopped = true;
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+
+    const outcome = function(data) {
+      if (!data) {
+        return null; // A failed check just means asking again.
+      }
+      if (data.state && data.state !== "PENDING") {
+        return data.state;
+      }
+      // A JSON error with no state (e.g. the session lapsed) cannot be fixed by asking again, but
+      // the payment may still land, so it is reported as unconfirmed rather than as a failure.
+      return data.error || Date.now() - startedAt >= MAX_WAIT_MS ? "UNCONFIRMED" : null;
+    };
+
+    const check = function() {
+      // One request at a time: becoming visible mid-request must not start a second chain.
+      if (inflight || stopped) {
+        return;
+      }
+      inflight = true;
+      window.clearTimeout(timer);
+      fetch(url, {credentials: "same-origin"})
+        .then((response) => response.json())
+        .catch(() => null)
+        .then(function(data) {
+          inflight = false;
+          if (stopped) {
+            return;
+          }
+          const result = outcome(data);
+          if (result) {
+            stop();
+            onDone(result);
+            return;
+          }
+          const waited = Date.now() - startedAt;
+          timer = window.setTimeout(check, Math.min(POLL_FIRST_MS + waited / 10, POLL_MAX_MS));
+        });
+    };
+
+    const onVisible = function() {
+      if (!document.hidden) {
+        check();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    timer = window.setTimeout(check, POLL_FIRST_MS);
+    return stop;
+  };
+
+  // The messages shown when the wait ends, fetched in the browser so that no other page carries them.
+  const MESSAGE_KEYS = ["paid", "canceled", "error", "timeout", "start_failed"];
+  const loadMessages = function() {
+    return Str.get_strings(MESSAGE_KEYS.map((key) => ({key: "process:checkout_" + key, component: "paygw_ifthenpay"})))
+      .then((list) => Object.fromEntries(MESSAGE_KEYS.map((key, i) => [key, list[i]])));
+  };
+
+  const newTab = function(component, paymentArea, itemId, description) {
     // Opened now, while the click still counts as a user gesture, and pointed at the checkout once
     // its URL exists. Opening it after the request would be blocked as a pop-up.
     const tab = window.open("", TAB_NAME);
@@ -87,84 +160,38 @@ define(["core/templates", "core/modal", "core/modal_events"], function(
     }
 
     return new Promise(function(resolve, reject) {
+      // What each final state tells core_payment: resolving shows the message and goes to the
+      // success URL, rejecting shows it as an alert.
+      const outcomes = (msg) => ({
+        PAID: [resolve, msg.paid],
+        CANCELED: [reject, msg.canceled],
+        ERROR: [reject, msg.error],
+        NOTFOUND: [reject, msg.error],
+        UNCONFIRMED: [reject, msg.timeout],
+      });
+      // If the strings cannot load, the wait still ends: an empty message beats a dialog that never closes.
+      const messages = loadMessages().catch(() => ({}));
       let modal = null;
-      let stopped = false;
+      let closed = false;
       let checkoutUrl = "";
+      let stopWatching = function() {};
 
-      const closeTab = function() {
-        try {
-          if (!tab.closed) {
-            tab.close();
-          }
-        } catch {
-          // Nothing to do: a tab we cannot close is one the customer can.
-        }
-      };
-
-      const finish = function(settle, message, closeCheckout) {
-        stopped = true;
-        if (closeCheckout) {
-          closeTab();
-        }
-        if (modal) {
-          modal.hide();
-        }
-        settle(message);
-      };
-
-      const poll = function(token, waited) {
-        if (stopped) {
-          return;
-        }
-        const delay = Math.min(POLL_FIRST_MS + waited / 10, POLL_MAX_MS);
-        window.setTimeout(function() {
-          if (stopped) {
-            return;
-          }
-          fetch(endpoint("return.php?action=verify&token=" + encodeURIComponent(token)),
-            {credentials: "same-origin"})
-            .then(function(response) {
-              return response.json();
-            })
-            // A failed check just means asking again.
-            .catch(function() {
-              return null;
-            })
-            .then(function(data) {
-              if (stopped) {
-                return;
-              }
-              const state = data && data.state;
-              // The checkout tab's own return pages close it, so it is left alone here: closing it
-              // from this side could cut off a confirmation screen the customer is still reading.
-              if (state === "PAID") {
-                finish(resolve, strings.paid, false);
-              } else if (state === "CANCELED") {
-                finish(reject, strings.canceled, false);
-              } else if (state === "ERROR" || state === "NOTFOUND") {
-                finish(reject, strings.error, false);
-              } else if (data && data.error) {
-                // A JSON error with no state, e.g. the session lapsed. Asking again cannot help, but
-                // the payment may still land, so say that rather than calling it a failure.
-                finish(reject, strings.timeout, false);
-              } else if (waited + delay >= MAX_WAIT_MS) {
-                finish(reject, strings.timeout, false);
-              } else {
-                poll(token, waited + delay);
-              }
-            });
-        }, delay);
+      // The checkout tab is left alone here: its own return pages close it, and closing it from this
+      // side could cut off a confirmation screen the customer is still reading.
+      const settle = function(settler, message) {
+        stopWatching();
+        modal.hide();
+        settler(message);
       };
 
       const start = function() {
-        fetch(endpoint("pay.php?format=json&") + payQuery(component, paymentArea, itemId, description),
+        const created = fetch(payUrl({format: "json"}, component, paymentArea, itemId, description),
           {credentials: "same-origin"})
-          .then(function(response) {
-            return response.json();
-          })
-          .then(function(data) {
+          .then((response) => response.json());
+        Promise.all([created, messages])
+          .then(function([data, msg]) {
             if (!data || !data.url || !data.token) {
-              throw new Error(strings.startfailed);
+              throw new Error("no checkout url");
             }
             checkoutUrl = data.url;
             if (tab.closed) {
@@ -172,24 +199,23 @@ define(["core/templates", "core/modal", "core/modal_events"], function(
             } else {
               tab.location.href = checkoutUrl;
             }
-            const reopen = modal.getRoot()[0].querySelector('[data-region="ifthenpay-reopen"]');
-            if (reopen) {
-              reopen.classList.remove("d-none");
+            modal.getRoot()[0].querySelector('[data-region="ifthenpay-reopen"]')
+              ?.classList.remove("d-none");
+            // The dialog may have been closed while the checkout was being created: nothing is waiting.
+            if (!closed) {
+              stopWatching = watchPayment(data.token, (state) => settle(...outcomes(msg)[state]));
             }
-            poll(data.token, 0);
           })
           .catch(function() {
             // Always the localised sentence: a server error message can be technical, and the alert
             // core_payment raises from it renders its text as HTML.
-            finish(reject, strings.startfailed, true);
+            tab.close();
+            messages.then((msg) => settle(reject, msg.start_failed));
           });
       };
 
       Modal.create({
-        body: Templates.render("paygw_ifthenpay/checkout_waiting", {
-          message: strings.waiting,
-          reopenlabel: strings.reopen,
-        }),
+        body: Templates.render("paygw_ifthenpay/checkout_waiting", {}),
         removeOnClose: true,
       }).then(function(created) {
         modal = created;
@@ -197,7 +223,8 @@ define(["core/templates", "core/modal", "core/modal_events"], function(
         // Closing the dialog only stops the waiting. The payment itself carries on, and the webhook
         // still enrols the customer, so there is no message to raise.
         root.on(ModalEvents.hidden, function() {
-          stopped = true;
+          closed = true;
+          stopWatching();
         });
         root.on("click", '[data-action="paygw_ifthenpay/reopen"]', function(e) {
           e.preventDefault();
@@ -212,11 +239,9 @@ define(["core/templates", "core/modal", "core/modal_events"], function(
   };
 
   const process = function(component, paymentArea, itemId, description) {
-    const settings = window.ifthenpay_checkout;
-    if (settings && settings.newtab) {
-      return newTab(settings, component, paymentArea, itemId, description);
-    }
-    return sameTab(component, paymentArea, itemId, description);
+    return window.ifthenpay_checkout?.newtab
+      ? newTab(component, paymentArea, itemId, description)
+      : sameTab(component, paymentArea, itemId, description);
   };
 
   return {process: process};

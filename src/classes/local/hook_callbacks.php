@@ -31,8 +31,9 @@ final class hook_callbacks {
      *
      * core_payment calls the gateway's JavaScript with the item being paid for and nothing else, and
      * the browser only lets a tab be opened synchronously from the click. So the choice cannot be
-     * fetched when the customer clicks; it has to already be on the page. Nothing is added unless
-     * the administrator has chosen the new tab.
+     * fetched when the customer clicks; it has to already be on the page. Only the flag goes here,
+     * and only when the administrator has chosen the new tab: the strings load in the browser when
+     * they are needed, so no other page pays for them.
      *
      * @param before_standard_head_html_generation $hook
      * @return void
@@ -43,22 +44,7 @@ final class hook_callbacks {
         if (during_initial_install() || (string) get_config('paygw_ifthenpay', 'checkout_target') !== 'newtab') {
             return;
         }
-        if (!in_array('ifthenpay', \core\plugininfo\paygw::get_enabled_plugins() ?? [], true)) {
-            return;
-        }
 
-        $component = 'paygw_ifthenpay';
-        $PAGE->requires->data_for_js('ifthenpay_checkout', (object) [
-            'newtab' => true,
-            'strings' => (object) [
-                'waiting' => get_string('process:checkout_waiting', $component),
-                'reopen' => get_string('process:checkout_reopen', $component),
-                'paid' => get_string('process:checkout_paid', $component),
-                'canceled' => get_string('process:checkout_canceled', $component),
-                'error' => get_string('process:checkout_error', $component),
-                'timeout' => get_string('process:checkout_timeout', $component),
-                'startfailed' => get_string('process:checkout_start_failed', $component),
-            ],
-        ]);
+        $PAGE->requires->data_for_js('ifthenpay_checkout', (object) ['newtab' => true]);
     }
 }

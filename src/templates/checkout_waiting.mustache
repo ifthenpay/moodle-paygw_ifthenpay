@@ -23,16 +23,15 @@
     back to the checkout for anyone who closed it or had it blocked.
 
     Context variables required for this template:
-    * message - Instruction shown under the spinner.
-    * reopenlabel - Label of the button that opens the checkout again.
+    * none
     Example context (json):
-    {"message": "Complete your payment in the ifthenpay tab.", "reopenlabel": "Open the checkout again"}
+    {}
 
 }}
 <div class="text-center p-4" role="status" aria-live="polite">
     <div class="spinner-border text-primary mb-3" aria-hidden="true"></div>
-    <p class="mb-3">{{message}}</p>
+    <p class="mb-3">{{#str}} process:checkout_waiting, paygw_ifthenpay {{/str}}</p>
     <div class="d-none" data-region="ifthenpay-reopen">
-        <button type="button" class="btn btn-secondary" data-action="paygw_ifthenpay/reopen">{{reopenlabel}}</button>
+        <button type="button" class="btn btn-secondary" data-action="paygw_ifthenpay/reopen">{{#str}} process:checkout_reopen, paygw_ifthenpay {{/str}}</button>
     </div>
 </div>

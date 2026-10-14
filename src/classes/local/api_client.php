@@ -130,24 +130,20 @@ final class api_client
      *
      * @param string $gatewaykey Gateway Key.
      * @param array<string, mixed> $payload Request payload.
-     * @return object Object with properties: pin_code, pinpay_url, redirect_url.
-     * @throws moodle_exception On transport/JSON errors or invalid response shape.
+     * @return string The checkout URL to send the customer to.
+     * @throws moodle_exception On transport/JSON errors or a response without a checkout URL.
      */
-    public function create_pay_by_link(string $gatewaykey, array $payload): object {
+    public function create_pay_by_link(string $gatewaykey, array $payload): string {
         $url = self::BASE_API_PUBLIC . self::ENDPOINT_PAY_BY_LINK
             . '/' . rawurlencode($gatewaykey);
 
         $resp = $this->post_json($url, $payload);
 
-        if (empty($resp['PinCode']) || empty($resp['PinpayUrl']) || empty($resp['RedirectUrl'])) {
+        if (!is_array($resp) || empty($resp['RedirectUrl']) || !is_string($resp['RedirectUrl'])) {
             throw new moodle_exception('api:error_invalid_pbl_response', 'paygw_ifthenpay');
         }
 
-        return (object)[
-            'pin_code'     => $resp['PinCode'],
-            'pinpay_url'   => $resp['PinpayUrl'],
-            'redirect_url' => $resp['RedirectUrl'],
-        ];
+        return $resp['RedirectUrl'];
     }
 
     /**

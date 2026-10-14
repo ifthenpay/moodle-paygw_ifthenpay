@@ -559,26 +559,8 @@ parameters:
 			path: src/lib.php
 
 		-
-			message: '#^Access to an undefined property object\:\:\$redirect_url\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/pay.php
-
-		-
-			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/pay.php
-
-		-
 			message: '#^Cannot access property \$id on mixed\.$#'
 			identifier: property.nonObject
-			count: 1
-			path: src/pay.php
-
-		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
 			count: 1
 			path: src/pay.php
 
@@ -633,12 +615,6 @@ parameters:
 		-
 			message: '#^Parameter \#4 \$desccheckout of static method paygw_ifthenpay\\local\\data_formatter\:\:build_pay_by_link_payload\(\) expects string, mixed given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/pay.php
-
-		-
-			message: '#^Variable \$cfg in isset\(\) always exists and is not nullable\.$#'
-			identifier: isset.variable
 			count: 1
 			path: src/pay.php
 

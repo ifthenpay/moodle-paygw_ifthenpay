@@ -146,7 +146,6 @@ $string['form:error_callback_activation'] = 'Falha ao ativar notificações de p
 
 // Proccessing => pay page.
 $string['process:missing_ifthenpay_state'] = 'Não foram encontrados dados de configuração para a ifthenpay. Por favor, contacte o administrador do site.';
-$string['process:error_missing_redirect']  = 'Falta a URL de redirecionamento da ifthenpay. Por favor, contacte o administrador do site.';
 
 // Proccessing => cancel/error page.
 $string['process:cancel_title']            = 'Pagamento não concluído';

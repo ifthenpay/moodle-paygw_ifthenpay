@@ -49,26 +49,14 @@ $payable   = helper::get_payable($component, $paymentarea, $itemid);
 $surcharge = helper::get_gateway_surcharge('ifthenpay');
 $cost      = helper::get_rounded_cost($payable->get_amount(), $payable->get_currency(), $surcharge);
 
-$cfg = helper::get_gateway_configuration($component, $paymentarea, $itemid, 'ifthenpay');
-if (!isset($cfg) || !is_array($cfg) || !array_key_exists('ifthenpay_state', $cfg) || empty($cfg['ifthenpay_state'])) {
+$state = paygw_ifthenpay_decode_state(helper::get_gateway_configuration($component, $paymentarea, $itemid, 'ifthenpay'));
+if (empty($state->gatewaykey) || empty($state->methods)) {
     throw new moodle_exception('process:missing_ifthenpay_state', 'paygw_ifthenpay');
 }
 
 $token = random_string(8);
-
-$state = \paygw_ifthenpay_decode_state($cfg);
-if (empty($state->gatewaykey) || empty($state->methods)) {
-    throw new moodle_exception('process:missing_ifthenpay_state', 'paygw_ifthenpay');
-}
 $payload = \paygw_ifthenpay\local\data_formatter::build_pay_by_link_payload($cost, $state, $token, $description, $asjson);
-
-$client = paygw_ifthenpay_api();
-$order  = $client->create_pay_by_link($state->gatewaykey, $payload);
-
-$redirect = (string) $order->redirect_url;
-if ($redirect === '') {
-    throw new moodle_exception('process:error_missing_redirect', 'paygw_ifthenpay');
-}
+$redirect = paygw_ifthenpay_api()->create_pay_by_link($state->gatewaykey, $payload);
 
 // The webhook matches on this record to finalise the payment and deliver the order, so it is
 // written before the customer is sent anywhere. Failing here is better than taking money for

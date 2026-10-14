@@ -167,8 +167,6 @@ $string['form:error_callback_activation'] =
 // Proccessing => pay page.
 $string['process:missing_ifthenpay_state'] =
     'No se encontraron datos de configuración de ifthenpay. Contacte con el administrador del sitio.';
-$string['process:error_missing_redirect']  =
-    'Falta la URL de redirección de ifthenpay. Contacte con el administrador del sitio.';
 
 // Proccessing => cancel/error page.
 $string['process:cancel_title']            = 'Pago no completado';

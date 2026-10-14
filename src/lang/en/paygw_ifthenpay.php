@@ -143,7 +143,6 @@ $string['form:error_callback_activation'] = 'Failed to activate payment notifica
 
 // Proccessing => pay page.
 $string['process:missing_ifthenpay_state'] = 'No configuration data found for ifthenpay. Please contact the site administrator.';
-$string['process:error_missing_redirect']  = 'Missing redirect URL from ifthenpay. Please contact the site administrator.';
 
 // Proccessing => cancel/error page.
 $string['process:cancel_title']            = 'Payment not completed';

@@ -116,7 +116,11 @@ echo $OUTPUT->render_from_template('paygw_ifthenpay/status_page', [
     ),
     'rows' => [
         ['label' => $str->ref, 'value' => $rec->token],
-        ['label' => $str->amount, 'value' => $rec->amount . ' ' . $rec->currency, 'strong' => true],
+        [
+            'label' => $str->amount,
+            'value' => helper::get_cost_as_string((float) $rec->amount, (string) $rec->currency),
+            'strong' => true,
+        ],
     ],
     'actions' => $actions,
 ]);

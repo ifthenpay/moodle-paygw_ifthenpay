@@ -152,16 +152,6 @@ class data_formatter
     }
 
     /**
-     * Format a monetary amount with two decimals (e.g., "12.34").
-     *
-     * @param float $amount Amount to format.
-     * @return string Amount formatted as "0.00".
-     */
-    public static function format_amount(float $amount): string {
-        return number_format($amount, 2, '.', '');
-    }
-
-    /**
      * Build the payload to create an ifthenpay Pay-by-Link.
      *
      * The methods and accounts on offer were already constrained by the admin form.
@@ -192,7 +182,7 @@ class data_formatter
 
         $payload = [
             'id'          => $token,
-            'amount'      => self::format_amount($cost),
+            'amount'      => number_format($cost, 2, '.', ''),
             'description' => self::make_description($state, $token, $desccheckout),
             'lang'        => \paygw_ifthenpay_detect_language(),
             'accounts'    => self::make_accounts($state),

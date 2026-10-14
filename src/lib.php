@@ -122,7 +122,7 @@ function paygw_ifthenpay_decode_state(array $cfg): stdClass {
         return new stdClass();
     }
     $decoded = json_decode($raw);
-    return (is_object($decoded) && json_last_error() === JSON_ERROR_NONE) ? $decoded : new stdClass();
+    return is_object($decoded) ? $decoded : new stdClass();
 }
 
 /**
@@ -322,11 +322,9 @@ function paygw_ifthenpay_tx_create(array $fields): void {
     global $DB;
     $now = time();
     $DB->insert_record('paygw_ifthenpay_tx', (object) ($fields + [
-        'timecreated'    => $now,
-        'timemodified'   => $now,
-        'paymentid'      => null,
-        'transaction_id' => null,
-        'state'          => 'PENDING',
+        'timecreated'  => $now,
+        'timemodified' => $now,
+        'state'        => 'PENDING',
     ]));
 }
 

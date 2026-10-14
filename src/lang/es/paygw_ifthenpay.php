@@ -67,9 +67,9 @@ $string['moodle_tip3'] =
 $string['moodle_tip4'] =
     'Añádala a un curso: <em>Curso → Participantes → Métodos de inscripción → Añadir método</em>.';
 $string['moodle_tips_links'] =
-    '<a href="https://docs.moodle.org/501/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
+    '<a href="https://docs.moodle.org/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
+    '<a href="https://docs.moodle.org/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
+    '<a href="https://docs.moodle.org/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
 $string['backoffice_key_desc'] = 'Se utiliza para leer de ifthenpay sus Gateway Keys y métodos de pago, y para registrar la URL de notificación de pagos.';
 $string['methods_showcase_title'] = 'Métodos de pago admitidos';
@@ -163,11 +163,11 @@ $string['form:error_callback_activation'] =
     'guarde de nuevo. Error: {$a}';
 
 
-// Proccessing => pay page.
+// Processing => pay page.
 $string['process:missing_ifthenpay_state'] =
     'No se encontraron datos de configuración de ifthenpay. Contacte con el administrador del sitio.';
 
-// Proccessing => cancel/error page.
+// Processing => cancel/error page.
 $string['process:cancel_title']            = 'Pago no completado';
 $string['process:cancel_desc_cancel']      = 'Canceló el pago antes de completarlo. No se ha cobrado nada.';
 $string['process:cancel_desc_error']       = 'Algo salió mal al confirmar su pago. No se ha cobrado nada.';

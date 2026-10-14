@@ -64,9 +64,9 @@ $string['moodle_tip3'] =
     'Enable <em>Enrolment on payment</em>: <em>Site administration → Plugins → Enrolments → Manage enrol plugins</em>.';
 $string['moodle_tip4'] = 'Add it to a course: <em>Course → Participants → Enrolment methods → Add method</em>.';
 $string['moodle_tips_links'] =
-    '<a href="https://docs.moodle.org/501/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
+    '<a href="https://docs.moodle.org/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
+    '<a href="https://docs.moodle.org/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
+    '<a href="https://docs.moodle.org/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
 $string['backoffice_key_desc'] = 'Used to read your Gateway Keys and payment methods from ifthenpay, and to register the payment notification URL.';
 $string['methods_showcase_title'] = 'Supported payment methods';
@@ -140,10 +140,10 @@ $string['form:error_maxchars'] = 'Maximum {$a} characters.';
 $string['form:error_callback_activation'] = 'Failed to activate payment notifications. Please check your Backoffice Key and internet connectivity, then save again. Error: {$a}';
 
 
-// Proccessing => pay page.
+// Processing => pay page.
 $string['process:missing_ifthenpay_state'] = 'No configuration data found for ifthenpay. Please contact the site administrator.';
 
-// Proccessing => cancel/error page.
+// Processing => cancel/error page.
 $string['process:cancel_title']            = 'Payment not completed';
 $string['process:cancel_desc_cancel']      = 'You canceled the payment before it was completed. Nothing has been charged.';
 $string['process:cancel_desc_error']       = 'Something went wrong while confirming your payment. Nothing has been charged.';

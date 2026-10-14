@@ -67,9 +67,9 @@ $string['moodle_tip3'] =
 $string['moodle_tip4'] =
     'Adicione-a a uma disciplina: <em>Disciplina → Participantes → Métodos de inscrição → Adicionar método</em>.';
 $string['moodle_tips_links'] =
-    '<a href="https://docs.moodle.org/501/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
+    '<a href="https://docs.moodle.org/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
+    '<a href="https://docs.moodle.org/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
+    '<a href="https://docs.moodle.org/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
 $string['backoffice_key_desc'] = 'Utilizada para ler da ifthenpay as suas Gateway Keys e métodos de pagamento, e para registar o URL de notificação de pagamentos.';
 $string['methods_showcase_title'] = 'Métodos de pagamento suportados';
@@ -143,10 +143,10 @@ $string['form:error_maxchars'] = 'Máximo de {$a} caracteres.';
 $string['form:error_callback_activation'] = 'Falha ao ativar notificações de pagamento. Verifique a sua Backoffice Key e a conectividade à internet, depois guarde novamente. Erro: {$a}';
 
 
-// Proccessing => pay page.
+// Processing => pay page.
 $string['process:missing_ifthenpay_state'] = 'Não foram encontrados dados de configuração para a ifthenpay. Por favor, contacte o administrador do site.';
 
-// Proccessing => cancel/error page.
+// Processing => cancel/error page.
 $string['process:cancel_title']            = 'Pagamento não concluído';
 $string['process:cancel_desc_cancel']      = 'Cancelou o pagamento antes de o concluir. Não foi cobrado qualquer valor.';
 $string['process:cancel_desc_error']       = 'Ocorreu um problema ao confirmar o pagamento. Não foi cobrado qualquer valor.';

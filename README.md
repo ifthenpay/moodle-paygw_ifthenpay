@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://ifthenpay.com/" target="_blank">
-    <img src="./src/pix/ifthenpay_brand.svg" alt="ifthenpay" width="220" />
+    <img src="./.github/assets/ifthenpay_brand.svg" alt="ifthenpay" width="220" />
   </a>
 </p>
 

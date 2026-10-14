@@ -25,6 +25,13 @@
 use paygw_ifthenpay\local\api_client;
 use paygw_ifthenpay\local\data_formatter;
 
+/** Webhook outcome: the payment is (or already was) settled. */
+define('PAYGW_IFTHENPAY_WEBHOOK_OK', 'ok');
+/** Webhook outcome: the call was rejected; retrying it would not help. */
+define('PAYGW_IFTHENPAY_WEBHOOK_INVALID', 'invalid');
+/** Webhook outcome: a transient failure; ifthenpay should retry. */
+define('PAYGW_IFTHENPAY_WEBHOOK_RETRY', 'retry');
+
 /**
  * Get the configured Ifthenpay Backoffice Key.
  *
@@ -322,23 +329,39 @@ function paygw_ifthenpay_report_payment_problem(string $token, string $problem):
 }
 
 /**
+ * Convert an amount string to integer cents.
+ *
+ * Amounts are compared in cents rather than as strings or floats: "10", "10.0" and "10.00" are the
+ * same charge, but a string comparison says otherwise, and float equality is unreliable for money.
+ *
+ * @param string $amount Amount such as "10", "10.5" or "10.50" (a decimal comma is accepted).
+ * @return int|null Cents, or null if the string is not a plain non-negative amount with at most
+ *                  two decimals.
+ */
+function paygw_ifthenpay_amount_to_cents(string $amount): ?int {
+    $amount = str_replace(',', '.', trim($amount));
+    if (!preg_match('/^(\d{1,12})(?:\.(\d{1,2}))?$/', $amount, $m)) {
+        return null;
+    }
+    return (int) $m[1] * 100 + (int) str_pad($m[2] ?? '', 2, '0');
+}
+
+/**
  * Process an Ifthenpay webhook event (idempotent).
  *
  * Contract (same as webhook.php GET):
  *  - $token  Internal order token (repository primary key).
- *  - $amount Amount as stored (string); must match exactly.
+ *  - $amount Amount as notified; must equal the stored amount once both are in cents.
  *  - $apk    Base64 of the gateway key; must decode to rec->gateway_key.
  *
- * Behaviour:
- *  - Returns true when the payment is (or becomes) PAID.
- *  - Returns false on any validation failure or technical error.
- *
  * @param string $token  Payment token.
- * @param string $amount Amount string (already formatted).
+ * @param string $amount Amount string.
  * @param string $apk    Base64-encoded gateway key.
- * @return bool True if processed/paid, false otherwise.
+ * @return string PAYGW_IFTHENPAY_WEBHOOK_OK when the payment is (or becomes) PAID;
+ *                PAYGW_IFTHENPAY_WEBHOOK_INVALID when the call is rejected;
+ *                PAYGW_IFTHENPAY_WEBHOOK_RETRY on a transient failure ifthenpay should retry.
  */
-function paygw_ifthenpay_process_webhook(string $token, string $amount, string $apk): bool {
+function paygw_ifthenpay_process_webhook(string $token, string $amount, string $apk): string {
     global $DB;
 
     /*
@@ -349,29 +372,44 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
     $lock = \core\lock\lock_config::get_lock_factory('paygw_ifthenpay')->get_lock($token, 10);
     if (!$lock) {
         debugging('[ifthenpay] webhook ' . $token . ': could not acquire lock', DEBUG_DEVELOPER);
-        return false;
+        return PAYGW_IFTHENPAY_WEBHOOK_RETRY;
     }
 
     try {
         // Read inside the lock: anything read before it may already be stale.
         $rec = paygw_ifthenpay_tx_get($token);
         if (!$rec) {
-            return false;
+            return PAYGW_IFTHENPAY_WEBHOOK_INVALID;
         }
 
-        // The anti-phishing key and the amount must match the record this site created.
+        /*
+         * The anti-phishing key must match the one this site stored for the order. An empty stored
+         * key is refused outright, or an empty apk would match it. hash_equals keeps the comparison
+         * time independent of how much of the key was guessed right.
+         */
+        $expectedkey = (string) $rec->gateway_key;
         $decoded = base64_decode($apk, true);
-        if ($decoded === false || $decoded !== (string) $rec->gateway_key) {
-            return false;
+        if ($expectedkey === '' || $decoded === false || !hash_equals($expectedkey, $decoded)) {
+            return PAYGW_IFTHENPAY_WEBHOOK_INVALID;
         }
-        if ($amount !== (string) $rec->amount) {
-            debugging('[ifthenpay] webhook ' . $token . ': amount mismatch', DEBUG_DEVELOPER);
-            return false;
+
+        /*
+         * Past the key check the caller holds this site's gateway key, so an amount mismatch is not
+         * scanner noise: either the customer paid a different amount or the key has leaked. Both
+         * need an administrator, so it is reported rather than only sent to debugging().
+         */
+        $notifiedcents = paygw_ifthenpay_amount_to_cents($amount);
+        if ($notifiedcents === null || $notifiedcents !== paygw_ifthenpay_amount_to_cents((string) $rec->amount)) {
+            paygw_ifthenpay_report_payment_problem(
+                $token,
+                'amount mismatch: notified ' . substr($amount, 0, 32) . ', expected ' . $rec->amount
+            );
+            return PAYGW_IFTHENPAY_WEBHOOK_INVALID;
         }
 
         // Idempotent: a retry of an already-settled payment is a success, not a repeat.
         if ((string) $rec->state === 'PAID') {
-            return true;
+            return PAYGW_IFTHENPAY_WEBHOOK_OK;
         }
 
         /*
@@ -403,17 +441,17 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         }
 
         // A component signals "could not deliver" by returning false, so the result is checked
-        // rather than assumed; returning false here asks ifthenpay to retry.
+        // rather than assumed; a retry outcome asks ifthenpay to call again.
         $delivered = \core_payment\helper::deliver_order(
-            $rec->component,
-            $rec->paymentarea,
-            $rec->itemid,
+            (string) $rec->component,
+            (string) $rec->paymentarea,
+            (int) $rec->itemid,
             $paymentid,
-            $rec->userid
+            (int) $rec->userid
         );
         if ($delivered === false) {
             paygw_ifthenpay_report_payment_problem($token, 'payment captured but delivery was refused');
-            return false;
+            return PAYGW_IFTHENPAY_WEBHOOK_RETRY;
         }
 
         $DB->update_record('paygw_ifthenpay_tx', (object) [
@@ -422,10 +460,10 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
             'timemodified' => time(),
         ]);
 
-        return true;
+        return PAYGW_IFTHENPAY_WEBHOOK_OK;
     } catch (\Throwable $e) {
         paygw_ifthenpay_report_payment_problem($token, $e->getMessage());
-        return false;
+        return PAYGW_IFTHENPAY_WEBHOOK_RETRY;
     } finally {
         $lock->release();
     }

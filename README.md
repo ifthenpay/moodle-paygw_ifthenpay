@@ -238,6 +238,16 @@ Prettier, EditorConfig.
    mdl qa         # phpcs + eslint + stylelint + PHPStan
    mdl build      # commit the built AMD files in src/amd/build/
    ```
+7. **Releasing:** add a `## x.y.z` section to `src/CHANGES.md`, set `$plugin->release = 'x.y.z'`
+   and bump `$plugin->version` in `src/version.php`, merge to `main`, then push the tag:
+   ```bash
+   git tag vx.y.z && git push origin vx.y.z
+   ```
+   `release.yml` refuses a tag that does not match `$plugin->release` or has no changelog section,
+   runs every check, then publishes the zip as a GitHub Release and to the
+   [Moodle Marketplace](https://marketplace.moodle.com/), both with that changelog section as the
+   release notes. The Marketplace step needs the `MOODLE_MARKETPLACE_TOKEN` repository secret; a
+   failed submission can be retried with *Re-run failed jobs*.
 
 ---
 

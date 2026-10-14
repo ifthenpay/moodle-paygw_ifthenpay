@@ -24,6 +24,14 @@
 
 use core_payment\helper;
 
+// Asked for by the checkout opened in its own tab, which needs the URL rather than a redirect. Set
+// before config.php so a failure comes back as JSON, not as an HTML error page the script cannot read.
+// phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalGlobalState
+$asjson = (($_GET['format'] ?? '') === 'json');
+if ($asjson) {
+    define('AJAX_SCRIPT', true);
+}
+
 require(__DIR__ . '/../../../config.php');
 require_once(__DIR__ . '/lib.php');
 
@@ -52,7 +60,7 @@ $state = \paygw_ifthenpay_decode_state($cfg);
 if (empty($state->gatewaykey) || empty($state->methods)) {
     throw new moodle_exception('process:missing_ifthenpay_state', 'paygw_ifthenpay');
 }
-$payload = \paygw_ifthenpay\local\data_formatter::build_pay_by_link_payload($cost, $state, $token, $description);
+$payload = \paygw_ifthenpay\local\data_formatter::build_pay_by_link_payload($cost, $state, $token, $description, $asjson);
 
 $client = paygw_ifthenpay_api();
 $order  = $client->create_pay_by_link($state->gatewaykey, $payload);
@@ -77,5 +85,11 @@ paygw_ifthenpay_tx_create([
     'gateway_key'  => $state->gatewaykey,
     'redirect_url' => $redirect,
 ]);
+
+if ($asjson) {
+    @header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['token' => $token, 'url' => $redirect]);
+    exit;
+}
 
 redirect(new moodle_url($redirect));

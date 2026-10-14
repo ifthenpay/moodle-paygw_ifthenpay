@@ -31,6 +31,7 @@ require_login();
 
 $token = (string) required_param('token', PARAM_ALPHANUMEXT);
 $type  = required_param('type', PARAM_ALPHA);        // CANCEL or ERROR.
+$tab   = optional_param('tab', 0, PARAM_BOOL);       // The checkout ran in its own tab (see pay.php).
 
 global $USER, $CFG, $PAGE, $OUTPUT;
 
@@ -51,11 +52,16 @@ $str = (object)[
     'notfound'    => get_string('process:not_found', 'paygw_ifthenpay'),
 ];
 
-$params = ['token' => $token, 'type' => $type];
+$params = ['token' => $token, 'type' => $type] + ($tab ? ['tab' => 1] : []);
 $PAGE->set_url(new moodle_url('/payment/gateway/ifthenpay/cancel.php', $params));
 $PAGE->set_context(context_system::instance());
 $PAGE->set_title($str->title);
 $PAGE->set_heading(get_string('gatewayname', 'paygw_ifthenpay'));
+
+if ($tab) {
+    // Closes the checkout tab; if the browser refuses, the page below is what the customer sees.
+    $PAGE->requires->js_call_amd('paygw_ifthenpay/checkout_tab', 'close');
+}
 
 echo $OUTPUT->header();
 
@@ -83,7 +89,10 @@ if ((string) $rec->state !== 'PAID' && (string) $rec->state !== $newstate) {
  */
 $fresh = paygw_ifthenpay_tx_get($token, 'id,state,component,paymentarea,itemid');
 if ($fresh && (string) $fresh->state === 'PAID') {
-    redirect(helper::get_success_url($fresh->component, $fresh->paymentarea, $fresh->itemid));
+    // A checkout tab goes to the page that closes it; the Moodle page behind it continues on its own.
+    redirect($tab
+        ? new moodle_url('/payment/gateway/ifthenpay/return.php', ['token' => $token, 'tab' => 1])
+        : helper::get_success_url($fresh->component, $fresh->paymentarea, $fresh->itemid));
 }
 
 $iserror = ($newstate === 'ERROR');

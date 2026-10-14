@@ -25,6 +25,12 @@ parameters:
 			path: src/cancel.php
 
 		-
+			message: '#^Cannot access property \$requires on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
 			message: '#^Cannot access property \$supportemail on mixed\.$#'
 			identifier: property.nonObject
 			count: 1
@@ -38,6 +44,12 @@ parameters:
 
 		-
 			message: '#^Cannot call method header\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method js_call_amd\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: src/cancel.php
@@ -335,6 +347,24 @@ parameters:
 			identifier: offsetAccess.invalidOffset
 			count: 1
 			path: src/classes/local/data_formatter.php
+
+		-
+			message: '#^Cannot access property \$requires on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/local/hook_callbacks.php
+
+		-
+			message: '#^Cannot call method data_for_js\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/local/hook_callbacks.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: src/classes/local/hook_callbacks.php
 
 		-
 			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
@@ -825,7 +855,7 @@ parameters:
 		-
 			message: '#^Cannot call method add\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 4
+			count: 5
 			path: src/settings.php
 
 		-

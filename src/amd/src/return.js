@@ -21,7 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define([], function() {
+define(["paygw_ifthenpay/checkout_tab"], function(CheckoutTab) {
   "use strict";
 
   // Stop polling after this long. The webhook still confirms the order afterwards; this only
@@ -59,7 +59,7 @@ define([], function() {
   class IfthenpayReturn {
     /**
      * @param {{selectors:Object, i18n:Object}} cfg
-     * @param {{verifyUrl:string, successUrl:string, coursesUrl:string}} ds
+     * @param {{verifyUrl:string, successUrl:string, coursesUrl:string, tab:boolean}} ds
      */
     constructor(cfg, ds) {
       this.s = cfg.selectors || {};
@@ -175,7 +175,12 @@ define([], function() {
         });
         const data = await res.json();
         if (data && data.paid) {
-          window.location.assign(this.ds.successUrl);
+          if (this.ds.tab) {
+            // Checkout tab: the Moodle page that opened it continues to the success URL itself.
+            CheckoutTab.close(this.ds.successUrl);
+          } else {
+            window.location.assign(this.ds.successUrl);
+          }
           return true;
         }
       } catch {

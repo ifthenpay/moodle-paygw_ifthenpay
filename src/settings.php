@@ -149,5 +149,16 @@ if ($ADMIN->fulltree) {
         get_string('behavior_desc', 'paygw_ifthenpay')
     ));
 
+    $settings->add(new \admin_setting_configselect(
+        'paygw_ifthenpay/checkout_target',
+        get_string('checkout_target', 'paygw_ifthenpay'),
+        get_string('checkout_target_desc', 'paygw_ifthenpay'),
+        'same',
+        [
+            'same' => get_string('checkout_target_same', 'paygw_ifthenpay'),
+            'newtab' => get_string('checkout_target_newtab', 'paygw_ifthenpay'),
+        ]
+    ));
+
     \core_payment\helper::add_common_gateway_settings($settings, 'paygw_ifthenpay');
 }

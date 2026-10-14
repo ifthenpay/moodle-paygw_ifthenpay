@@ -24,6 +24,12 @@
 
 use core_payment\helper;
 
+// The polling request must get JSON even when the session has lapsed, not a login page it cannot parse.
+// phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalGlobalState
+if (($_GET['action'] ?? '') === 'verify') {
+    define('AJAX_SCRIPT', true);
+}
+
 require(__DIR__ . '/../../../config.php');
 require_once(__DIR__ . '/lib.php');
 
@@ -32,7 +38,10 @@ require_login();
 $token  = (string) required_param('token', PARAM_ALPHANUMEXT);
 // Written into transaction_id char(64); constrain it here rather than letting the database
 // reject it, which on the AJAX path would return HTML where the browser expects JSON.
-$txid   = substr(required_param('txid', PARAM_ALPHANUMEXT), 0, 64);
+// Optional: the Moodle page that opened the checkout in another tab polls with the token alone.
+$txid   = substr(optional_param('txid', '', PARAM_ALPHANUMEXT), 0, 64);
+// Set on the URLs given to ifthenpay when the checkout runs in its own tab (see pay.php).
+$tab    = optional_param('tab', 0, PARAM_BOOL);
 $sk     = optional_param('sk', '', PARAM_RAW_TRIMMED);
 $action = optional_param('action', '', PARAM_ALPHA);   // For AJAX polling.
 
@@ -47,7 +56,7 @@ if ($rec && (int) $rec->userid !== (int) $USER->id) {
 if (!$rec) {
     if ($action === 'verify') {
         @header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['paid' => false, 'error' => 'notfound']);
+        echo json_encode(['paid' => false, 'state' => 'NOTFOUND', 'error' => 'notfound']);
         exit;
     }
     redirect(new moodle_url('/my/courses.php'));
@@ -55,7 +64,7 @@ if (!$rec) {
 
 // Record the transaction id once, as a single field: rewriting the whole row from this snapshot
 // could undo a state the webhook set between the read above and this write.
-if (empty($rec->transaction_id)) {
+if ($txid !== '' && empty($rec->transaction_id)) {
     paygw_ifthenpay_tx_set_transaction_id((int) $rec->id, $txid);
 }
 
@@ -73,7 +82,9 @@ if (empty($rec->transaction_id)) {
 if ($action === 'verify') {
     @header('Content-Type: application/json; charset=utf-8');
     $fresh = paygw_ifthenpay_tx_get($token, 'id,state');
-    echo json_encode(['paid' => $fresh && (string) $fresh->state === 'PAID']);
+    $current = $fresh ? (string) $fresh->state : 'NOTFOUND';
+    // The state lets the waiting page tell a cancelled or failed attempt from one still pending.
+    echo json_encode(['paid' => $current === 'PAID', 'state' => $current]);
     exit;
 }
 
@@ -84,13 +95,20 @@ if ($action === 'verify') {
  */
 $successurl = helper::get_success_url($rec->component, $rec->paymentarea, $rec->itemid);
 
-// Already paid? Go straight to success.
-if ((string)$rec->state === 'PAID') {
+// Already paid? Go straight to success. A checkout tab stays put instead: the script below closes it,
+// and the Moodle page that opened it carries on to the success URL.
+if ((string)$rec->state === 'PAID' && !$tab) {
     redirect($successurl);
 }
 
 // Normal page (UI).
-$params = ['token' => $token, 'txid' => $txid];
+$params = ['token' => $token];
+if ($txid !== '') {
+    $params['txid'] = $txid;
+}
+if ($tab) {
+    $params['tab'] = 1;
+}
 if ($sk !== '') {
     $params['sk'] = $sk;
 }
@@ -123,6 +141,7 @@ $PAGE->requires->data_for_js('ifthenpay', (object) [
     'verifyUrl'  => (new moodle_url('/payment/gateway/ifthenpay/return.php', $params + ['action' => 'verify']))->out(false),
     'successUrl' => $successurl->out(false),
     'coursesUrl' => $coursesurl,
+    'tab'        => (bool) $tab,
 ]);
 $PAGE->requires->js_call_amd('paygw_ifthenpay/return', 'init', [$selectors, (object) ['timeout' => $str->timeout]]);
 
@@ -139,7 +158,7 @@ echo $OUTPUT->render_from_template('paygw_ifthenpay/status_page', [
     'loadinglabel' => $str->loading,
     'rows' => [
         ['label' => $str->ref, 'value' => $rec->token],
-        ['label' => $str->txid, 'value' => $txid],
+        ...($txid !== '' ? [['label' => $str->txid, 'value' => $txid]] : []),
         ['label' => $str->amount, 'value' => $rec->amount . ' ' . $rec->currency, 'strong' => true],
     ],
     'retry' => ['id' => $selectors->retry, 'text' => $str->retry],

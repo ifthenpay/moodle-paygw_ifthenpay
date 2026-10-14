@@ -39,6 +39,10 @@ $string['modal:redirectingtoifthenpay'] = 'Taking you to ifthenpay to complete y
 $string['api_heading'] = 'Connect your ifthenpay account';
 $string['behavior_heading'] = 'Payment behaviour';
 $string['behavior_desc'] = 'Optional settings affecting how this gateway is shown to users.';
+$string['checkout_target'] = 'Checkout window';
+$string['checkout_target_desc'] = 'Where the ifthenpay checkout opens. In the same tab, it replaces the Moodle page. In a new tab, the Moodle page stays open and moves on by itself once the payment is confirmed (Moodle 4.4 or later; on 4.3 the checkout always opens in the same tab).';
+$string['checkout_target_same'] = 'Same tab';
+$string['checkout_target_newtab'] = 'New tab';
 // Onboarding and tips. Structure (list, numbering, badges) lives in the steps template — these
 // carry prose only, so a translator never has to preserve Bootstrap classes.
 $string['onboarding_step1'] =
@@ -159,6 +163,13 @@ $string['process:transaction_id']          = 'Transaction ID';
 $string['process:amount']                  = 'Amount';
 $string['process:btn_retry']               = 'Check again';
 $string['process:btn_go_to_courses']       = 'Go to My courses';
+$string['process:checkout_waiting'] = 'Complete your payment in the ifthenpay tab. This page will update by itself as soon as the payment is confirmed.';
+$string['process:checkout_reopen'] = 'Open the checkout again';
+$string['process:checkout_paid'] = 'Payment received. Your access is being enabled.';
+$string['process:checkout_canceled'] = 'The payment was cancelled. Nothing has been charged.';
+$string['process:checkout_error'] = 'Something went wrong while confirming your payment. Nothing has been charged.';
+$string['process:checkout_timeout'] = 'We have not received the payment confirmation yet. If you have paid, your access is enabled automatically as soon as ifthenpay confirms it.';
+$string['process:checkout_start_failed'] = 'The checkout could not be started. Please try again.';
 
 
 // Events.

@@ -40,6 +40,10 @@ $string['modal:redirectingtoifthenpay'] = 'Redirection vers ifthenpay pour final
 $string['api_heading'] = 'Connectez votre compte ifthenpay';
 $string['behavior_heading'] = 'Comportement du paiement';
 $string['behavior_desc'] = 'Réglages facultatifs affectant la façon dont cette passerelle est présentée aux utilisateurs.';
+$string['checkout_target'] = 'Fenêtre du checkout';
+$string['checkout_target_desc'] = 'Où s’ouvre le checkout ifthenpay. Dans le même onglet, il remplace la page Moodle. Dans un nouvel onglet, la page Moodle reste ouverte et avance toute seule dès que le paiement est confirmé (Moodle 4.4 ou ultérieur ; sur 4.3, le checkout s’ouvre toujours dans le même onglet).';
+$string['checkout_target_same'] = 'Même onglet';
+$string['checkout_target_newtab'] = 'Nouvel onglet';
 // Onboarding et conseils. La structure (liste, numérotation, badges) réside dans le gabarit steps —
 // ces chaînes ne contiennent que du texte, afin qu'un traducteur n'ait jamais à conserver de classes Bootstrap.
 $string['onboarding_step1'] =
@@ -193,6 +197,13 @@ $string['process:transaction_id']          = 'ID de transaction';
 $string['process:amount']                  = 'Montant';
 $string['process:btn_retry']               = 'Vérifier à nouveau';
 $string['process:btn_go_to_courses']       = 'Aller à Mes cours';
+$string['process:checkout_waiting'] = 'Finalisez votre paiement dans l’onglet ifthenpay. Cette page se mettra à jour toute seule dès que le paiement sera confirmé.';
+$string['process:checkout_reopen'] = 'Rouvrir le checkout';
+$string['process:checkout_paid'] = 'Paiement reçu. Votre accès est en cours d’activation.';
+$string['process:checkout_canceled'] = 'Le paiement a été annulé. Rien n’a été débité.';
+$string['process:checkout_error'] = 'Un problème est survenu lors de la confirmation du paiement. Rien n’a été débité.';
+$string['process:checkout_timeout'] = 'Nous n’avons pas encore reçu la confirmation du paiement. Si vous avez payé, votre accès sera activé automatiquement dès qu’ifthenpay l’aura confirmé.';
+$string['process:checkout_start_failed'] = 'Le checkout n’a pas pu être démarré. Veuillez réessayer.';
 
 
 // Events.

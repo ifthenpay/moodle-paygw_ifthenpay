@@ -39,6 +39,10 @@ $string['modal:redirectingtoifthenpay'] = 'Le estamos llevando a ifthenpay para 
 $string['api_heading'] = 'Conecte su cuenta de ifthenpay';
 $string['behavior_heading'] = 'Comportamiento del pago';
 $string['behavior_desc'] = 'Ajustes opcionales que afectan a cómo se muestra esta pasarela a los usuarios.';
+$string['checkout_target'] = 'Ventana del checkout';
+$string['checkout_target_desc'] = 'Dónde se abre el checkout de ifthenpay. En la misma pestaña, sustituye la página de Moodle. En una pestaña nueva, la página de Moodle sigue abierta y avanza sola cuando se confirma el pago (Moodle 4.4 o posterior; en 4.3 el checkout se abre siempre en la misma pestaña).';
+$string['checkout_target_same'] = 'Misma pestaña';
+$string['checkout_target_newtab'] = 'Pestaña nueva';
 // Onboarding y consejos. La estructura (lista, numeración, insignias) vive en la plantilla steps —
 // estas cadenas contienen solo texto, para que un traductor nunca tenga que conservar clases Bootstrap.
 $string['onboarding_step1'] =
@@ -186,6 +190,13 @@ $string['process:transaction_id']          = 'ID de transacción';
 $string['process:amount']                  = 'Importe';
 $string['process:btn_retry']               = 'Comprobar de nuevo';
 $string['process:btn_go_to_courses']       = 'Ir a Mis cursos';
+$string['process:checkout_waiting'] = 'Complete el pago en la pestaña de ifthenpay. Esta página se actualizará sola en cuanto se confirme el pago.';
+$string['process:checkout_reopen'] = 'Abrir el checkout de nuevo';
+$string['process:checkout_paid'] = 'Pago recibido. Se está activando su acceso.';
+$string['process:checkout_canceled'] = 'El pago se canceló. No se ha cobrado nada.';
+$string['process:checkout_error'] = 'Algo salió mal al confirmar el pago. No se ha cobrado nada.';
+$string['process:checkout_timeout'] = 'Todavía no hemos recibido la confirmación del pago. Si ya ha pagado, su acceso se activará automáticamente en cuanto ifthenpay lo confirme.';
+$string['process:checkout_start_failed'] = 'No se pudo iniciar el checkout. Inténtelo de nuevo.';
 
 
 // Events.

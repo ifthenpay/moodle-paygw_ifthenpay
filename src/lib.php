@@ -255,23 +255,6 @@ function paygw_ifthenpay_tx_get(string $token, string $fields = '*'): ?stdClass 
 
 
 /**
- * Record the ifthenpay transaction id against a transaction.
- *
- * @param int $id Transaction row id.
- * @param string $txid Transaction id reported by ifthenpay.
- * @return void
- */
-function paygw_ifthenpay_tx_set_transaction_id(int $id, string $txid): void {
-    global $DB;
-    // Both columns in one statement: two set_field calls would be two UPDATEs for one change.
-    $DB->update_record('paygw_ifthenpay_tx', (object) [
-        'id'             => $id,
-        'transaction_id' => $txid,
-        'timemodified'   => time(),
-    ]);
-}
-
-/**
  * Move a transaction to a final unpaid state, without ever overwriting a paid one.
  *
  * The "not paid" test is part of the UPDATE rather than a separate read, so a webhook settling the

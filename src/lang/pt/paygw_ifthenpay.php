@@ -162,7 +162,6 @@ $string['process:waiting_hint']            = 'Normalmente demora alguns segundos
 $string['process:loading']                 = 'A verificar';
 $string['process:waiting_timeout']         = 'Ainda a processar. Pode fechar esta página em segurança — a inscrição fica concluída automaticamente assim que a ifthenpay confirmar o pagamento.';
 $string['process:order_reference']         = 'Referência da encomenda';
-$string['process:transaction_id']          = 'ID da transação';
 $string['process:amount']                  = 'Montante';
 $string['process:btn_retry']               = 'Verificar novamente';
 $string['process:btn_go_to_courses']       = 'Ir para os meus cursos';

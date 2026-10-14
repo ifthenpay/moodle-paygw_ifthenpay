@@ -186,7 +186,6 @@ $string['process:waiting_timeout']         =
     'Todavía en proceso. Puede cerrar esta página con seguridad: su inscripción se completa automáticamente en cuanto ' .
     'ifthenpay confirme el pago.';
 $string['process:order_reference']         = 'Referencia del pedido';
-$string['process:transaction_id']          = 'ID de transacción';
 $string['process:amount']                  = 'Importe';
 $string['process:btn_retry']               = 'Comprobar de nuevo';
 $string['process:btn_go_to_courses']       = 'Ir a Mis cursos';

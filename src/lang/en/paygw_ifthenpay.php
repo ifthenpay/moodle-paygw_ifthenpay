@@ -159,7 +159,6 @@ $string['process:waiting_hint']            = 'This usually takes a few seconds.'
 $string['process:loading']                 = 'Checking';
 $string['process:waiting_timeout']         = 'Still processing. You can close this page safely — your enrolment completes automatically as soon as ifthenpay confirms the payment.';
 $string['process:order_reference']         = 'Order reference';
-$string['process:transaction_id']          = 'Transaction ID';
 $string['process:amount']                  = 'Amount';
 $string['process:btn_retry']               = 'Check again';
 $string['process:btn_go_to_courses']       = 'Go to My courses';

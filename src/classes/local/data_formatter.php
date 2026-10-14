@@ -182,22 +182,13 @@ class data_formatter
         string $desccheckout,
         bool $newtab = false
     ): array {
-        $tab = $newtab ? ['tab' => 1] : [];
+        $returnurl = static fn(string $page, array $params): string =>
+            (new \moodle_url('/payment/gateway/ifthenpay/' . $page, $params + ['token' => $token]
+                + ($newtab ? ['tab' => 1] : [])))->out(false);
 
-        // The [TRANSACTIONID] placeholder stays literal: ifthenpay substitutes it on the way back.
-        $success = (new \moodle_url('/payment/gateway/ifthenpay/return.php', [
-            'token' => $token,
-        ] + $tab))->out(false) . '&txid=[TRANSACTIONID]';
-
-        $cancel = (new \moodle_url('/payment/gateway/ifthenpay/cancel.php', [
-            'token' => $token,
-            'type'  => 'CANCEL',
-        ] + $tab))->out(false);
-
-        $error = (new \moodle_url('/payment/gateway/ifthenpay/cancel.php', [
-            'token' => $token,
-            'type'  => 'ERROR',
-        ] + $tab))->out(false);
+        $success = $returnurl('return.php', []);
+        $cancel = $returnurl('cancel.php', ['type' => 'CANCEL']);
+        $error = $returnurl('cancel.php', ['type' => 'ERROR']);
 
         $payload = [
             'id'          => $token,

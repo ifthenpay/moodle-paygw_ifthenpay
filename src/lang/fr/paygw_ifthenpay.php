@@ -193,7 +193,6 @@ $string['process:waiting_timeout']         =
     'Traitement toujours en cours. Vous pouvez fermer cette page en toute sécurité : votre inscription se finalise ' .
     'automatiquement dès qu\'ifthenpay confirme le paiement.';
 $string['process:order_reference']         = 'Référence de la commande';
-$string['process:transaction_id']          = 'ID de transaction';
 $string['process:amount']                  = 'Montant';
 $string['process:btn_retry']               = 'Vérifier à nouveau';
 $string['process:btn_go_to_courses']       = 'Aller à Mes cours';

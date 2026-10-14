@@ -43,7 +43,7 @@ $definitions = [
     ],
 
     /*
-     * Gateway keys and their per-method accounts, per Backoffice Key.
+     * Gateway keys and their per-method accounts, and the Backoffice Key's status, per key.
      *
      * Request-scoped on purpose: this reflects the merchant's own configuration, which an admin
      * may change in the ifthenpay backoffice and expect to see on the next page load. Caching it

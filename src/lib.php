@@ -66,29 +66,42 @@ function paygw_ifthenpay_api(): api_client {
  * Transport failures report 'ok': an unreachable API says nothing about the key, and an outage
  * should not accuse an admin of a misconfiguration they do not have.
  *
+ * Cached for the request, like the gateway dataset: saving the gateway form asks twice (once to
+ * build the form, once to validate it), and each answer costs a remote call.
+ *
  * @return string One of 'unconfigured', 'rejected', 'nomoodlekeys', 'ok'.
  */
 function paygw_ifthenpay_backoffice_key_status(): string {
-    if (paygw_ifthenpay_get_backoffice_key() === '') {
+    $key = paygw_ifthenpay_get_backoffice_key();
+    if ($key === '') {
         return 'unconfigured';
     }
+
+    $cache = cache::make('paygw_ifthenpay', 'gatewaydata');
+    $cachekey = 'status:' . $key;
+    $status = $cache->get($cachekey);
+    if (is_string($status)) {
+        return $status;
+    }
+
     try {
-        if (!paygw_ifthenpay_api()->verify_backoffice_key()) {
-            return 'rejected';
-        }
+        $recognised = paygw_ifthenpay_api()->verify_backoffice_key();
     } catch (\moodle_exception $e) {
-        return $e->errorcode === 'api:error_unauthorized' ? 'rejected' : 'ok';
+        $recognised = $e->errorcode !== 'api:error_unauthorized';
     } catch (\Throwable $e) {
-        return 'ok';
+        $recognised = true;
     }
 
     // Shares the memoised fetch with the gateway form. Null means the lookup failed, which is not
     // evidence of a misconfiguration, so it reports 'ok' like any other transport failure.
-    $dataset = paygw_ifthenpay_gateway_dataset();
-    if ($dataset === null) {
-        return 'ok';
+    if (!$recognised) {
+        $status = 'rejected';
+    } else {
+        $status = (paygw_ifthenpay_gateway_dataset()['gatewaykeys'] ?? null) === [] ? 'nomoodlekeys' : 'ok';
     }
-    return $dataset['gatewaykeys'] === [] ? 'nomoodlekeys' : 'ok';
+
+    $cache->set($cachekey, $status);
+    return $status;
 }
 
 /**

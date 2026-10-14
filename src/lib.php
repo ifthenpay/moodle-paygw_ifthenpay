@@ -266,6 +266,37 @@ function paygw_ifthenpay_tx_get(string $token, string $fields = '*'): ?stdClass 
     return $DB->get_record('paygw_ifthenpay_tx', ['token' => $token], $fields, IGNORE_MISSING) ?: null;
 }
 
+/**
+ * Fetch the current user's own transaction by its token.
+ *
+ * Someone else's counts as absent: tokens travel in URLs, browser history and support tickets, so
+ * possession of one is not proof of ownership.
+ *
+ * @param string $token Internal order token.
+ * @return stdClass|null The record, or null when there is no such token for this user.
+ */
+function paygw_ifthenpay_tx_get_own(string $token): ?stdClass {
+    global $DB, $USER;
+    return $DB->get_record('paygw_ifthenpay_tx', ['token' => $token, 'userid' => $USER->id], '*', IGNORE_MISSING) ?: null;
+}
+
+/**
+ * The order reference and amount rows of the status_page template.
+ *
+ * @param stdClass $rec Transaction record.
+ * @return array<int, array<string, mixed>> Template rows.
+ */
+function paygw_ifthenpay_status_rows(stdClass $rec): array {
+    return [
+        ['label' => get_string('process:order_reference', 'paygw_ifthenpay'), 'value' => $rec->token],
+        [
+            'label' => get_string('process:amount', 'paygw_ifthenpay'),
+            'value' => \core_payment\helper::get_cost_as_string((float) $rec->amount, (string) $rec->currency),
+            'strong' => true,
+        ],
+    ];
+}
+
 
 /**
  * Move a transaction to a final unpaid state, without ever overwriting a paid one.

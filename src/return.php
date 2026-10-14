@@ -67,12 +67,7 @@ $token = required_param('token', PARAM_ALPHANUMEXT);
 // Set on the URLs given to ifthenpay when the checkout runs in its own tab (see pay.php).
 $tab   = optional_param('tab', 0, PARAM_BOOL);
 
-// Fetch the record and confirm it belongs to the person asking: tokens travel in URLs, browser
-// history and support tickets, so possession of one is not proof of ownership.
-$rec = paygw_ifthenpay_tx_get($token);
-if ($rec && (int) $rec->userid !== (int) $USER->id) {
-    $rec = null;
-}
+$rec = paygw_ifthenpay_tx_get_own($token);
 if (!$rec) {
     if ($action === 'verify') {
         paygw_ifthenpay_return_json(['paid' => false, 'state' => 'NOTFOUND', 'error' => 'notfound']);
@@ -109,26 +104,11 @@ if ((string)$rec->state === 'PAID' && !$tab) {
 }
 
 // Normal page (UI).
-$params = ['token' => $token];
-if ($tab) {
-    $params['tab'] = 1;
-}
+$params = ['token' => $token] + ($tab ? ['tab' => 1] : []);
+$title = get_string('process:return_title', 'paygw_ifthenpay');
 
 $PAGE->set_url(new moodle_url('/payment/gateway/ifthenpay/return.php', $params));
-
-// Strings.
-$str = (object)[
-    'title'   => get_string('process:return_title', 'paygw_ifthenpay'),
-    'hint'    => get_string('process:waiting_hint', 'paygw_ifthenpay'),
-    'timeout' => get_string('process:waiting_timeout', 'paygw_ifthenpay'),
-    'loading' => get_string('process:loading', 'paygw_ifthenpay'),
-    'ref'     => get_string('process:order_reference', 'paygw_ifthenpay'),
-    'amount'  => get_string('process:amount', 'paygw_ifthenpay'),
-    'retry'   => get_string('process:btn_retry', 'paygw_ifthenpay'),
-    'courses' => get_string('process:btn_go_to_courses', 'paygw_ifthenpay'),
-];
-
-$PAGE->set_title($str->title);
+$PAGE->set_title($title);
 $PAGE->set_heading(get_string('gatewayname', 'paygw_ifthenpay'));
 
 // JS dataset + AMD boot. The same $selectors drive the template's ids, so the markup and the
@@ -142,29 +122,27 @@ $PAGE->requires->data_for_js('ifthenpay', (object) [
     'coursesUrl' => $coursesurl,
     'tab'        => (bool) $tab,
 ]);
-$PAGE->requires->js_call_amd('paygw_ifthenpay/return', 'init', [$selectors, (object) ['timeout' => $str->timeout]]);
+$PAGE->requires->js_call_amd('paygw_ifthenpay/return', 'init', [
+    $selectors,
+    (object) ['timeout' => get_string('process:waiting_timeout', 'paygw_ifthenpay')],
+]);
 
 echo $OUTPUT->header();
 
 echo $OUTPUT->render_from_template('paygw_ifthenpay/status_page', [
-    'title' => $str->title,
+    'title' => $title,
     // The explanation doubles as the live region: the AMD module rewrites it if the wait runs long,
     // rather than the card carrying a second status line that just repeated the heading.
-    'intro' => $str->hint,
+    'intro' => get_string('process:waiting_hint', 'paygw_ifthenpay'),
     'spinner' => true,
     'spinnerid' => $selectors->spinner,
     'statusid' => $selectors->status,
-    'loadinglabel' => $str->loading,
-    'rows' => [
-        ['label' => $str->ref, 'value' => $rec->token],
-        [
-            'label' => $str->amount,
-            'value' => helper::get_cost_as_string((float) $rec->amount, (string) $rec->currency),
-            'strong' => true,
-        ],
+    'loadinglabel' => get_string('process:loading', 'paygw_ifthenpay'),
+    'rows' => paygw_ifthenpay_status_rows($rec),
+    'retry' => ['id' => $selectors->retry, 'text' => get_string('process:btn_retry', 'paygw_ifthenpay')],
+    'actions' => [
+        ['url' => $coursesurl, 'text' => get_string('process:btn_go_to_courses', 'paygw_ifthenpay'), 'primary' => false],
     ],
-    'retry' => ['id' => $selectors->retry, 'text' => $str->retry],
-    'actions' => [['url' => $coursesurl, 'text' => $str->courses, 'primary' => false]],
 ]);
 
 echo $OUTPUT->footer();

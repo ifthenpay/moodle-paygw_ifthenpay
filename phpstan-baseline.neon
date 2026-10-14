@@ -7,12 +7,6 @@ parameters:
 			path: src/cancel.php
 
 		-
-			message: '#^Cannot access property \$id on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/cancel.php
-
-		-
 			message: '#^Cannot access property \$requires on mixed\.$#'
 			identifier: property.nonObject
 			count: 1
@@ -85,21 +79,15 @@ parameters:
 			path: src/cancel.php
 
 		-
-			message: '#^Cannot cast mixed to float\.$#'
-			identifier: cast.double
-			count: 1
-			path: src/cancel.php
-
-		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
-			count: 3
+			count: 1
 			path: src/cancel.php
 
 		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 5
+			count: 3
 			path: src/cancel.php
 
 		-
@@ -110,6 +98,18 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$string of function strtoupper expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_tx_get expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_tx_get_own expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/cancel.php
@@ -535,6 +535,12 @@ parameters:
 			path: src/lib.php
 
 		-
+			message: '#^Cannot access property \$id on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
 			message: '#^Cannot call method execute\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -543,7 +549,7 @@ parameters:
 		-
 			message: '#^Cannot call method get_record\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 1
+			count: 2
 			path: src/lib.php
 
 		-
@@ -567,7 +573,7 @@ parameters:
 		-
 			message: '#^Cannot cast mixed to float\.$#'
 			identifier: cast.double
-			count: 1
+			count: 2
 			path: src/lib.php
 
 		-
@@ -579,7 +585,7 @@ parameters:
 		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 9
+			count: 10
 			path: src/lib.php
 
 		-
@@ -614,6 +620,12 @@ parameters:
 
 		-
 			message: '#^Function paygw_ifthenpay_tx_get\(\) should return stdClass\|null but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Function paygw_ifthenpay_tx_get_own\(\) should return stdClass\|null but returns mixed\.$#'
 			identifier: return.type
 			count: 1
 			path: src/lib.php
@@ -703,12 +715,6 @@ parameters:
 			path: src/pay.php
 
 		-
-			message: '#^Cannot access property \$id on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/return.php
-
-		-
 			message: '#^Cannot access property \$requires on mixed\.$#'
 			identifier: property.nonObject
 			count: 2
@@ -769,21 +775,9 @@ parameters:
 			path: src/return.php
 
 		-
-			message: '#^Cannot cast mixed to float\.$#'
-			identifier: cast.double
-			count: 1
-			path: src/return.php
-
-		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 2
-			path: src/return.php
-
-		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 3
+			count: 2
 			path: src/return.php
 
 		-
@@ -793,7 +787,7 @@ parameters:
 			path: src/return.php
 
 		-
-			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_tx_get expects string, mixed given\.$#'
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_tx_get_own expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/return.php

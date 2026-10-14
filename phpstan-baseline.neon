@@ -535,6 +535,12 @@ parameters:
 			path: src/db/upgrade.php
 
 		-
+			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/lib.php
+
+		-
 			message: '#^Cannot call method execute\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -561,7 +567,7 @@ parameters:
 		-
 			message: '#^Cannot call method update_record\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 3
+			count: 2
 			path: src/lib.php
 
 		-
@@ -573,13 +579,13 @@ parameters:
 		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
-			count: 4
+			count: 6
 			path: src/lib.php
 
 		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 7
+			count: 9
 			path: src/lib.php
 
 		-
@@ -615,30 +621,6 @@ parameters:
 		-
 			message: '#^Function paygw_ifthenpay_tx_get\(\) should return stdClass\|null but returns mixed\.$#'
 			identifier: return.type
-			count: 1
-			path: src/lib.php
-
-		-
-			message: '#^Parameter \#1 \$component of static method core_payment\\helper\:\:deliver_order\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/lib.php
-
-		-
-			message: '#^Parameter \#2 \$paymentarea of static method core_payment\\helper\:\:deliver_order\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/lib.php
-
-		-
-			message: '#^Parameter \#3 \$itemid of static method core_payment\\helper\:\:deliver_order\(\) expects int, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/lib.php
-
-		-
-			message: '#^Parameter \#5 \$userid of static method core_payment\\helper\:\:deliver_order\(\) expects int, mixed given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/lib.php
 
@@ -727,18 +709,6 @@ parameters:
 			path: src/pay.php
 
 		-
-			message: '#^Binary operation "\." between mixed and '' '' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/return.php
-
-		-
-			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/return.php
-
-		-
 			message: '#^Cannot access property \$id on mixed\.$#'
 			identifier: property.nonObject
 			count: 1
@@ -805,9 +775,15 @@ parameters:
 			path: src/return.php
 
 		-
+			message: '#^Cannot cast mixed to float\.$#'
+			identifier: cast.double
+			count: 1
+			path: src/return.php
+
+		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
-			count: 3
+			count: 2
 			path: src/return.php
 
 		-
@@ -823,7 +799,7 @@ parameters:
 			path: src/return.php
 
 		-
-			message: '#^Parameter \#1 \$string of function substr expects string, mixed given\.$#'
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_tx_get expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/return.php
@@ -871,13 +847,13 @@ parameters:
 			path: src/settings.php
 
 		-
-			message: '#^Parameter \#1 \$settings of static method core_payment\\helper\:\:add_common_gateway_settings\(\) expects admin_settingpage, mixed given\.$#'
+			message: '#^Parameter \#1 \$settings of static method core_payment\\helper\:\:add_common_gateway_settings\(\) expects core_admin\\setting\\settingpage\\settingpage, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/settings.php
 
 		-
-			message: '#^Parameter \#3 \$information of class admin_setting_heading constructor expects string, mixed given\.$#'
+			message: '#^Parameter \#3 \$information of class core_admin\\setting\\setting\\heading constructor expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/settings.php
@@ -913,13 +889,19 @@ parameters:
 			path: src/version.php
 
 		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
-			count: 2
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
 			path: src/webhook.php
 
 		-
-			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
+			message: '#^Parameter \#2 \$amount of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/webhook.php
+
+		-
+			message: '#^Parameter \#3 \$apk of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/webhook.php

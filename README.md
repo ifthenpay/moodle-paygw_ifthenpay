@@ -32,7 +32,7 @@ Ifthenpay payment gateway plugin for <a href="https://moodle.org/">Moodle</a> wi
 
 ## 🧰 Tech Stack
 
-- **Runtime:** <a href="https://moodle.org/">Moodle 5.1.5</a> (pinned + checksum-verified, configurable) · PHP 8.3 · <a href="https://xdebug.org/">Xdebug 3.4</a>
+- **Runtime:** <a href="https://moodle.org/">Moodle 5.3</a> (pinned + checksum-verified, configurable) · PHP 8.3 · <a href="https://xdebug.org/">Xdebug 3.4</a>
 - **Database:** <a href="https://dev.mysql.com/doc/refman/8.4/en/">MySQL 8.4 LTS</a>
 - **Dev Environment:** <a href="https://code.visualstudio.com/docs/devcontainers/containers">VS Code Dev Containers</a> + <a href="https://docs.docker.com/compose/">Docker Compose</a>
 - **PHP Tooling:**
@@ -87,7 +87,7 @@ Everything is driven by a single `.env` file (created automatically from
 
 | Variable | Default | What it does |
 |---|---|---|
-| `MOODLE_VERSION` / `MOODLE_BRANCH` | `5.1.5` / `stable501` | Pinned Moodle release. Change + rebuild to test another version; core files and DB upgrade themselves on the next start. |
+| `MOODLE_VERSION` / `MOODLE_BRANCH` | `5.3` / `stable503` | Pinned Moodle release. Change + rebuild to test another version; core files and DB upgrade themselves on the next start. |
 | `MOODLE_PORT` / `PMA_PORT` | `8080` / `8081` | Published ports. |
 | `MOODLE_WWWROOT` | `http://localhost:8080` | Public base URL. `config.php` is rewritten and caches purged on start when it changes. |
 | `MOODLE_DEV_MODE` | `1` | DEVELOPER debug level, JS/template/lang caches off, mail disabled, password policy off. |

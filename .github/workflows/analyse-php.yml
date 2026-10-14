@@ -25,8 +25,8 @@ permissions:
   contents: read
 
 env:
-  MOODLE_BRANCH: stable501
-  MOODLE_VERSION: 5.1.5
+  MOODLE_BRANCH: stable503
+  MOODLE_VERSION: 5.3
 
 jobs:
   analyse-php:

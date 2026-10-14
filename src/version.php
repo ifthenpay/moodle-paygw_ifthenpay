@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'paygw_ifthenpay';
 $plugin->version   = 2026101400;
-$plugin->requires  = 2023100900;        // Moodle 4.3: gateways_modal uses Modal.create(), which replaced
-                                        // core/modal_factory in 4.3 (deprecated there, absent before).
+$plugin->requires  = 2024100700;        // Moodle 4.5 LTS: the oldest release still receiving security
+                                        // fixes. (The "new tab" checkout itself needs 4.4's head hook.)
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.2.0';

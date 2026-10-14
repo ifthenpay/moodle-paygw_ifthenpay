@@ -40,7 +40,7 @@ $string['api_heading'] = 'Connect your ifthenpay account';
 $string['behavior_heading'] = 'Payment behaviour';
 $string['behavior_desc'] = 'Optional settings affecting how this gateway is shown to users.';
 $string['checkout_target'] = 'Checkout window';
-$string['checkout_target_desc'] = 'Where the ifthenpay checkout opens. In the same tab, it replaces the Moodle page. In a new tab, the Moodle page stays open and moves on by itself once the payment is confirmed (Moodle 4.4 or later; on 4.3 the checkout always opens in the same tab).';
+$string['checkout_target_desc'] = 'Where the ifthenpay checkout opens. In the same tab, it replaces the Moodle page. In a new tab, the Moodle page stays open and moves on by itself once the payment is confirmed.';
 $string['checkout_target_same'] = 'Same tab';
 $string['checkout_target_newtab'] = 'New tab';
 // Onboarding and tips. Structure (list, numbering, badges) lives in the steps template — these

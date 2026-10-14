@@ -17,8 +17,7 @@
 /**
  * Hook callbacks registered by the ifthenpay payment gateway.
  *
- * The head hook exists from Moodle 4.4. On 4.3 the class below is never dispatched, which only means
- * the "new tab" checkout option has no effect there and the checkout opens in the same tab.
+ * The head hook carries the "new tab" checkout choice to the page (see hook_callbacks).
  *
  * @package    paygw_ifthenpay
  * @copyright  2025 ifthenpay <geral@ifthenpay.com>

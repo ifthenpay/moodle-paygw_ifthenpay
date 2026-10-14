@@ -243,7 +243,7 @@ class config_form
             ] as $cols => $text
         ) {
             // Bootstrap 5 spells this fw-bold and Bootstrap 4 font-weight-bold; both are emitted
-            // so the styling holds on Moodle 4.3-4.5 and on 5.x, where the BS4 name is deprecated.
+            // so the styling holds on Moodle 4.5 and on 5.x, where the BS4 name is deprecated.
             $headercols .= \html_writer::div(
                 $text,
                 $cols . ' px-0 text-uppercase text-muted small fw-bold font-weight-bold'

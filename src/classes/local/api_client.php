@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Ifthenpay API client for Moodle 4.3+.
+ * Ifthenpay API client for Moodle 4.5+.
  *
  * @package    paygw_ifthenpay
  * @copyright  2025 ifthenpay <geral@ifthenpay.com>

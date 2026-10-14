@@ -40,7 +40,7 @@ $string['api_heading'] = 'Conecte su cuenta de ifthenpay';
 $string['behavior_heading'] = 'Comportamiento del pago';
 $string['behavior_desc'] = 'Ajustes opcionales que afectan a cómo se muestra esta pasarela a los usuarios.';
 $string['checkout_target'] = 'Ventana del checkout';
-$string['checkout_target_desc'] = 'Dónde se abre el checkout de ifthenpay. En la misma pestaña, sustituye la página de Moodle. En una pestaña nueva, la página de Moodle sigue abierta y avanza sola cuando se confirma el pago (Moodle 4.4 o posterior; en 4.3 el checkout se abre siempre en la misma pestaña).';
+$string['checkout_target_desc'] = 'Dónde se abre el checkout de ifthenpay. En la misma pestaña, sustituye la página de Moodle. En una pestaña nueva, la página de Moodle sigue abierta y avanza sola cuando se confirma el pago.';
 $string['checkout_target_same'] = 'Misma pestaña';
 $string['checkout_target_newtab'] = 'Pestaña nueva';
 // Onboarding y consejos. La estructura (lista, numeración, insignias) vive en la plantilla steps —

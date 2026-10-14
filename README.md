@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://ifthenpay.com/" target="_blank">
-    <img src="./src/pix/ifthenpay_brand.svg" alt="ifthenpay" width="220" />
+    <img src="./.github/assets/ifthenpay_brand.svg" alt="ifthenpay" width="220" />
   </a>
 </p>
 
@@ -32,7 +32,7 @@ Ifthenpay payment gateway plugin for <a href="https://moodle.org/">Moodle</a> wi
 
 ## 🧰 Tech Stack
 
-- **Runtime:** <a href="https://moodle.org/">Moodle 5.1.5</a> (pinned + checksum-verified, configurable) · PHP 8.3 · <a href="https://xdebug.org/">Xdebug 3.4</a>
+- **Runtime:** <a href="https://moodle.org/">Moodle 5.3</a> (pinned + checksum-verified, configurable) · PHP 8.3 · <a href="https://xdebug.org/">Xdebug 3.4</a>
 - **Database:** <a href="https://dev.mysql.com/doc/refman/8.4/en/">MySQL 8.4 LTS</a>
 - **Dev Environment:** <a href="https://code.visualstudio.com/docs/devcontainers/containers">VS Code Dev Containers</a> + <a href="https://docs.docker.com/compose/">Docker Compose</a>
 - **PHP Tooling:**
@@ -87,7 +87,7 @@ Everything is driven by a single `.env` file (created automatically from
 
 | Variable | Default | What it does |
 |---|---|---|
-| `MOODLE_VERSION` / `MOODLE_BRANCH` | `5.1.5` / `stable501` | Pinned Moodle release. Change + rebuild to test another version; core files and DB upgrade themselves on the next start. |
+| `MOODLE_VERSION` / `MOODLE_BRANCH` | `5.3` / `stable503` | Pinned Moodle release. Change + rebuild to test another version; core files and DB upgrade themselves on the next start. |
 | `MOODLE_PORT` / `PMA_PORT` | `8080` / `8081` | Published ports. |
 | `MOODLE_WWWROOT` | `http://localhost:8080` | Public base URL. `config.php` is rewritten and caches purged on start when it changes. |
 | `MOODLE_DEV_MODE` | `1` | DEVELOPER debug level, JS/template/lang caches off, mail disabled, password policy off. |
@@ -238,6 +238,16 @@ Prettier, EditorConfig.
    mdl qa         # phpcs + eslint + stylelint + PHPStan
    mdl build      # commit the built AMD files in src/amd/build/
    ```
+7. **Releasing:** add a `## x.y.z` section to `src/CHANGES.md`, set `$plugin->release = 'x.y.z'`
+   and bump `$plugin->version` in `src/version.php`, merge to `main`, then push the tag:
+   ```bash
+   git tag vx.y.z && git push origin vx.y.z
+   ```
+   `release.yml` refuses a tag that does not match `$plugin->release` or has no changelog section,
+   runs every check, then publishes the zip as a GitHub Release and to the
+   [Moodle Marketplace](https://marketplace.moodle.com/), both with that changelog section as the
+   release notes. The Marketplace step needs the `MOODLE_MARKETPLACE_TOKEN` repository secret; a
+   failed submission can be retried with *Re-run failed jobs*.
 
 ---
 

@@ -5,6 +5,11 @@ Accept diverse payments—including credit and store cards (Cartão Crédito), m
 
 To unlock the full potential of this integration, users must have an active ifthenpay account. Once subscribed, you'll need to activate a Gateway Key and associate/activate your selected Payment Methods by [contacting our helpdesk](https://helpdesk.ifthenpay.com/en/support/home). Please note that our services operate under a tariff structure; users should check tariffs per payment method in our website.
 
+## Requirements 📋
+
+- Moodle 4.5 or later.
+- An active ifthenpay account, with a Gateway Key for Moodle.
+
 ## Setup 📥
 
 1. Install the plugin in your Moodle instance.
@@ -14,6 +19,12 @@ To unlock the full potential of this integration, users must have an active ifth
 5. In Moodle, configure the ifthenpay payment account by choosing the desired Gateway Key and link it to the associated payment methods.
 6. Enable **Enrolment on payment** for the Moodle courses you wish to offer with paid access.
 7. Configure the enrolment method for each course, specifying the currency you want to accept.
+
+## Checkout window 🪟
+
+By default the ifthenpay checkout replaces the Moodle page. In **Site administration → Plugins →
+Payment gateways → ifthenpay**, *Checkout window* can open it in a new tab instead: the Moodle page
+stays open and moves on by itself once the payment is confirmed.
 
 ## Currencies 💱
 
@@ -47,7 +58,7 @@ If you encounter issues or need assistance, please refer to the following resour
 #### Keeping the Plugin Updated:
 
 - Always use the latest versions of Moodle, and this plugin.
-- Review the changelog before updating.
+- Review the [changelog](CHANGES.md) before updating.
 - After updates, test payment flows to ensure functionality.
 
 Regular updates and active monitoring will ensure continued compatibility and optimal performance.

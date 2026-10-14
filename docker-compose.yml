@@ -49,8 +49,8 @@ services:
       args:
         APP_UID: ${APP_UID:-1000}
         APP_GID: ${APP_GID:-1000}
-        MOODLE_BRANCH: ${MOODLE_BRANCH:-stable501}
-        MOODLE_VERSION: ${MOODLE_VERSION:-5.1.5}
+        MOODLE_BRANCH: ${MOODLE_BRANCH:-stable503}
+        MOODLE_VERSION: ${MOODLE_VERSION:-5.3}
         XDEBUG_VERSION: ${XDEBUG_VERSION:-3.4.0}
     container_name: ifthenpay-app
     depends_on:

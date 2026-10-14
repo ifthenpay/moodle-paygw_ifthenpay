@@ -29,38 +29,54 @@ require_once(__DIR__ . '/lib.php');
 
 require_login();
 
-$token = (string) required_param('token', PARAM_ALPHANUMEXT);
+$token = required_param('token', PARAM_ALPHANUMEXT);
 $type  = required_param('type', PARAM_ALPHA);        // CANCEL or ERROR.
+$tab   = optional_param('tab', 0, PARAM_BOOL);       // The checkout ran in its own tab (see pay.php).
 
-global $USER, $CFG, $PAGE, $OUTPUT;
+// Set before anything can redirect: redirect() and the renderer both expect a page context.
+$PAGE->set_context(context_system::instance());
 
-// Fetch the transaction, and treat someone else's as absent: a token in a URL is not a credential.
-$rec = paygw_ifthenpay_tx_get($token);
-if ($rec && (int) $rec->userid !== (int) $USER->id) {
-    $rec = null;
+$iserror = strtoupper($type) === 'ERROR';
+$rec = paygw_ifthenpay_tx_get_own($token);
+
+// Settled before anything is output, so a paid order can still be redirected.
+if ($rec) {
+    // Persist the outcome. The "not already paid" condition lives in the UPDATE, so a webhook that
+    // settles the payment while this page is open cannot be overwritten.
+    $newstate = $iserror ? 'ERROR' : 'CANCELED';
+    if ((string) $rec->state !== 'PAID' && (string) $rec->state !== $newstate) {
+        paygw_ifthenpay_tx_set_unpaid_state((int) $rec->id, $newstate);
+    }
+
+    /*
+     * Re-read before rendering. A Multibanco payment can settle while this redirect is in flight —
+     * the UPDATE above correctly refuses to overwrite PAID, but showing "Payment not completed" to
+     * someone who has just been enrolled would be alarming and wrong.
+     */
+    $fresh = paygw_ifthenpay_tx_get($token, 'id,state');
+    if ($fresh && (string) $fresh->state === 'PAID') {
+        // A checkout tab goes to the page that closes it; the Moodle page behind it continues on its own.
+        redirect($tab
+            ? new moodle_url('/payment/gateway/ifthenpay/return.php', ['token' => $token, 'tab' => 1])
+            : helper::get_success_url($rec->component, $rec->paymentarea, $rec->itemid));
+    }
 }
 
-$str = (object)[
-    'title'       => get_string('process:cancel_title', 'paygw_ifthenpay'),
-    'desccancel'  => get_string('process:cancel_desc_cancel', 'paygw_ifthenpay'),
-    'descerror'   => get_string('process:cancel_desc_error', 'paygw_ifthenpay'),
-    'ref'         => get_string('process:order_reference', 'paygw_ifthenpay'),
-    'amount'      => get_string('process:amount', 'paygw_ifthenpay'),
-    'tryagain'    => get_string('process:btn_try_again', 'paygw_ifthenpay'),
-    'support'     => get_string('process:btn_contact_support', 'paygw_ifthenpay'),
-    'notfound'    => get_string('process:not_found', 'paygw_ifthenpay'),
-];
-
-$params = ['token' => $token, 'type' => $type];
+$title = get_string('process:cancel_title', 'paygw_ifthenpay');
+$params = ['token' => $token, 'type' => $type] + ($tab ? ['tab' => 1] : []);
 $PAGE->set_url(new moodle_url('/payment/gateway/ifthenpay/cancel.php', $params));
-$PAGE->set_context(context_system::instance());
-$PAGE->set_title($str->title);
+$PAGE->set_title($title);
 $PAGE->set_heading(get_string('gatewayname', 'paygw_ifthenpay'));
+
+if ($tab) {
+    // Closes the checkout tab; if the browser refuses, the page below is what the customer sees.
+    $PAGE->requires->js_call_amd('paygw_ifthenpay/checkout_tab', 'close');
+}
 
 echo $OUTPUT->header();
 
 if (!$rec) {
-    echo $OUTPUT->notification($str->notfound, 'notifyproblem');
+    echo $OUTPUT->notification(get_string('process:not_found', 'paygw_ifthenpay'), 'notifyproblem');
     echo html_writer::div(
         html_writer::link(new moodle_url('/'), get_string('back'), ['class' => 'btn btn-secondary']),
         'mt-3'
@@ -69,46 +85,29 @@ if (!$rec) {
     exit;
 }
 
-// Persist the outcome. The "not already paid" condition lives in the UPDATE, so a webhook that
-// settles the payment while this page is open cannot be overwritten.
-$newstate = (strtoupper($type) === 'ERROR') ? 'ERROR' : 'CANCELED';
-if ((string) $rec->state !== 'PAID' && (string) $rec->state !== $newstate) {
-    paygw_ifthenpay_tx_set_unpaid_state((int) $rec->id, $newstate);
-}
-
-/*
- * Re-read before rendering. A Multibanco payment can settle while this redirect is in flight — the
- * UPDATE above correctly refuses to overwrite PAID, but showing "Payment not completed" to someone
- * who has just been enrolled would be alarming and wrong.
- */
-$fresh = paygw_ifthenpay_tx_get($token, 'id,state,component,paymentarea,itemid');
-if ($fresh && (string) $fresh->state === 'PAID') {
-    redirect(helper::get_success_url($fresh->component, $fresh->paymentarea, $fresh->itemid));
-}
-
-$iserror = ($newstate === 'ERROR');
 $actions = [[
     'url' => helper::get_success_url($rec->component, $rec->paymentarea, $rec->itemid)->out(false),
-    'text' => $str->tryagain,
+    'text' => get_string('process:btn_try_again', 'paygw_ifthenpay'),
     'primary' => true,
 ]];
 if (!empty($CFG->supportemail)) {
-    $actions[] = ['url' => 'mailto:' . $CFG->supportemail, 'text' => $str->support, 'primary' => false];
+    $actions[] = [
+        'url' => 'mailto:' . $CFG->supportemail,
+        'text' => get_string('process:btn_contact_support', 'paygw_ifthenpay'),
+        'primary' => false,
+    ];
 }
 
 echo $OUTPUT->render_from_template('paygw_ifthenpay/status_page', [
-    'title' => $str->title,
-    'intro' => $iserror ? $str->descerror : $str->desccancel,
+    'title' => $title,
+    'intro' => get_string($iserror ? 'process:cancel_desc_error' : 'process:cancel_desc_cancel', 'paygw_ifthenpay'),
     'icon' => $OUTPUT->pix_icon(
         $iserror ? 'i/invalid' : 'i/warning',
         '',
         'core',
         ['class' => 'icon ' . ($iserror ? 'text-danger' : 'text-warning')]
     ),
-    'rows' => [
-        ['label' => $str->ref, 'value' => $rec->token],
-        ['label' => $str->amount, 'value' => $rec->amount . ' ' . $rec->currency, 'strong' => true],
-    ],
+    'rows' => paygw_ifthenpay_status_rows($rec),
     'actions' => $actions,
 ]);
 

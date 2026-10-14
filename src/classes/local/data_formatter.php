@@ -152,16 +152,6 @@ class data_formatter
     }
 
     /**
-     * Format a monetary amount with two decimals (e.g., "12.34").
-     *
-     * @param float $amount Amount to format.
-     * @return string Amount formatted as "0.00".
-     */
-    public static function format_amount(float $amount): string {
-        return number_format($amount, 2, '.', '');
-    }
-
-    /**
      * Build the payload to create an ifthenpay Pay-by-Link.
      *
      * The methods and accounts on offer were already constrained by the admin form.
@@ -170,32 +160,29 @@ class data_formatter
      * @param \stdClass $state         Decoded ifthenpay_state (gateway form state).
      * @param string    $token         Unique token for this payment attempt.
      * @param string    $desccheckout  Optional checkout description.
+     * @param bool      $newtab        Whether the checkout runs in its own browser tab. The three return
+     *                                 URLs then carry a marker so the page that lands there can close
+     *                                 the tab and leave the Moodle page to carry on.
      * @return array<string, mixed> Payload for api_client::create_pay_by_link().
      */
     public static function build_pay_by_link_payload(
         float $cost,
         stdClass $state,
         string $token,
-        string $desccheckout
+        string $desccheckout,
+        bool $newtab = false
     ): array {
-        // The [TRANSACTIONID] placeholder stays literal: ifthenpay substitutes it on the way back.
-        $success = (new \moodle_url('/payment/gateway/ifthenpay/return.php', [
-            'token' => $token,
-        ]))->out(false) . '&txid=[TRANSACTIONID]';
+        $returnurl = static fn(string $page, array $params): string =>
+            (new \moodle_url('/payment/gateway/ifthenpay/' . $page, $params + ['token' => $token]
+                + ($newtab ? ['tab' => 1] : [])))->out(false);
 
-        $cancel = (new \moodle_url('/payment/gateway/ifthenpay/cancel.php', [
-            'token' => $token,
-            'type'  => 'CANCEL',
-        ]))->out(false);
-
-        $error = (new \moodle_url('/payment/gateway/ifthenpay/cancel.php', [
-            'token' => $token,
-            'type'  => 'ERROR',
-        ]))->out(false);
+        $success = $returnurl('return.php', []);
+        $cancel = $returnurl('cancel.php', ['type' => 'CANCEL']);
+        $error = $returnurl('cancel.php', ['type' => 'ERROR']);
 
         $payload = [
             'id'          => $token,
-            'amount'      => self::format_amount($cost),
+            'amount'      => number_format($cost, 2, '.', ''),
             'description' => self::make_description($state, $token, $desccheckout),
             'lang'        => \paygw_ifthenpay_detect_language(),
             'accounts'    => self::make_accounts($state),

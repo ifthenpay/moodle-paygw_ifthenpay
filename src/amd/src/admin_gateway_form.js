@@ -29,167 +29,113 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(["jquery"], function($) {
+
+define([], function() {
     "use strict";
 
     /**
-     * Find a form element by its name, preferring Moodle's generated id.
+     * Entry point.
      *
-     * @param {String} name Element name.
-     * @returns {jQuery} Matching element(s), possibly empty.
+     * @param {Object} s Field names supplied by PHP.
+     * @returns {void}
      */
-    const byName = function(name) {
-        const $byId = $("#id_" + name);
-        return $byId.length ? $byId : $('[name="' + name + '"]');
-    };
-
-    /**
-     * Form controller.
-     *
-     * @param {Object} selectors Field names supplied by PHP.
-     */
-    const Form = function(selectors) {
+    const init = function(s) {
         const data = window.ifthenpay || {};
-        this.s = selectors;
-        this.accounts = data.accounts || {};
-        this.notActivated = data.notActivated || "";
-        // Methods Pay-by-Link can preselect; the rest never get an enabled default radio.
-        this.preselectable = data.preselectable || [];
-        this.$gatewayKey = byName(this.s.gatewayKey);
+        const accounts = data.accounts || {};
         // The rows PHP rendered, in the same order. Not derived from the accounts map: a method
         // activated on no Gateway Key at all still has a row that must stay in the state.
-        this.methods = data.methods || [];
-    };
+        const methods = data.methods || [];
+        // Methods Pay-by-Link can preselect; the rest never get an enabled default radio.
+        const preselectable = data.preselectable || [];
 
-    /**
-     * The account bound to a method under the currently selected Gateway Key.
-     *
-     * @param {String} method Method key.
-     * @returns {String} Account id, or an empty string when the method is not activated.
-     */
-    Form.prototype.accountFor = function(method) {
-        const forKey = this.accounts[this.$gatewayKey.val()] || {};
-        return forKey[method] || "";
-    };
+        // Moodle's generated id where there is one; hidden fields have none, so by name.
+        const field = (name) => document.getElementById("id_" + name) || document.querySelector(`[name="${name}"]`);
+        const defaultRadio = (value) => document.querySelector(`[name="${s.defaultMethod}"][value="${value}"]`);
+        const gatewayKey = field(s.gatewayKey);
+        const enable = (method) => field(s.enablePrefix + method);
+        // The account bound to a method under the selected Gateway Key, or "" when not activated.
+        const accountFor = (method) => (accounts[gatewayKey.value] || {})[method] || "";
 
-    /**
-     * Allow a method to be the default only while it is switched on.
-     *
-     * Being bound to an account is not enough: an available but unchecked method would otherwise
-     * be selectable as the default and then rejected on save. Methods with no Pay-by-Link
-     * selected_method code (Google Pay, Apple Pay) can never be the default at all.
-     *
-     * @param {String} method Method key.
-     * @param {Boolean} available Whether the current Gateway Key binds an account for it.
-     * @returns {void}
-     */
-    Form.prototype.gateDefault = function(method, available) {
-        const $default = $('[name="' + this.s.defaultMethod + '"][value="' + method + '"]');
-        const allowed = available
-            && this.preselectable.indexOf(method) !== -1
-            && byName(this.s.enablePrefix + method).is(":checked");
-
-        $default.prop("disabled", !allowed);
-        if (!allowed && $default.prop("checked")) {
-            $default.prop("checked", false);
-            $('[name="' + this.s.defaultMethod + '"][value=""]').prop("checked", true);
-        }
-    };
-
-    /**
-     * Apply the selected Gateway Key to every method row.
-     *
-     * @returns {void}
-     */
-    Form.prototype.refresh = function() {
-        this.methods.forEach(function(method) {
-            const account = this.accountFor(method);
-            const available = account !== "";
-            const $enable = byName(this.s.enablePrefix + method);
-
-            byName(this.s.accountPrefix + method).val(account);
-
-            // The account id is data and must be escaped; the not-activated notice is markup (it
-            // carries a support link), so it is assigned as HTML.
-            const $cell = $("#ifthenpay-account-" + method);
-            if (available) {
-                $cell.text(account);
-            } else {
-                $cell.html(this.notActivated);
-            }
-            $cell.toggleClass("text-muted", !available);
-
-            $enable.prop("disabled", !available);
-            if (!available) {
-                $enable.prop("checked", false);
-            }
-            this.gateDefault(method, available);
-        }.bind(this));
-
-        // Nothing selectable at all: the key only carries methods this plugin does not support.
-        // Toggled with d-none rather than jQuery's .toggle(), which writes an inline display value
-        // and would override whatever the theme sets on the element.
-        const usable = this.methods.some(function(method) {
-            return this.accountFor(method) !== "";
-        }.bind(this));
-        $("#ifthenpay-no-methods").toggleClass("d-none", usable);
-
-        this.syncState();
-    };
-
-    /**
-     * Mirror the visible form into the hidden state field.
-     *
-     * @returns {void}
-     */
-    Form.prototype.syncState = function() {
-        const state = {
-            gatewaykey: this.$gatewayKey.val() || "",
-            defaultmethod: $('[name="' + this.s.defaultMethod + '"]:checked').val() || "",
-            description: byName(this.s.description).val() || "",
-            methods: {}
+        /**
+         * Mirror the visible form into the hidden state field.
+         */
+        const syncState = function() {
+            const checked = document.querySelector(`[name="${s.defaultMethod}"]:checked`);
+            const state = {
+                gatewaykey: gatewayKey.value || "",
+                defaultmethod: checked ? checked.value : "",
+                description: field(s.description).value || "",
+                methods: {},
+            };
+            methods.forEach((method) => {
+                state.methods[method] = {
+                    enabled: enable(method).checked,
+                    account: field(s.accountPrefix + method).value || "",
+                };
+            });
+            field(s.state).value = JSON.stringify(state);
         };
 
-        this.methods.forEach(function(method) {
-            state.methods[method] = {
-                enabled: byName(this.s.enablePrefix + method).is(":checked"),
-                account: byName(this.s.accountPrefix + method).val() || ""
-            };
-        }.bind(this));
-
-        byName(this.s.state).val(JSON.stringify(state));
-    };
-
-    /**
-     * Bind listeners and apply the initial state.
-     *
-     * @returns {void}
-     */
-    Form.prototype.start = function() {
-        this.$gatewayKey.on("change", this.refresh.bind(this));
-
-        const sync = this.syncState.bind(this);
-        this.methods.forEach(function(method) {
-            byName(this.s.enablePrefix + method).on("change", function() {
-                this.gateDefault(method, this.accountFor(method) !== "");
-                sync();
-            }.bind(this));
-        }.bind(this));
-        $('[name="' + this.s.defaultMethod + '"]').on("change", sync);
-        byName(this.s.description).on("input", sync);
-
-        this.refresh();
-    };
-
-    return {
         /**
-         * Entry point.
+         * Allow a method to be the default only while it is switched on.
          *
-         * @param {Object} selectors Field names supplied by PHP.
-         * @returns {void}
+         * Being bound to an account is not enough: an available but unchecked method would otherwise
+         * be selectable as the default and then rejected on save. Methods with no Pay-by-Link
+         * selected_method code (Google Pay, Apple Pay) can never be the default at all.
+         *
+         * @param {String} method Method key.
          */
-        init: function(selectors) {
-            new Form(selectors).start();
-        }
+        const gateDefault = function(method) {
+            const radio = defaultRadio(method);
+            radio.disabled = !(accountFor(method) !== "" && preselectable.includes(method) && enable(method).checked);
+            if (radio.disabled && radio.checked) {
+                defaultRadio("").checked = true;
+            }
+        };
+
+        /**
+         * Apply the selected Gateway Key to every method row.
+         */
+        const refresh = function() {
+            methods.forEach((method) => {
+                const account = accountFor(method);
+                const available = account !== "";
+                field(s.accountPrefix + method).value = account;
+
+                // The account id is data and must be escaped; the not-activated notice is markup (it
+                // carries a support link), so it is assigned as HTML.
+                const cell = document.getElementById("ifthenpay-account-" + method);
+                if (available) {
+                    cell.textContent = account;
+                } else {
+                    cell.innerHTML = data.notActivated || "";
+                }
+                cell.classList.toggle("text-muted", !available);
+
+                enable(method).disabled = !available;
+                if (!available) {
+                    enable(method).checked = false;
+                }
+                gateDefault(method);
+            });
+
+            // Nothing selectable at all: the key only carries methods this plugin does not support.
+            document.getElementById("ifthenpay-no-methods")
+                .classList.toggle("d-none", methods.some((method) => accountFor(method) !== ""));
+
+            syncState();
+        };
+
+        gatewayKey.addEventListener("change", refresh);
+        methods.forEach((method) => enable(method).addEventListener("change", () => {
+            gateDefault(method);
+            syncState();
+        }));
+        document.querySelectorAll(`[name="${s.defaultMethod}"]`).forEach((radio) => radio.addEventListener("change", syncState));
+        field(s.description).addEventListener("input", syncState);
+
+        refresh();
     };
+
+    return {init: init};
 });

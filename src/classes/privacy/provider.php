@@ -44,33 +44,30 @@ class provider implements
     \core_privacy\local\request\userlist_provider
 {
     /**
-     * Describe the personal data this plugin stores.
+     * The personal-data columns of paygw_ifthenpay_tx: described, and exported, field for field.
      *
      * gateway_key is deliberately absent. It is merchant configuration, identical for every user,
      * so it is not personal data — and it is the shared secret the webhook authenticates with
      * (the anti-phishing key is base64(gateway_key)). Exporting it would let any data subject
      * settle arbitrary pending payments for this merchant.
+     */
+    private const FIELDS = [
+        'userid', 'timecreated', 'timemodified', 'token', 'component', 'paymentarea', 'itemid', 'accountid',
+        'amount', 'currency', 'redirect_url', 'transaction_id', 'paymentid', 'state',
+    ];
+
+    /**
+     * Describe the personal data this plugin stores.
      *
      * @param collection $collection The initialised collection to add items to.
      * @return collection A listing of user data stored in this plugin.
      */
     public static function get_metadata(collection $collection): collection {
-        $collection->add_database_table('paygw_ifthenpay_tx', [
-            'userid'         => 'privacy:metadata:ifthenpay_tx:userid',
-            'timecreated'    => 'privacy:metadata:ifthenpay_tx:timecreated',
-            'timemodified'   => 'privacy:metadata:ifthenpay_tx:timemodified',
-            'token'          => 'privacy:metadata:ifthenpay_tx:token',
-            'component'      => 'privacy:metadata:ifthenpay_tx:component',
-            'paymentarea'    => 'privacy:metadata:ifthenpay_tx:paymentarea',
-            'itemid'         => 'privacy:metadata:ifthenpay_tx:itemid',
-            'accountid'      => 'privacy:metadata:ifthenpay_tx:accountid',
-            'amount'         => 'privacy:metadata:ifthenpay_tx:amount',
-            'currency'       => 'privacy:metadata:ifthenpay_tx:currency',
-            'redirect_url'   => 'privacy:metadata:ifthenpay_tx:redirect_url',
-            'transaction_id' => 'privacy:metadata:ifthenpay_tx:transaction_id',
-            'paymentid'      => 'privacy:metadata:ifthenpay_tx:paymentid',
-            'state'          => 'privacy:metadata:ifthenpay_tx:state',
-        ], 'privacy:metadata:ifthenpay_tx');
+        $collection->add_database_table(
+            'paygw_ifthenpay_tx',
+            array_combine(self::FIELDS, array_map(fn($f) => 'privacy:metadata:ifthenpay_tx:' . $f, self::FIELDS)),
+            'privacy:metadata:ifthenpay_tx'
+        );
 
         return $collection;
     }
@@ -113,22 +110,7 @@ class provider implements
 
         $w = writer::with_context($sysctx);
         foreach ($records as $r) {
-            $subpath = ['ifthenpay', (string)$r->id];
-            $w->export_data($subpath, (object)[
-                'timecreated'    => transform::datetime($r->timecreated),
-                'timemodified'   => transform::datetime($r->timemodified),
-                'token'          => $r->token,
-                'component'      => $r->component,
-                'paymentarea'    => $r->paymentarea,
-                'itemid'         => $r->itemid,
-                'accountid'      => $r->accountid,
-                'amount'         => $r->amount,
-                'currency'       => $r->currency,
-                'redirect_url'   => $r->redirect_url,
-                'transaction_id' => $r->transaction_id,
-                'paymentid'      => $r->paymentid,
-                'state'          => $r->state,
-            ]);
+            $w->export_data(['ifthenpay', (string) $r->id], self::export_record($r));
         }
     }
 
@@ -215,19 +197,22 @@ class provider implements
             return;
         }
 
-        writer::with_context($context)->export_data(
-            array_merge($subcontext, ['ifthenpay']),
-            (object)[
-                'timecreated'    => transform::datetime($tx->timecreated),
-                'timemodified'   => transform::datetime($tx->timemodified),
-                'token'          => $tx->token,
-                'amount'         => $tx->amount,
-                'currency'       => $tx->currency,
-                'state'          => $tx->state,
-                'transaction_id' => $tx->transaction_id,
-                'redirect_url'   => $tx->redirect_url,
-            ]
-        );
+        writer::with_context($context)->export_data(array_merge($subcontext, ['ifthenpay']), self::export_record($tx));
+    }
+
+    /**
+     * One transaction as exported: the described fields, with timestamps made readable.
+     *
+     * The userid is left out, since the export already belongs to that user.
+     *
+     * @param stdClass $tx Transaction record.
+     * @return stdClass Export data.
+     */
+    private static function export_record(stdClass $tx): stdClass {
+        $data = array_intersect_key((array) $tx, array_flip(array_diff(self::FIELDS, ['userid'])));
+        $data['timecreated'] = transform::datetime($tx->timecreated);
+        $data['timemodified'] = transform::datetime($tx->timemodified);
+        return (object) $data;
     }
 
     /**

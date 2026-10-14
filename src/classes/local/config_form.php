@@ -243,7 +243,7 @@ class config_form
             ] as $cols => $text
         ) {
             // Bootstrap 5 spells this fw-bold and Bootstrap 4 font-weight-bold; both are emitted
-            // so the styling holds on Moodle 4.3-4.5 and on 5.x, where the BS4 name is deprecated.
+            // so the styling holds on Moodle 4.5 and on 5.x, where the BS4 name is deprecated.
             $headercols .= \html_writer::div(
                 $text,
                 $cols . ' px-0 text-uppercase text-muted small fw-bold font-weight-bold'
@@ -469,11 +469,16 @@ class config_form
             return;
         }
 
+        // Without the callback no payment is ever confirmed, so a refusal blocks the save like a
+        // transport failure does.
         try {
-            \paygw_ifthenpay_api()->activate_callback_by_gateway_context($gatewaykey);
+            $activated = \paygw_ifthenpay_api()->activate_callback_by_gateway_context($gatewaykey);
+            $problem = $activated ? null : 'INVALID';
         } catch (\moodle_exception $e) {
-            $errors['ifthenpay_methods_note'] =
-                get_string('form:error_callback_activation', 'paygw_ifthenpay', $e->getMessage());
+            $problem = $e->getMessage();
+        }
+        if ($problem !== null) {
+            $errors['ifthenpay_methods_note'] = get_string('form:error_callback_activation', 'paygw_ifthenpay', $problem);
         }
     }
 

@@ -39,6 +39,10 @@ $string['modal:redirectingtoifthenpay'] = 'Le estamos llevando a ifthenpay para 
 $string['api_heading'] = 'Conecte su cuenta de ifthenpay';
 $string['behavior_heading'] = 'Comportamiento del pago';
 $string['behavior_desc'] = 'Ajustes opcionales que afectan a cómo se muestra esta pasarela a los usuarios.';
+$string['checkout_target'] = 'Ventana del checkout';
+$string['checkout_target_desc'] = 'Dónde se abre el checkout de ifthenpay. En la misma pestaña, sustituye la página de Moodle. En una pestaña nueva, la página de Moodle sigue abierta y avanza sola cuando se confirma el pago.';
+$string['checkout_target_same'] = 'Misma pestaña';
+$string['checkout_target_newtab'] = 'Pestaña nueva';
 // Onboarding y consejos. La estructura (lista, numeración, insignias) vive en la plantilla steps —
 // estas cadenas contienen solo texto, para que un traductor nunca tenga que conservar clases Bootstrap.
 $string['onboarding_step1'] =
@@ -63,11 +67,11 @@ $string['moodle_tip3'] =
 $string['moodle_tip4'] =
     'Añádala a un curso: <em>Curso → Participantes → Métodos de inscripción → Añadir método</em>.';
 $string['moodle_tips_links'] =
-    '<a href="https://docs.moodle.org/501/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
+    '<a href="https://docs.moodle.org/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
+    '<a href="https://docs.moodle.org/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
+    '<a href="https://docs.moodle.org/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
-$string['backoffice_key_desc'] = 'Se utiliza para autenticar las llamadas a la API y los webhooks.';
+$string['backoffice_key_desc'] = 'Se utiliza para leer de ifthenpay sus Gateway Keys y métodos de pago, y para registrar la URL de notificación de pagos.';
 $string['methods_showcase_title'] = 'Métodos de pago admitidos';
 $string['status_unconfigured_title'] = 'Aún sin conexión';
 $string['status_unconfigured_desc'] =
@@ -97,7 +101,6 @@ $string['error_missing_backoffice_key'] =
 
 
 // Errors for API responses.
-$string['api:nobackofficekey_error'] = 'API: no hay ninguna Backoffice Key configurada.';
 $string['api:error_invalid_pbl_response'] = 'Respuesta no válida de la API Pay-by-Link.';
 $string['api:error_invalid_json_get'] = 'JSON no válido en la petición GET: {$a}';
 $string['api:error_invalid_json_post'] = 'JSON no válido en la petición POST.';
@@ -160,13 +163,11 @@ $string['form:error_callback_activation'] =
     'guarde de nuevo. Error: {$a}';
 
 
-// Proccessing => pay page.
+// Processing => pay page.
 $string['process:missing_ifthenpay_state'] =
     'No se encontraron datos de configuración de ifthenpay. Contacte con el administrador del sitio.';
-$string['process:error_missing_redirect']  =
-    'Falta la URL de redirección de ifthenpay. Contacte con el administrador del sitio.';
 
-// Proccessing => cancel/error page.
+// Processing => cancel/error page.
 $string['process:cancel_title']            = 'Pago no completado';
 $string['process:cancel_desc_cancel']      = 'Canceló el pago antes de completarlo. No se ha cobrado nada.';
 $string['process:cancel_desc_error']       = 'Algo salió mal al confirmar su pago. No se ha cobrado nada.';
@@ -182,10 +183,16 @@ $string['process:waiting_timeout']         =
     'Todavía en proceso. Puede cerrar esta página con seguridad: su inscripción se completa automáticamente en cuanto ' .
     'ifthenpay confirme el pago.';
 $string['process:order_reference']         = 'Referencia del pedido';
-$string['process:transaction_id']          = 'ID de transacción';
 $string['process:amount']                  = 'Importe';
 $string['process:btn_retry']               = 'Comprobar de nuevo';
 $string['process:btn_go_to_courses']       = 'Ir a Mis cursos';
+$string['process:checkout_waiting'] = 'Complete el pago en la pestaña de ifthenpay. Esta página se actualizará sola en cuanto se confirme el pago.';
+$string['process:checkout_reopen'] = 'Abrir el checkout de nuevo';
+$string['process:checkout_paid'] = 'Pago recibido. Se está activando su acceso.';
+$string['process:checkout_canceled'] = 'El pago se canceló. No se ha cobrado nada.';
+$string['process:checkout_error'] = 'Algo salió mal al confirmar el pago. No se ha cobrado nada.';
+$string['process:checkout_timeout'] = 'Todavía no hemos recibido la confirmación del pago. Si ya ha pagado, su acceso se activará automáticamente en cuanto ifthenpay lo confirme.';
+$string['process:checkout_start_failed'] = 'No se pudo iniciar el checkout. Inténtelo de nuevo.';
 
 
 // Events.
@@ -201,10 +208,10 @@ $string['privacy:metadata:ifthenpay_tx:token'] = 'Token aleatorio que identifica
 $string['privacy:metadata:ifthenpay_tx:component'] = 'Componente que inició el pago.';
 $string['privacy:metadata:ifthenpay_tx:paymentarea'] = 'Área de pago dentro del componente.';
 $string['privacy:metadata:ifthenpay_tx:itemid'] = 'Identificador del elemento dentro del área de pago.';
-$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Cuenta de ifthenpay utilizada para este pago.';
+$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Cuenta de pago de Moodle que recibió este pago.';
 $string['privacy:metadata:ifthenpay_tx:amount'] = 'Importe del pago.';
 $string['privacy:metadata:ifthenpay_tx:currency'] = 'Moneda del pago.';
-$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'URL de retorno utilizada durante el flujo de pago.';
+$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'Dirección del checkout de ifthenpay al que se envió al usuario.';
 $string['privacy:metadata:ifthenpay_tx:transaction_id'] =
     'Identificador de transacción devuelto por ifthenpay (si está disponible).';
 $string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Enlace al registro de pago del núcleo.';

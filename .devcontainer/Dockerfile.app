@@ -12,8 +12,8 @@ FROM php:8.3-apache
 ARG APP_UID=1000
 ARG APP_GID=1000
 # Pinned Moodle release, verified against the published SHA-256 checksum.
-ARG MOODLE_BRANCH=stable501
-ARG MOODLE_VERSION=5.1.5
+ARG MOODLE_BRANCH=stable503
+ARG MOODLE_VERSION=5.3
 ARG XDEBUG_VERSION=3.4.0
 
 # 1) System dependencies.

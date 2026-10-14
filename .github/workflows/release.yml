@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*" # e.g., v0.1.0
+      - "v*" # e.g., v1.3.0
 
 permissions:
   contents: write
@@ -13,29 +13,66 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Cheap checks first, so a mistagged release fails in seconds rather than after the full suite.
+  verify:
+    name: 🏷️ Tag, version.php and changelog agree
+    runs-on: ubuntu-latest
+    outputs:
+      component: ${{ steps.read.outputs.component }}
+      release: ${{ steps.read.outputs.release }}
+
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v7
+
+      - name: 🔎 Read version.php and CHANGES.md
+        id: read
+        run: |
+          set -euo pipefail
+          component=$(sed -nE "s/^\\\$plugin->component *= *'([a-z0-9_]+)'.*/\1/p" src/version.php)
+          release=$(sed -nE "s/^\\\$plugin->release *= *'([^']+)'.*/\1/p" src/version.php)
+          if [ -z "$component" ] || [ -z "$release" ]; then
+            echo "::error file=src/version.php::Could not read \$plugin->component and \$plugin->release."
+            exit 1
+          fi
+          if [ "v${release}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error file=src/version.php::Tag ${GITHUB_REF_NAME} does not match \$plugin->release '${release}' (expected tag v${release})."
+            exit 1
+          fi
+          # The release notes are this version's section of the changelog, which the GitHub Release
+          # and the Moodle Marketplace both receive. A release without one is refused here.
+          if ! grep -qxF "## ${release}" src/CHANGES.md; then
+            echo "::error file=src/CHANGES.md::No '## ${release}' section in src/CHANGES.md."
+            exit 1
+          fi
+          echo "component=${component}" >> "$GITHUB_OUTPUT"
+          echo "release=${release}" >> "$GITHUB_OUTPUT"
+
+  # The four checks are independent of each other, so they run side by side.
   lint-php:
     name: 🐘 PHP Lint
+    needs: verify
     uses: ./.github/workflows/lint-php.yml
 
   lint-js:
     name: 🔍 JS/CSS Lint
+    needs: verify
     uses: ./.github/workflows/lint-js.yml
-    needs: lint-php
 
   analyse-php:
     name: 🛡️ PHPStan
+    needs: verify
     uses: ./.github/workflows/analyse-php.yml
-    needs: lint-js
 
   test-phpunit:
     name: 🧪 PHPUnit
+    needs: verify
     uses: ./.github/workflows/test-phpunit.yml
-    needs: analyse-php
 
   package:
     name: 📦 Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [test-phpunit]
+    needs: [verify, lint-php, lint-js, analyse-php, test-phpunit]
 
     steps:
       - name: 🛎️ Checkout
@@ -52,14 +89,73 @@ jobs:
             src/ dist/ifthenpay/
           (cd dist && zip -r ifthenpay-${GITHUB_REF_NAME}.zip ifthenpay)
 
-      - name: ⬆️ Upload ZIP artifact
+      - name: 📝 Release notes from CHANGES.md
+        env:
+          RELEASE: ${{ needs.verify.outputs.release }}
+        run: |
+          set -euo pipefail
+          # From the version's heading up to the next one, without either heading.
+          awk -v heading="## ${RELEASE}" '
+            $0 == heading { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' src/CHANGES.md > dist/release-notes.md
+          cat dist/release-notes.md
+
+      - name: ⬆️ Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: plugin-zip-${{ github.ref_name }}
-          path: dist/ifthenpay-${{ github.ref_name }}.zip
+          path: |
+            dist/ifthenpay-${{ github.ref_name }}.zip
+            dist/release-notes.md
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           files: dist/ifthenpay-${{ github.ref_name }}.zip
-          generate_release_notes: true
+          body_path: dist/release-notes.md
+
+  # Its own job, so a failed submission can be retried with "Re-run failed jobs" without rebuilding
+  # anything or touching the GitHub Release.
+  marketplace:
+    name: 🏪 Publish to Moodle Marketplace
+    runs-on: ubuntu-latest
+    needs: [verify, package]
+
+    steps:
+      - name: ⬇️ Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: plugin-zip-${{ github.ref_name }}
+          path: dist
+
+      # Same request as moodlehq/moodle-plugin-release. That workflow cannot be used directly: it
+      # expects version.php at the repository root and zips the whole repository, while this
+      # plugin lives in src/.
+      - name: 🚀 Submit version
+        env:
+          TOKEN: ${{ secrets.MOODLE_MARKETPLACE_TOKEN }}
+          COMPONENT: ${{ needs.verify.outputs.component }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TOKEN}" ]; then
+            echo "::warning::MOODLE_MARKETPLACE_TOKEN is not set; skipping the Moodle Marketplace submission."
+            exit 0
+          fi
+
+          # --form-string, not -F: notes beginning with "<" or "@" would otherwise be read as a file.
+          status=$(curl -sS -o response.json -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -F "file=@dist/ifthenpay-${GITHUB_REF_NAME}.zip;filename=ifthenpay.zip" \
+            --form-string "releaseNotes=$(cat dist/release-notes.md)" \
+            --form-string "vcsTag=${GITHUB_REF_NAME}" \
+            "https://marketplace.moodle.com/api/plugins/${COMPONENT}/versions")
+
+          jq . response.json 2>/dev/null || cat response.json
+          if [ "${status}" -ne 201 ]; then
+            echo "::error::Moodle Marketplace answered HTTP ${status}."
+            jq -r '.violations[]? | "::error::\(.propertyPath // "request"): \(.message)"' response.json 2>/dev/null || true
+            exit 1
+          fi
+          echo "::notice::Published ${COMPONENT} ${GITHUB_REF_NAME} to the Moodle Marketplace (version id $(jq -r '.id' response.json))."

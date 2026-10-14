@@ -40,6 +40,10 @@ $string['modal:redirectingtoifthenpay'] = 'Redirection vers ifthenpay pour final
 $string['api_heading'] = 'Connectez votre compte ifthenpay';
 $string['behavior_heading'] = 'Comportement du paiement';
 $string['behavior_desc'] = 'Réglages facultatifs affectant la façon dont cette passerelle est présentée aux utilisateurs.';
+$string['checkout_target'] = 'Fenêtre du checkout';
+$string['checkout_target_desc'] = 'Où s’ouvre le checkout ifthenpay. Dans le même onglet, il remplace la page Moodle. Dans un nouvel onglet, la page Moodle reste ouverte et avance toute seule dès que le paiement est confirmé.';
+$string['checkout_target_same'] = 'Même onglet';
+$string['checkout_target_newtab'] = 'Nouvel onglet';
 // Onboarding et conseils. La structure (liste, numérotation, badges) réside dans le gabarit steps —
 // ces chaînes ne contiennent que du texte, afin qu'un traducteur n'ait jamais à conserver de classes Bootstrap.
 $string['onboarding_step1'] =
@@ -65,11 +69,11 @@ $string['moodle_tip3'] =
 $string['moodle_tip4'] =
     'Ajoutez-la à un cours : <em>Cours → Participants → Méthodes d\'inscription → Ajouter une méthode</em>.';
 $string['moodle_tips_links'] =
-    '<a href="https://docs.moodle.org/501/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
+    '<a href="https://docs.moodle.org/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
+    '<a href="https://docs.moodle.org/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
+    '<a href="https://docs.moodle.org/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
-$string['backoffice_key_desc'] = 'Utilisée pour authentifier les appels à l\'API et les webhooks.';
+$string['backoffice_key_desc'] = 'Utilisée pour lire auprès d\'ifthenpay vos Gateway Keys et moyens de paiement, et pour enregistrer l\'URL de notification des paiements.';
 $string['methods_showcase_title'] = 'Moyens de paiement pris en charge';
 $string['status_unconfigured_title'] = 'Pas encore connecté';
 $string['status_unconfigured_desc'] =
@@ -100,7 +104,6 @@ $string['error_missing_backoffice_key'] =
 
 
 // Errors for API responses.
-$string['api:nobackofficekey_error'] = 'API : aucune Backoffice Key configurée.';
 $string['api:error_invalid_pbl_response'] = 'Réponse non valide de l\'API Pay-by-Link.';
 $string['api:error_invalid_json_get'] = 'JSON non valide sur la requête GET : {$a}';
 $string['api:error_invalid_json_post'] = 'JSON non valide sur la requête POST.';
@@ -166,13 +169,11 @@ $string['form:error_callback_activation'] =
     'puis enregistrez à nouveau. Erreur : {$a}';
 
 
-// Proccessing => pay page.
+// Processing => pay page.
 $string['process:missing_ifthenpay_state'] =
     'Aucune donnée de configuration trouvée pour ifthenpay. Veuillez contacter l\'administrateur du site.';
-$string['process:error_missing_redirect']  =
-    'URL de redirection manquante de la part d\'ifthenpay. Veuillez contacter l\'administrateur du site.';
 
-// Proccessing => cancel/error page.
+// Processing => cancel/error page.
 $string['process:cancel_title']            = 'Paiement non finalisé';
 $string['process:cancel_desc_cancel']      = 'Vous avez annulé le paiement avant sa finalisation. Rien n\'a été débité.';
 $string['process:cancel_desc_error']       =
@@ -189,10 +190,16 @@ $string['process:waiting_timeout']         =
     'Traitement toujours en cours. Vous pouvez fermer cette page en toute sécurité : votre inscription se finalise ' .
     'automatiquement dès qu\'ifthenpay confirme le paiement.';
 $string['process:order_reference']         = 'Référence de la commande';
-$string['process:transaction_id']          = 'ID de transaction';
 $string['process:amount']                  = 'Montant';
 $string['process:btn_retry']               = 'Vérifier à nouveau';
 $string['process:btn_go_to_courses']       = 'Aller à Mes cours';
+$string['process:checkout_waiting'] = 'Finalisez votre paiement dans l’onglet ifthenpay. Cette page se mettra à jour toute seule dès que le paiement sera confirmé.';
+$string['process:checkout_reopen'] = 'Rouvrir le checkout';
+$string['process:checkout_paid'] = 'Paiement reçu. Votre accès est en cours d’activation.';
+$string['process:checkout_canceled'] = 'Le paiement a été annulé. Rien n’a été débité.';
+$string['process:checkout_error'] = 'Un problème est survenu lors de la confirmation du paiement. Rien n’a été débité.';
+$string['process:checkout_timeout'] = 'Nous n’avons pas encore reçu la confirmation du paiement. Si vous avez payé, votre accès sera activé automatiquement dès qu’ifthenpay l’aura confirmé.';
+$string['process:checkout_start_failed'] = 'Le checkout n’a pas pu être démarré. Veuillez réessayer.';
 
 
 // Events.
@@ -208,10 +215,10 @@ $string['privacy:metadata:ifthenpay_tx:token'] = 'Jeton aléatoire identifiant l
 $string['privacy:metadata:ifthenpay_tx:component'] = 'Composant à l\'origine du paiement.';
 $string['privacy:metadata:ifthenpay_tx:paymentarea'] = 'Zone de paiement au sein du composant.';
 $string['privacy:metadata:ifthenpay_tx:itemid'] = 'Identifiant de l\'élément dans la zone de paiement.';
-$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Compte ifthenpay utilisé pour ce paiement.';
+$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Compte de paiement Moodle qui a reçu ce paiement.';
 $string['privacy:metadata:ifthenpay_tx:amount'] = 'Montant du paiement.';
 $string['privacy:metadata:ifthenpay_tx:currency'] = 'Devise du paiement.';
-$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'URL de retour utilisée durant le flux de paiement.';
+$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'Adresse du checkout ifthenpay vers laquelle l\'utilisateur a été envoyé.';
 $string['privacy:metadata:ifthenpay_tx:transaction_id'] =
     'Identifiant de transaction renvoyé par ifthenpay (si disponible).';
 $string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Lien vers l\'enregistrement de paiement du noyau.';

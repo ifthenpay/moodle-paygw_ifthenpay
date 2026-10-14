@@ -7,19 +7,7 @@ parameters:
 			path: src/cancel.php
 
 		-
-			message: '#^Binary operation "\." between mixed and '' '' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/cancel.php
-
-		-
-			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/cancel.php
-
-		-
-			message: '#^Cannot access property \$id on mixed\.$#'
+			message: '#^Cannot access property \$requires on mixed\.$#'
 			identifier: property.nonObject
 			count: 1
 			path: src/cancel.php
@@ -38,6 +26,12 @@ parameters:
 
 		-
 			message: '#^Cannot call method header\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Cannot call method js_call_amd\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: src/cancel.php
@@ -87,13 +81,13 @@ parameters:
 		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
-			count: 3
+			count: 1
 			path: src/cancel.php
 
 		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 4
+			count: 3
 			path: src/cancel.php
 
 		-
@@ -104,6 +98,18 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$string of function strtoupper expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_tx_get expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/cancel.php
+
+		-
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_tx_get_own expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/cancel.php
@@ -337,93 +343,33 @@ parameters:
 			path: src/classes/local/data_formatter.php
 
 		-
+			message: '#^Cannot access property \$requires on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/classes/local/hook_callbacks.php
+
+		-
+			message: '#^Cannot call method data_for_js\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/classes/local/hook_callbacks.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: src/classes/local/hook_callbacks.php
+
+		-
 			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
 			identifier: foreach.nonIterable
 			count: 1
 			path: src/classes/privacy/provider.php
 
 		-
-			message: '#^Cannot access property \$accountid on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$amount on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$component on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$currency on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/classes/privacy/provider.php
-
-		-
 			message: '#^Cannot access property \$id on mixed\.$#'
 			identifier: property.nonObject
 			count: 1
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$itemid on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$paymentarea on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$paymentid on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$redirect_url on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$state on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$timecreated on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$timemodified on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$token on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/classes/privacy/provider.php
-
-		-
-			message: '#^Cannot access property \$transaction_id on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
 			path: src/classes/privacy/provider.php
 
 		-
@@ -477,7 +423,13 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$datetime of static method core_privacy\\local\\request\\transform\:\:datetime\(\) expects int, mixed given\.$#'
 			identifier: argument.type
-			count: 4
+			count: 2
+			path: src/classes/privacy/provider.php
+
+		-
+			message: '#^Parameter \#1 \$tx of static method paygw_ifthenpay\\privacy\\provider\:\:export_record\(\) expects stdClass, mixed given\.$#'
+			identifier: argument.type
+			count: 2
 			path: src/classes/privacy/provider.php
 
 		-
@@ -505,6 +457,18 @@ parameters:
 			path: src/db/upgrade.php
 
 		-
+			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot access property \$id on mixed\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
 			message: '#^Cannot call method execute\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -513,7 +477,7 @@ parameters:
 		-
 			message: '#^Cannot call method get_record\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 1
+			count: 2
 			path: src/lib.php
 
 		-
@@ -531,25 +495,25 @@ parameters:
 		-
 			message: '#^Cannot call method update_record\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 3
+			count: 2
 			path: src/lib.php
 
 		-
 			message: '#^Cannot cast mixed to float\.$#'
 			identifier: cast.double
-			count: 1
+			count: 2
 			path: src/lib.php
 
 		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
-			count: 4
+			count: 6
 			path: src/lib.php
 
 		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 7
+			count: 10
 			path: src/lib.php
 
 		-
@@ -589,50 +553,14 @@ parameters:
 			path: src/lib.php
 
 		-
-			message: '#^Parameter \#1 \$component of static method core_payment\\helper\:\:deliver_order\(\) expects string, mixed given\.$#'
-			identifier: argument.type
+			message: '#^Function paygw_ifthenpay_tx_get_own\(\) should return stdClass\|null but returns mixed\.$#'
+			identifier: return.type
 			count: 1
 			path: src/lib.php
-
-		-
-			message: '#^Parameter \#2 \$paymentarea of static method core_payment\\helper\:\:deliver_order\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/lib.php
-
-		-
-			message: '#^Parameter \#3 \$itemid of static method core_payment\\helper\:\:deliver_order\(\) expects int, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/lib.php
-
-		-
-			message: '#^Parameter \#5 \$userid of static method core_payment\\helper\:\:deliver_order\(\) expects int, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/lib.php
-
-		-
-			message: '#^Access to an undefined property object\:\:\$redirect_url\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/pay.php
-
-		-
-			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/pay.php
 
 		-
 			message: '#^Cannot access property \$id on mixed\.$#'
 			identifier: property.nonObject
-			count: 1
-			path: src/pay.php
-
-		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
 			count: 1
 			path: src/pay.php
 
@@ -689,30 +617,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/pay.php
-
-		-
-			message: '#^Variable \$cfg in isset\(\) always exists and is not nullable\.$#'
-			identifier: isset.variable
-			count: 1
-			path: src/pay.php
-
-		-
-			message: '#^Binary operation "\." between mixed and '' '' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/return.php
-
-		-
-			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/return.php
-
-		-
-			message: '#^Cannot access property \$id on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/return.php
 
 		-
 			message: '#^Cannot access property \$requires on mixed\.$#'
@@ -775,15 +679,9 @@ parameters:
 			path: src/return.php
 
 		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 3
-			path: src/return.php
-
-		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 3
+			count: 2
 			path: src/return.php
 
 		-
@@ -793,7 +691,7 @@ parameters:
 			path: src/return.php
 
 		-
-			message: '#^Parameter \#1 \$string of function substr expects string, mixed given\.$#'
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_tx_get_own expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/return.php
@@ -825,7 +723,7 @@ parameters:
 		-
 			message: '#^Cannot call method add\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 4
+			count: 5
 			path: src/settings.php
 
 		-
@@ -841,13 +739,13 @@ parameters:
 			path: src/settings.php
 
 		-
-			message: '#^Parameter \#1 \$settings of static method core_payment\\helper\:\:add_common_gateway_settings\(\) expects admin_settingpage, mixed given\.$#'
+			message: '#^Parameter \#1 \$settings of static method core_payment\\helper\:\:add_common_gateway_settings\(\) expects core_admin\\setting\\settingpage\\settingpage, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/settings.php
 
 		-
-			message: '#^Parameter \#3 \$information of class admin_setting_heading constructor expects string, mixed given\.$#'
+			message: '#^Parameter \#3 \$information of class core_admin\\setting\\setting\\heading constructor expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/settings.php
@@ -883,13 +781,19 @@ parameters:
 			path: src/version.php
 
 		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
-			count: 2
+			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
 			path: src/webhook.php
 
 		-
-			message: '#^Parameter \#1 \$token of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
+			message: '#^Parameter \#2 \$amount of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/webhook.php
+
+		-
+			message: '#^Parameter \#3 \$apk of function paygw_ifthenpay_process_webhook expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/webhook.php

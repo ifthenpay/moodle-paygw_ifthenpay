@@ -57,21 +57,14 @@ if ($ADMIN->fulltree) {
      * as the problem it is. String keys are written out rather than built from $keystatus so that
      * grepping for one still finds its use.
      */
+    // Status => [icon, icon class, alert level, title string, description string].
     $states = [
-        'unconfigured' => ['icon' => 'i/info', 'iconclass' => 'text-primary', 'alert' => ''],
-        'rejected'     => ['icon' => 'i/invalid', 'iconclass' => '', 'alert' => 'danger'],
-        'nomoodlekeys' => ['icon' => 'i/warning', 'iconclass' => '', 'alert' => 'warning'],
-        'ok'           => ['icon' => 'i/valid', 'iconclass' => 'text-success', 'alert' => ''],
+        'unconfigured' => ['i/info', 'text-primary', '', 'status_unconfigured_title', 'status_unconfigured_desc'],
+        'rejected'     => ['i/invalid', '', 'danger', 'status_rejected_title', 'status_rejected_desc'],
+        'nomoodlekeys' => ['i/warning', '', 'warning', 'status_nomoodlekeys_title', 'status_nomoodlekeys_desc'],
+        'ok'           => ['i/valid', 'text-success', '', 'status_connected_title', 'status_connected_desc'],
     ];
-    $state = $states[$keystatus] ?? $states['ok'];
-
-    $titles = [
-        'unconfigured' => ['status_unconfigured_title', 'status_unconfigured_desc'],
-        'rejected'     => ['status_rejected_title', 'status_rejected_desc'],
-        'nomoodlekeys' => ['status_nomoodlekeys_title', 'status_nomoodlekeys_desc'],
-        'ok'           => ['status_connected_title', 'status_connected_desc'],
-    ];
-    [$titlekey, $desckey] = $titles[$keystatus] ?? $titles['ok'];
+    [$icon, $iconclass, $alertlevel, $titlekey, $desckey] = $states[$keystatus];
 
     /*
      * ifthenpay's public catalog (/gateway/methods/available — keyless, so it renders before an
@@ -108,16 +101,15 @@ if ($ADMIN->fulltree) {
 
     // Core's .icons-collapse-expand shows exactly one of these, depending on Bootstrap's
     // .collapsed class.
-    $expandedicon = $OUTPUT->pix_icon('t/expanded', '', 'core');
-    $collapsedicon = $OUTPUT->pix_icon('t/collapsed', '', 'core');
-    foreach ($disclosures as $i => $disclosure) {
-        $disclosures[$i]['expandedicon'] = $expandedicon;
-        $disclosures[$i]['collapsedicon'] = $collapsedicon;
-    }
+    $icons = [
+        'expandedicon' => $OUTPUT->pix_icon('t/expanded', '', 'core'),
+        'collapsedicon' => $OUTPUT->pix_icon('t/collapsed', '', 'core'),
+    ];
+    $disclosures = array_map(fn(array $disclosure): array => $disclosure + $icons, $disclosures);
 
     $card = $OUTPUT->render_from_template('paygw_ifthenpay/settings_status', [
-        'icon' => $OUTPUT->pix_icon($state['icon'], '', 'core', ['class' => 'icon ' . $state['iconclass']]),
-        'alertlevel' => $state['alert'],
+        'icon' => $OUTPUT->pix_icon($icon, '', 'core', ['class' => 'icon ' . $iconclass]),
+        'alertlevel' => $alertlevel,
         'title' => get_string($titlekey, 'paygw_ifthenpay'),
         'description' => get_string($desckey, 'paygw_ifthenpay'),
         'steps' => $keystatus === 'unconfigured' ? $subscriptionsteps : null,
@@ -147,6 +139,17 @@ if ($ADMIN->fulltree) {
         'paygw_ifthenpay/behavior_heading',
         get_string('behavior_heading', 'paygw_ifthenpay'),
         get_string('behavior_desc', 'paygw_ifthenpay')
+    ));
+
+    $settings->add(new \admin_setting_configselect(
+        'paygw_ifthenpay/checkout_target',
+        get_string('checkout_target', 'paygw_ifthenpay'),
+        get_string('checkout_target_desc', 'paygw_ifthenpay'),
+        'same',
+        [
+            'same' => get_string('checkout_target_same', 'paygw_ifthenpay'),
+            'newtab' => get_string('checkout_target_newtab', 'paygw_ifthenpay'),
+        ]
     ));
 
     \core_payment\helper::add_common_gateway_settings($settings, 'paygw_ifthenpay');

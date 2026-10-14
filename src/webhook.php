@@ -23,17 +23,35 @@
  */
 
 define('NO_MOODLE_COOKIES', true);
+// The status code is what ifthenpay reads, so debugging output goes to the error log rather than into the
+// response, where on a developer site it would turn an answer into an error page.
+define('NO_DEBUG_DISPLAY', true);
 
 require(__DIR__ . '/../../../config.php');
 require_once(__DIR__ . '/lib.php');
 
 @header('Content-Type: text/plain; charset=utf-8');
 
-$amount   = required_param('amount', PARAM_RAW_TRIMMED);
-$token    = required_param('reference', PARAM_ALPHANUMEXT);
-$apk      = required_param('apk', PARAM_RAW_TRIMMED);
+// Read with optional_param and checked below: required_param throws on a missing parameter, and
+// Moodle would then answer with an HTML error page instead of the plain-text reply ifthenpay reads.
+$token  = optional_param('reference', '', PARAM_ALPHANUMEXT);
+$amount = optional_param('amount', '', PARAM_RAW_TRIMMED);
+$apk    = optional_param('apk', '', PARAM_RAW_TRIMMED);
+
+if ($token === '' || $amount === '' || $apk === '') {
+    echo 'INVALID';
+    exit;
+}
+
+$result = paygw_ifthenpay_process_webhook($token, $amount, $apk);
 
 // Idempotent: ifthenpay retries, and a retry of a settled payment must still answer OK.
-$ok = paygw_ifthenpay_process_webhook($token, (string)$amount, (string)$apk);
+// Transient failures (lock busy, delivery refused, database error) answer 503 so they are retried;
+// rejections answer 200 INVALID, so a forged or malformed call is not retried indefinitely.
+if ($result === PAYGW_IFTHENPAY_WEBHOOK_RETRY) {
+    http_response_code(503);
+    echo 'RETRY';
+    exit;
+}
 
-echo $ok ? 'OK' : 'INVALID';
+echo $result === PAYGW_IFTHENPAY_WEBHOOK_OK ? 'OK' : 'INVALID';

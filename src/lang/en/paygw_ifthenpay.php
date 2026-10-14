@@ -39,6 +39,10 @@ $string['modal:redirectingtoifthenpay'] = 'Taking you to ifthenpay to complete y
 $string['api_heading'] = 'Connect your ifthenpay account';
 $string['behavior_heading'] = 'Payment behaviour';
 $string['behavior_desc'] = 'Optional settings affecting how this gateway is shown to users.';
+$string['checkout_target'] = 'Checkout window';
+$string['checkout_target_desc'] = 'Where the ifthenpay checkout opens. In the same tab, it replaces the Moodle page. In a new tab, the Moodle page stays open and moves on by itself once the payment is confirmed.';
+$string['checkout_target_same'] = 'Same tab';
+$string['checkout_target_newtab'] = 'New tab';
 // Onboarding and tips. Structure (list, numbering, badges) lives in the steps template — these
 // carry prose only, so a translator never has to preserve Bootstrap classes.
 $string['onboarding_step1'] =
@@ -60,11 +64,11 @@ $string['moodle_tip3'] =
     'Enable <em>Enrolment on payment</em>: <em>Site administration → Plugins → Enrolments → Manage enrol plugins</em>.';
 $string['moodle_tip4'] = 'Add it to a course: <em>Course → Participants → Enrolment methods → Add method</em>.';
 $string['moodle_tips_links'] =
-    '<a href="https://docs.moodle.org/501/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
-    '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
+    '<a href="https://docs.moodle.org/en/Payment_gateways" target="_blank" rel="noopener">Payment gateways</a> · ' .
+    '<a href="https://docs.moodle.org/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
+    '<a href="https://docs.moodle.org/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
-$string['backoffice_key_desc'] = 'Used to authenticate API calls and webhooks.';
+$string['backoffice_key_desc'] = 'Used to read your Gateway Keys and payment methods from ifthenpay, and to register the payment notification URL.';
 $string['methods_showcase_title'] = 'Supported payment methods';
 $string['status_unconfigured_title'] = 'Not connected yet';
 $string['status_unconfigured_desc'] =
@@ -91,7 +95,6 @@ $string['error_missing_backoffice_key'] = 'The Backoffice Key is not configured.
 
 
 // Errors for API responses.
-$string['api:nobackofficekey_error'] = 'API: No Backoffice Key configured.';
 $string['api:error_invalid_pbl_response'] = 'Invalid response from Pay-by-Link API.';
 $string['api:error_invalid_json_get'] = 'Invalid JSON on GET request: {$a}';
 $string['api:error_invalid_json_post'] = 'Invalid JSON on POST request.';
@@ -137,11 +140,10 @@ $string['form:error_maxchars'] = 'Maximum {$a} characters.';
 $string['form:error_callback_activation'] = 'Failed to activate payment notifications. Please check your Backoffice Key and internet connectivity, then save again. Error: {$a}';
 
 
-// Proccessing => pay page.
+// Processing => pay page.
 $string['process:missing_ifthenpay_state'] = 'No configuration data found for ifthenpay. Please contact the site administrator.';
-$string['process:error_missing_redirect']  = 'Missing redirect URL from ifthenpay. Please contact the site administrator.';
 
-// Proccessing => cancel/error page.
+// Processing => cancel/error page.
 $string['process:cancel_title']            = 'Payment not completed';
 $string['process:cancel_desc_cancel']      = 'You canceled the payment before it was completed. Nothing has been charged.';
 $string['process:cancel_desc_error']       = 'Something went wrong while confirming your payment. Nothing has been charged.';
@@ -155,10 +157,16 @@ $string['process:waiting_hint']            = 'This usually takes a few seconds.'
 $string['process:loading']                 = 'Checking';
 $string['process:waiting_timeout']         = 'Still processing. You can close this page safely — your enrolment completes automatically as soon as ifthenpay confirms the payment.';
 $string['process:order_reference']         = 'Order reference';
-$string['process:transaction_id']          = 'Transaction ID';
 $string['process:amount']                  = 'Amount';
 $string['process:btn_retry']               = 'Check again';
 $string['process:btn_go_to_courses']       = 'Go to My courses';
+$string['process:checkout_waiting'] = 'Complete your payment in the ifthenpay tab. This page will update by itself as soon as the payment is confirmed.';
+$string['process:checkout_reopen'] = 'Open the checkout again';
+$string['process:checkout_paid'] = 'Payment received. Your access is being enabled.';
+$string['process:checkout_canceled'] = 'The payment was cancelled. Nothing has been charged.';
+$string['process:checkout_error'] = 'Something went wrong while confirming your payment. Nothing has been charged.';
+$string['process:checkout_timeout'] = 'We have not received the payment confirmation yet. If you have paid, your access is enabled automatically as soon as ifthenpay confirms it.';
+$string['process:checkout_start_failed'] = 'The checkout could not be started. Please try again.';
 
 
 // Events.
@@ -174,10 +182,10 @@ $string['privacy:metadata:ifthenpay_tx:token'] = 'Random token identifying the t
 $string['privacy:metadata:ifthenpay_tx:component'] = 'Component which initiated the payment.';
 $string['privacy:metadata:ifthenpay_tx:paymentarea'] = 'Payment area within the component.';
 $string['privacy:metadata:ifthenpay_tx:itemid'] = 'Item identifier inside the payment area.';
-$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Mapped ifthenpay account used for this payment.';
+$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Moodle payment account that received this payment.';
 $string['privacy:metadata:ifthenpay_tx:amount'] = 'Payment amount.';
 $string['privacy:metadata:ifthenpay_tx:currency'] = 'Payment currency.';
-$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'Return URL used during the payment flow.';
+$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'ifthenpay checkout address the user was sent to.';
 $string['privacy:metadata:ifthenpay_tx:transaction_id'] = 'Transaction identifier returned by ifthenpay (if available).';
 $string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Link to the core payment record.';
 $string['privacy:metadata:ifthenpay_tx:state'] = 'Current transaction state.';

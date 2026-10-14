@@ -23,6 +23,9 @@
  */
 
 define('NO_MOODLE_COOKIES', true);
+// ifthenpay reads the status code, so debugging output goes to the error log rather than into the
+// response, where on a developer site it would turn an answer into an error page.
+define('NO_DEBUG_DISPLAY', true);
 
 require(__DIR__ . '/../../../config.php');
 require_once(__DIR__ . '/lib.php');

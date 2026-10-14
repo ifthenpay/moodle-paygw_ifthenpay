@@ -26,9 +26,11 @@ use core_payment\helper;
 
 // The polling request runs every few seconds and never writes to the session, so it asks not to hold
 // the session lock: the lock would stall the customer's other Moodle requests until each one finished.
+// Its answer is JSON, so debugging output goes to the error log rather than into it.
 // phpcs:ignore moodle.Files.MoodleInternal.MoodleInternalGlobalState
 if (($_GET['action'] ?? '') === 'verify') {
     define('READ_ONLY_SESSION', true);
+    define('NO_DEBUG_DISPLAY', true);
 }
 
 require(__DIR__ . '/../../../config.php');

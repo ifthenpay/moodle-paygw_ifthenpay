@@ -25,6 +25,8 @@ Earlier releases are described on the project's GitHub Releases page.
 - The cancel page redirected a paid order through an intermediate "redirecting" page instead of
   going straight to the course.
 - The "Open the checkout again" button could fail to appear.
+- On sites that display debug messages, a payment notification or the payment status check could
+  answer with an error page instead of its result.
 - The cancel page shows the amount in the site's currency format, like the return page.
 - Corrected the descriptions of the Backoffice Key and of two privacy fields.
 

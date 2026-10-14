@@ -71,7 +71,7 @@ $string['moodle_tips_links'] =
     '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
     '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
-$string['backoffice_key_desc'] = 'Utilizada para autenticar chamadas à API e webhooks.';
+$string['backoffice_key_desc'] = 'Utilizada para ler da ifthenpay as suas Gateway Keys e métodos de pagamento, e para registar o URL de notificação de pagamentos.';
 $string['methods_showcase_title'] = 'Métodos de pagamento suportados';
 $string['status_unconfigured_title'] = 'Ainda não ligado';
 $string['status_unconfigured_desc'] =
@@ -187,10 +187,10 @@ $string['privacy:metadata:ifthenpay_tx:token'] = 'Token aleatório que identific
 $string['privacy:metadata:ifthenpay_tx:component'] = 'Componente que iniciou o pagamento.';
 $string['privacy:metadata:ifthenpay_tx:paymentarea'] = 'Área de pagamento dentro do componente.';
 $string['privacy:metadata:ifthenpay_tx:itemid'] = 'Identificador do item na área de pagamento.';
-$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Conta ifthenpay mapeada utilizada neste pagamento.';
+$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Conta de pagamento do Moodle que recebeu este pagamento.';
 $string['privacy:metadata:ifthenpay_tx:amount'] = 'Montante do pagamento.';
 $string['privacy:metadata:ifthenpay_tx:currency'] = 'Moeda do pagamento.';
-$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'URL de retorno utilizado no fluxo de pagamento.';
+$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'Endereço do checkout ifthenpay para onde o utilizador foi encaminhado.';
 $string['privacy:metadata:ifthenpay_tx:transaction_id'] = 'Identificador de transação devolvido pela ifthenpay (se existir).';
 $string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Ligação ao registo de pagamento do core.';
 $string['privacy:metadata:ifthenpay_tx:state'] = 'Estado atual da transação.';

@@ -71,7 +71,7 @@ $string['moodle_tips_links'] =
     '<a href="https://docs.moodle.org/400/en/Set_up_payment" target="_blank" rel="noopener">Set up payment</a> · ' .
     '<a href="https://docs.moodle.org/400/en/Enrolment_on_payment" target="_blank" rel="noopener">Enrolment on payment</a>';
 $string['backoffice_key'] = 'Backoffice Key';
-$string['backoffice_key_desc'] = 'Se utiliza para autenticar las llamadas a la API y los webhooks.';
+$string['backoffice_key_desc'] = 'Se utiliza para leer de ifthenpay sus Gateway Keys y métodos de pago, y para registrar la URL de notificación de pagos.';
 $string['methods_showcase_title'] = 'Métodos de pago admitidos';
 $string['status_unconfigured_title'] = 'Aún sin conexión';
 $string['status_unconfigured_desc'] =
@@ -211,10 +211,10 @@ $string['privacy:metadata:ifthenpay_tx:token'] = 'Token aleatorio que identifica
 $string['privacy:metadata:ifthenpay_tx:component'] = 'Componente que inició el pago.';
 $string['privacy:metadata:ifthenpay_tx:paymentarea'] = 'Área de pago dentro del componente.';
 $string['privacy:metadata:ifthenpay_tx:itemid'] = 'Identificador del elemento dentro del área de pago.';
-$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Cuenta de ifthenpay utilizada para este pago.';
+$string['privacy:metadata:ifthenpay_tx:accountid'] = 'Cuenta de pago de Moodle que recibió este pago.';
 $string['privacy:metadata:ifthenpay_tx:amount'] = 'Importe del pago.';
 $string['privacy:metadata:ifthenpay_tx:currency'] = 'Moneda del pago.';
-$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'URL de retorno utilizada durante el flujo de pago.';
+$string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'Dirección del checkout de ifthenpay al que se envió al usuario.';
 $string['privacy:metadata:ifthenpay_tx:transaction_id'] =
     'Identificador de transacción devuelto por ifthenpay (si está disponible).';
 $string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Enlace al registro de pago del núcleo.';

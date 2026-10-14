@@ -160,7 +160,9 @@ define(["core/templates", "core/modal", "core/modal_events", "core/str", "paygw_
           }
         });
         modal.show();
-        start();
+        // Once the body has rendered: start() reveals the reopen button inside it, which a fast
+        // checkout request would otherwise look for before it exists.
+        modal.getBodyPromise().then(start);
       });
     });
   };

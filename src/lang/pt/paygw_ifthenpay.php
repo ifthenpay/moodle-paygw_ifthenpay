@@ -98,7 +98,6 @@ $string['error_missing_backoffice_key'] = 'A Backoffice Key não está configura
 
 
 // Errors for API responses.
-$string['api:nobackofficekey_error'] = 'API: Nenhuma Backoffice Key configurada.';
 $string['api:error_invalid_pbl_response'] = 'Resposta inválida da API Pay-by-Link.';
 $string['api:error_invalid_json_get'] = 'Resposta JSON inválida no pedido GET: {$a}';
 $string['api:error_invalid_json_post'] = 'Resposta JSON inválida no pedido POST.';

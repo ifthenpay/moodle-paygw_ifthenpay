@@ -74,7 +74,7 @@ final class api_client
     public function __construct(string $backofficekey, int $timeout = 10) {
         $backofficekey = trim($backofficekey);
         if ($backofficekey === '') {
-            throw new moodle_exception('api:nobackofficekey_error', 'paygw_ifthenpay');
+            throw new moodle_exception('error_missing_backoffice_key', 'paygw_ifthenpay');
         }
         $this->timeout = max(1, $timeout);
         $this->backofficekey = $backofficekey;

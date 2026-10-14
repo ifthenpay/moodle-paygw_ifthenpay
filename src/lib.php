@@ -48,11 +48,7 @@ function paygw_ifthenpay_get_backoffice_key(): string {
  * @throws \moodle_exception If the Backoffice Key is missing.
  */
 function paygw_ifthenpay_api(): api_client {
-    $key = paygw_ifthenpay_get_backoffice_key();
-    if ($key === '') {
-        throw new \moodle_exception('error_missing_backoffice_key', 'paygw_ifthenpay');
-    }
-    return new api_client($key, 8);
+    return new api_client(paygw_ifthenpay_get_backoffice_key(), 8);
 }
 
 /**

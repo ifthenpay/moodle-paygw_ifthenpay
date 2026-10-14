@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'paygw_ifthenpay';
-$plugin->version   = 2026101400;
+$plugin->version   = 2026101401;
 $plugin->requires  = 2024100700;        // Moodle 4.5 LTS: the oldest release still receiving security
                                         // fixes. (The "new tab" checkout itself needs 4.4's head hook.)
 $plugin->maturity  = MATURITY_STABLE;

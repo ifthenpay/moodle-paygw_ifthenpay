@@ -469,11 +469,16 @@ class config_form
             return;
         }
 
+        // Without the callback no payment is ever confirmed, so a refusal blocks the save like a
+        // transport failure does.
         try {
-            \paygw_ifthenpay_api()->activate_callback_by_gateway_context($gatewaykey);
+            $activated = \paygw_ifthenpay_api()->activate_callback_by_gateway_context($gatewaykey);
+            $problem = $activated ? null : 'INVALID';
         } catch (\moodle_exception $e) {
-            $errors['ifthenpay_methods_note'] =
-                get_string('form:error_callback_activation', 'paygw_ifthenpay', $e->getMessage());
+            $problem = $e->getMessage();
+        }
+        if ($problem !== null) {
+            $errors['ifthenpay_methods_note'] = get_string('form:error_callback_activation', 'paygw_ifthenpay', $problem);
         }
     }
 

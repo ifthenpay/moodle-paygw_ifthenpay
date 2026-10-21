@@ -39,19 +39,31 @@ $amount = optional_param('amount', '', PARAM_RAW_TRIMMED);
 $apk    = optional_param('apk', '', PARAM_RAW_TRIMMED);
 
 if ($token === '' || $amount === '' || $apk === '') {
-    echo 'INVALID';
+    http_response_code(400);
+    echo 'INVALID: missing reference, amount or apk';
     exit;
 }
 
 $result = paygw_ifthenpay_process_webhook($token, $amount, $apk);
 
-// Idempotent: ifthenpay retries, and a retry of a settled payment must still answer OK.
-// Transient failures (lock busy, delivery refused, database error) answer 503 so they are retried;
-// rejections answer 200 INVALID, so a forged or malformed call is not retried indefinitely.
-if ($result === PAYGW_IFTHENPAY_WEBHOOK_RETRY) {
-    http_response_code(503);
-    echo 'RETRY';
-    exit;
-}
+/*
+ * Idempotent: ifthenpay retries, and a retry of a settled payment must still answer OK.
+ *
+ * Every other outcome answers a distinct non-2xx code. ifthenpay's callback log records only the
+ * status, so a single 200 INVALID made a misrouted callback indistinguishable from any other
+ * rejection; and ifthenpay stops on any 2xx, so a rejection answered 200 was never retried even
+ * when the cause (an unknown reference, say) is fixed within the retry window. The cost is that a
+ * genuine callback that stays rejected is retried, and reported in the site log, on each of
+ * ifthenpay's bounded attempts. A forged call is not retried at all: ifthenpay only retries its own.
+ */
+$responses = [
+    PAYGW_IFTHENPAY_WEBHOOK_OK       => [200, 'OK'],
+    PAYGW_IFTHENPAY_WEBHOOK_UNKNOWN  => [404, 'INVALID: unknown reference'],
+    PAYGW_IFTHENPAY_WEBHOOK_BADKEY   => [403, 'INVALID: anti-phishing key mismatch'],
+    PAYGW_IFTHENPAY_WEBHOOK_MISMATCH => [409, 'INVALID: amount mismatch'],
+];
+// Transient failures (lock busy, delivery refused, database error) answer 503 so they are retried.
+[$status, $body] = $responses[$result] ?? [503, 'RETRY'];
 
-echo $result === PAYGW_IFTHENPAY_WEBHOOK_OK ? 'OK' : 'INVALID';
+http_response_code($status);
+echo $body;

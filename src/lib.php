@@ -27,8 +27,12 @@ use paygw_ifthenpay\local\data_formatter;
 
 /** Webhook outcome: the payment is (or already was) settled. */
 define('PAYGW_IFTHENPAY_WEBHOOK_OK', 'ok');
-/** Webhook outcome: the call was rejected; retrying it would not help. */
-define('PAYGW_IFTHENPAY_WEBHOOK_INVALID', 'invalid');
+/** Webhook outcome: rejected, no transaction has this token. */
+define('PAYGW_IFTHENPAY_WEBHOOK_UNKNOWN', 'unknown');
+/** Webhook outcome: rejected, the anti-phishing key does not match the transaction's. */
+define('PAYGW_IFTHENPAY_WEBHOOK_BADKEY', 'badkey');
+/** Webhook outcome: rejected, the notified amount differs from the transaction's. */
+define('PAYGW_IFTHENPAY_WEBHOOK_MISMATCH', 'mismatch');
 /** Webhook outcome: a transient failure; ifthenpay should retry. */
 define('PAYGW_IFTHENPAY_WEBHOOK_RETRY', 'retry');
 
@@ -350,6 +354,19 @@ function paygw_ifthenpay_report_payment_problem(string $token, string $problem):
 }
 
 /**
+ * Make a caller-supplied value safe to put in a log message.
+ *
+ * Control characters would let a caller forge extra lines in the error log, and a byte-wise cut
+ * can split a UTF-8 character, which makes the event's JSON fail to encode and lose its data.
+ *
+ * @param string $value Untrusted value, e.g. the notified amount.
+ * @return string At most 32 characters, without control characters.
+ */
+function paygw_ifthenpay_log_value(string $value): string {
+    return \core_text::substr((string) preg_replace('/[[:cntrl:]]/', ' ', $value), 0, 32);
+}
+
+/**
  * Convert an amount string to integer cents.
  *
  * Amounts are compared in cents rather than as strings or floats: "10", "10.0" and "10.00" are the
@@ -379,7 +396,7 @@ function paygw_ifthenpay_amount_to_cents(string $amount): ?int {
  * @param string $amount Amount string.
  * @param string $apk    Base64-encoded gateway key.
  * @return string PAYGW_IFTHENPAY_WEBHOOK_OK when the payment is (or becomes) PAID;
- *                PAYGW_IFTHENPAY_WEBHOOK_INVALID when the call is rejected;
+ *                PAYGW_IFTHENPAY_WEBHOOK_UNKNOWN, _BADKEY or _MISMATCH when the call is rejected;
  *                PAYGW_IFTHENPAY_WEBHOOK_RETRY on a transient failure ifthenpay should retry.
  */
 function paygw_ifthenpay_process_webhook(string $token, string $amount, string $apk): string {
@@ -400,7 +417,22 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         // Read inside the lock: anything read before it may already be stale.
         $rec = paygw_ifthenpay_tx_get($token);
         if (!$rec) {
-            return PAYGW_IFTHENPAY_WEBHOOK_INVALID;
+            /*
+             * Reported because nothing else records it: the likely cause is a misrouted callback
+             * (another system's payment on the same account, or a reference ifthenpay substituted),
+             * otherwise visible only as an HTTP code in ifthenpay's logs. Only when the apk is a
+             * gateway key this site has used, which a genuine misrouted callback carries: the
+             * endpoint is unauthenticated, and logging every random reference would let anyone
+             * fill the site log. The answer is the same either way, so it reveals nothing.
+             */
+            $decoded = base64_decode($apk, true);
+            if ($decoded !== false && $decoded !== '' && $DB->record_exists('paygw_ifthenpay_tx', ['gateway_key' => $decoded])) {
+                paygw_ifthenpay_report_payment_problem(
+                    $token,
+                    'unknown reference (no such transaction), notified amount ' . paygw_ifthenpay_log_value($amount)
+                );
+            }
+            return PAYGW_IFTHENPAY_WEBHOOK_UNKNOWN;
         }
 
         /*
@@ -411,7 +443,9 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         $expectedkey = (string) $rec->gateway_key;
         $decoded = base64_decode($apk, true);
         if ($expectedkey === '' || $decoded === false || !hash_equals($expectedkey, $decoded)) {
-            return PAYGW_IFTHENPAY_WEBHOOK_INVALID;
+            // The key itself is never logged: it is the webhook's shared secret.
+            paygw_ifthenpay_report_payment_problem($token, 'anti-phishing key does not match the transaction');
+            return PAYGW_IFTHENPAY_WEBHOOK_BADKEY;
         }
 
         /*
@@ -423,9 +457,9 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         if ($notifiedcents === null || $notifiedcents !== paygw_ifthenpay_amount_to_cents((string) $rec->amount)) {
             paygw_ifthenpay_report_payment_problem(
                 $token,
-                'amount mismatch: notified ' . substr($amount, 0, 32) . ', expected ' . $rec->amount
+                'amount mismatch: notified ' . paygw_ifthenpay_log_value($amount) . ', expected ' . $rec->amount
             );
-            return PAYGW_IFTHENPAY_WEBHOOK_INVALID;
+            return PAYGW_IFTHENPAY_WEBHOOK_MISMATCH;
         }
 
         // Idempotent: a retry of an already-settled payment is a success, not a repeat.

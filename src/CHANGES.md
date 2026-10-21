@@ -4,6 +4,14 @@ Earlier releases are described on the project's GitHub Releases page.
 
 ## 1.3.1
 
+### Changed
+
+- A payment notification that is rejected now answers with its own HTTP status instead of
+  `200 INVALID`, so the cause shows in ifthenpay's callback log and ifthenpay retries it: `404`
+  unknown reference, `403` anti-phishing key mismatch, `409` amount mismatch, `400` missing
+  parameters. A key mismatch, and an unknown reference that carries a Gateway Key this site uses,
+  are also recorded in the site logs on each attempt, as an amount mismatch already was.
+
 ### Fixed
 
 - Saving a payment account failed with "Failed to activate payment notifications … Error:

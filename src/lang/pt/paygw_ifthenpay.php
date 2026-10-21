@@ -104,6 +104,8 @@ $string['api:error_invalid_json_post'] = 'Resposta JSON inválida no pedido POST
 $string['api:error_http_request_failed'] = 'Falha na chamada HTTP: {$a}';
 $string['api:error_http_status'] = 'Erro HTTP da API: {$a}';
 $string['api:error_unauthorized'] = 'A API rejeitou as credenciais: {$a}';
+$string['api:response_empty'] = '(resposta vazia)';
+$string['api:error_callback_refused'] = 'A ifthenpay recusou registar o URL de notificação: {$a}';
 
 
 // Form – sections & labels.
@@ -140,7 +142,9 @@ $string['form:error_no_methods_enabled'] = 'Ative pelo menos um método de pagam
 $string['form:error_default_not_enabled'] = 'O método predefinido "{$a}" tem de estar ativado nos métodos de pagamento.';
 $string['form:error_default_unknown'] = 'O método predefinido selecionado "{$a}" não é reconhecido.';
 $string['form:error_maxchars'] = 'Máximo de {$a} caracteres.';
-$string['form:error_callback_activation'] = 'Falha ao ativar notificações de pagamento. Verifique a sua Backoffice Key e a conectividade à internet, depois guarde novamente. Erro: {$a}';
+$string['form:error_callback_activation'] =
+    'Falha ao ativar as notificações de pagamento para esta Gateway Key. Guarde novamente; se continuar a ' .
+    'falhar, contacte o suporte ifthenpay com este erro: {$a}';
 
 
 // Processing => pay page.

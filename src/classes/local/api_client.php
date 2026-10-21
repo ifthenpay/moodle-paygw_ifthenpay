@@ -150,13 +150,14 @@ final class api_client
      * Register this site's webhook URL against a gateway key.
      *
      * The placeholders in urlCb are substituted by ifthenpay when it calls back. The endpoint
-     * answers with plain text, "OK" or "INVALID", rather than JSON.
+     * answers "OK" or "INVALID", served as a JSON string ("\"OK\"", quotes included) under an
+     * application/json content type, so the quotes must be decoded away before comparing.
      *
      * @param string $gatewaykey The Ifthenpay Gateway Key.
-     * @return bool True on "OK", false otherwise.
-     * @throws \moodle_exception On transport or JSON errors (via post_json()).
+     * @throws \moodle_exception On transport or JSON errors (via post_json()), or when ifthenpay
+     *                           answers anything but "OK" — the message then carries its answer.
      */
-    public function activate_callback_by_gateway_context(string $gatewaykey): bool {
+    public function activate_callback_by_gateway_context(string $gatewaykey): void {
         $url = self::BASE_API_PUBLIC . self::ENDPOINT_CALLBACK_ACTIVATION . '/?cms=moodle';
 
         $payload = [
@@ -168,7 +169,20 @@ final class api_client
 
         $response = $this->post_json($url, $payload);
 
-        return trim((string)$response) === 'OK';
+        // The post_json() helper only decodes arrays, so a JSON string comes back raw, quotes and all.
+        $decoded = is_string($response) ? json_decode($response) : null;
+        $answer = is_string($decoded) ? $decoded : (is_string($response) ? $response : (string) json_encode($response));
+        $answer = trim($answer);
+        if ($answer === 'OK') {
+            return;
+        }
+
+        // The answer is shown to the admin, so strip any markup and keep an error page short.
+        $shown = \core_text::substr(strip_tags($answer), 0, 200);
+        if ($shown === '') {
+            $shown = get_string('api:response_empty', 'paygw_ifthenpay');
+        }
+        throw new moodle_exception('api:error_callback_refused', 'paygw_ifthenpay', '', $shown);
     }
 
     /**
@@ -199,6 +213,13 @@ final class api_client
             throw new moodle_exception('api:error_http_request_failed', 'paygw_ifthenpay', '', $e->getMessage());
         }
 
+        // Moodle's curl does not throw on a timeout, DNS/TLS failure or blocked host: it returns the
+        // error text as if it were the body, so that has to be caught here or callers read it as
+        // ifthenpay's answer.
+        if (is_string($curl->error) && $curl->error !== '') {
+            throw new moodle_exception('api:error_http_request_failed', 'paygw_ifthenpay', '', $curl->error);
+        }
+
         $code = (int) ($curl->get_info()['http_code'] ?? 0);
 
         // 401/403 means the credentials were rejected, which callers — notably the Backoffice Key
@@ -207,7 +228,9 @@ final class api_client
             throw new moodle_exception('api:error_unauthorized', 'paygw_ifthenpay', '', "HTTP $code");
         }
         if ($code >= 400) {
-            throw new moodle_exception('api:error_http_status', 'paygw_ifthenpay', '', "HTTP $code: $body");
+            // An error page from a proxy or CDN can be a whole HTML document; keep only a short text.
+            $snippet = \core_text::substr(trim(strip_tags((string) $body)), 0, 200);
+            throw new moodle_exception('api:error_http_status', 'paygw_ifthenpay', '', "HTTP $code: $snippet");
         }
 
         return (string) $body;

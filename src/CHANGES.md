@@ -2,6 +2,28 @@
 
 Earlier releases are described on the project's GitHub Releases page.
 
+## 1.3.1
+
+### Changed
+
+- A payment notification that is rejected now answers with its own HTTP status instead of
+  `200 INVALID`, so the cause shows in ifthenpay's callback log and ifthenpay retries it: `404`
+  unknown reference, `403` anti-phishing key mismatch, `409` amount mismatch, `400` missing
+  parameters. A key mismatch, and an unknown reference that carries a Gateway Key this site uses,
+  are also recorded in the site logs on each attempt, as an amount mismatch already was.
+
+### Fixed
+
+- Saving a payment account failed with "Failed to activate payment notifications … Error:
+  INVALID" even though ifthenpay had registered the notification URL. The plugin misread
+  ifthenpay's confirmation, so no account could be saved on 1.3.0.
+- When ifthenpay does refuse to register the notification URL, the error now shows ifthenpay's
+  own answer instead of a fixed "INVALID", and no longer points at the Backoffice Key, which this
+  step does not use.
+- A network failure while talking to ifthenpay (timeout, DNS or TLS error, or a host blocked in
+  Moodle's HTTP security settings) is now reported as a connection error rather than as an
+  ifthenpay answer, and HTTP error pages are shortened to plain text in error messages.
+
 ## 1.3.0
 
 **Requires Moodle 4.5 or later.** Sites on Moodle 4.3 or 4.4 can keep using 1.2.0.

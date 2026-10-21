@@ -101,6 +101,8 @@ $string['api:error_invalid_json_post'] = 'Invalid JSON on POST request.';
 $string['api:error_http_request_failed'] = 'HTTP request failed: {$a}';
 $string['api:error_http_status'] = 'API HTTP error: {$a}';
 $string['api:error_unauthorized'] = 'API rejected the credentials: {$a}';
+$string['api:response_empty'] = '(empty response)';
+$string['api:error_callback_refused'] = 'ifthenpay refused to register the notification URL: {$a}';
 
 
 // Form – sections & labels.
@@ -137,7 +139,9 @@ $string['form:error_no_methods_enabled'] = 'Please enable at least one payment m
 $string['form:error_default_not_enabled'] = 'The default method "{$a}" must be enabled in Payment methods.';
 $string['form:error_default_unknown'] = 'Selected default method "{$a}" is not recognised.';
 $string['form:error_maxchars'] = 'Maximum {$a} characters.';
-$string['form:error_callback_activation'] = 'Failed to activate payment notifications. Please check your Backoffice Key and internet connectivity, then save again. Error: {$a}';
+$string['form:error_callback_activation'] =
+    'Failed to activate payment notifications for this Gateway Key. Save again; if it keeps failing, ' .
+    'contact ifthenpay support with this error: {$a}';
 
 
 // Processing => pay page.

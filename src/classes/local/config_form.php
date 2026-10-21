@@ -472,13 +472,10 @@ class config_form
         // Without the callback no payment is ever confirmed, so a refusal blocks the save like a
         // transport failure does.
         try {
-            $activated = \paygw_ifthenpay_api()->activate_callback_by_gateway_context($gatewaykey);
-            $problem = $activated ? null : 'INVALID';
+            \paygw_ifthenpay_api()->activate_callback_by_gateway_context($gatewaykey);
         } catch (\moodle_exception $e) {
-            $problem = $e->getMessage();
-        }
-        if ($problem !== null) {
-            $errors['ifthenpay_methods_note'] = get_string('form:error_callback_activation', 'paygw_ifthenpay', $problem);
+            $errors['ifthenpay_methods_note'] =
+                get_string('form:error_callback_activation', 'paygw_ifthenpay', s($e->getMessage()));
         }
     }
 

@@ -169,20 +169,8 @@ parameters:
 			path: src/classes/local/api_client.php
 
 		-
-			message: '#^Cannot cast array\<mixed\>\|string to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: src/classes/local/api_client.php
-
-		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
-			count: 1
-			path: src/classes/local/api_client.php
-
-		-
-			message: '#^Parameter \#1 \$string of function trim expects string, mixed given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/classes/local/api_client.php
 
@@ -482,6 +470,12 @@ parameters:
 
 		-
 			message: '#^Cannot call method insert_record\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/lib.php
+
+		-
+			message: '#^Cannot call method record_exists\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: src/lib.php

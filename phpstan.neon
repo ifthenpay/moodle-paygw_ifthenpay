@@ -25,14 +25,6 @@ parameters:
   excludePaths:
     analyseAndScan:
       - src/lang/*/paygw_ifthenpay.php
-      # Same reasoning for the declarative db/ definition files: bare `$capabilities = [...]` /
-      # `$messageproviders = [...]` arrays with no logic. Adding db/access.php alone turned
-      # baseline entries for hook_callbacks.php and data_formatter.php into "unmatched"
-      # errors, with no change to those files. db/upgrade.php has logic and stays analysed.
-      - src/db/access.php
-      - src/db/messages.php
-      - src/db/caches.php
-      - src/db/hooks.php
 
   # A related phantom-error family, same extension: a plugin class file that references another
   # class under paygw_ifthenpay\local\ directly draws non-ignorable "return statement is missing"

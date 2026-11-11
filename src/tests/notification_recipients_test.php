@@ -146,6 +146,25 @@ final class notification_recipients_test extends \advanced_testcase {
     }
 
     /**
+     * A provider disabled site-wide is received by nobody, not even an administrator.
+     *
+     * @return void
+     */
+    public function test_disabled_provider_received_by_nobody(): void {
+        $this->resetAfterTest();
+        [, $tx] = $this->course_and_tx();
+        set_config('paygw_ifthenpay_paymentproblem_disable', 1, 'message');
+        $adminid = self::id(get_admin());
+
+        $this->assertFalse(notification_recipients::can_receive($adminid, notification_recipients::PROVIDER_PROBLEM));
+        $this->assertTrue(notification_recipients::can_receive($adminid, notification_recipients::PROVIDER_COMPLETED));
+        $this->assertSame(
+            [],
+            notification_recipients::resolve($tx, ['notify_admins' => '1'], notification_recipients::PROVIDER_PROBLEM)
+        );
+    }
+
+    /**
      * Nothing configured means nobody, and malformed chosen ids are ignored.
      *
      * @return void

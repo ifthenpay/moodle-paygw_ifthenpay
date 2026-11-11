@@ -48,6 +48,12 @@ class notification_recipients {
      * @return bool
      */
     public static function can_receive(int $userid, string $provider): bool {
+        // An administrator who disables a provider site-wide has chosen silence: nobody receives it,
+        // and message_send() would refuse it anyway. Treated as "cannot receive" so nothing is
+        // queued and no failure is logged for a deliberate setting.
+        if (get_config('message', 'paygw_ifthenpay_' . $provider . '_disable')) {
+            return false;
+        }
         /** @var \stdClass[] $providers */
         $providers = message_get_providers_for_user($userid);
         foreach ($providers as $p) {

@@ -25,6 +25,7 @@ use core_privacy\local\request\contextlist;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
+use paygw_ifthenpay\local\notification_recipients;
 
 /**
  * Privacy Subsystem implementation for paygw_ifthenpay.
@@ -40,8 +41,8 @@ use core_privacy\local\request\writer;
 class provider implements
     \core_payment\privacy\paygw_provider,
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\userlist_provider
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider
 {
     /**
      * The personal-data columns of paygw_ifthenpay_tx: described, and exported, field for field.
@@ -59,6 +60,14 @@ class provider implements
     /**
      * Describe the personal data this plugin stores.
      *
+     * The staff-notification recipients chosen for a payment account are stored by this plugin in
+     * the account's gateway configuration, the config column of core_payment's payment_gateways
+     * table. core_payment's own provider does not know about them (the column is opaque gateway
+     * configuration to it), so this plugin describes that column as a database table it stores
+     * data in, and exports and deletes it itself. The notifications themselves go through
+     * core_message. When one cannot be sent, the notification_failed event names the recipient in
+     * relateduserid, which the logstore's own privacy provider covers.
+     *
      * @param collection $collection The initialised collection to add items to.
      * @return collection A listing of user data stored in this plugin.
      */
@@ -68,6 +77,12 @@ class provider implements
             array_combine(self::FIELDS, array_map(fn($f) => 'privacy:metadata:ifthenpay_tx:' . $f, self::FIELDS)),
             'privacy:metadata:ifthenpay_tx'
         );
+        $collection->add_database_table(
+            'payment_gateways',
+            ['config' => 'privacy:metadata:payment_gateways:config'],
+            'privacy:metadata:payment_gateways'
+        );
+        $collection->link_subsystem('core_message', 'privacy:metadata:core_message');
 
         return $collection;
     }
@@ -85,6 +100,18 @@ class provider implements
         if ($DB->record_exists('paygw_ifthenpay_tx', ['userid' => $userid])) {
             $list->add_system_context();
         }
+
+        $contextids = [];
+        foreach (self::recipient_accounts(null, $userid) as $account) {
+            $contextids[$account->contextid] = $account->contextid;
+        }
+        if ($contextids) {
+            /** @var \moodle_database $db */
+            $db = $DB;
+            /** @var array{0: string, 1: array<string, mixed>} $insql */
+            $insql = $db->get_in_or_equal(array_values($contextids), SQL_PARAMS_NAMED);
+            $list->add_from_sql("SELECT id FROM {context} WHERE id {$insql[0]}", $insql[1]);
+        }
         return $list;
     }
 
@@ -96,6 +123,8 @@ class provider implements
      */
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
+
+        self::export_recipient_data($contextlist);
 
         $sysctx = context_system::instance();
         if (!in_array($sysctx->id, $contextlist->get_contextids(), true)) {
@@ -123,6 +152,13 @@ class provider implements
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
 
+        $userid = $contextlist->get_user()->id;
+        if (is_numeric($userid)) {
+            foreach ($contextlist->get_contextids() as $contextid) {
+                self::remove_recipients((int) $contextid, [(int) $userid]);
+            }
+        }
+
         $sysctx = context_system::instance();
         if (!in_array($sysctx->id, $contextlist->get_contextids(), true)) {
             return;
@@ -140,6 +176,8 @@ class provider implements
     public static function delete_data_for_all_users_in_context(\context $context): void {
         global $DB;
 
+        self::remove_recipients((int) $context->id, null);
+
         if ($context->contextlevel === CONTEXT_SYSTEM) {
             $DB->delete_records('paygw_ifthenpay_tx');
         }
@@ -152,6 +190,14 @@ class provider implements
      * @return void
      */
     public static function get_users_in_context(userlist $userlist): void {
+        $userids = [];
+        foreach (self::recipient_accounts((int) $userlist->get_context()->id, null) as $account) {
+            foreach ($account->userids as $id) {
+                $userids[$id] = $id;
+            }
+        }
+        $userlist->add_users(array_values($userids));
+
         if ($userlist->get_context()->contextlevel !== CONTEXT_SYSTEM) {
             return;
         }
@@ -167,6 +213,10 @@ class provider implements
      */
     public static function delete_data_for_users(approved_userlist $userlist): void {
         global $DB;
+
+        if ($userlist->get_userids()) {
+            self::remove_recipients((int) $userlist->get_context()->id, array_map('intval', $userlist->get_userids()));
+        }
 
         if ($userlist->get_context()->contextlevel !== CONTEXT_SYSTEM) {
             return;
@@ -226,5 +276,118 @@ class provider implements
         global $DB;
 
         $DB->delete_records_select('paygw_ifthenpay_tx', "paymentid IN ($paymentsql)", $paymentparams);
+    }
+
+    /**
+     * Exports the payment accounts the user receives notifications for, per approved context.
+     *
+     * @param approved_contextlist $contextlist Approved contexts and user.
+     * @return void
+     */
+    private static function export_recipient_data(approved_contextlist $contextlist): void {
+        $userid = $contextlist->get_user()->id;
+        if (!is_numeric($userid)) {
+            return;
+        }
+        $pluginname = get_string('pluginname', 'paygw_ifthenpay');
+        foreach ($contextlist->get_contexts() as $context) {
+            $accounts = [];
+            foreach (self::recipient_accounts((int) $context->id, (int) $userid) as $account) {
+                $accounts[] = (object) [
+                    'description' => get_string('privacy:export:notifications', 'paygw_ifthenpay', $account->name),
+                    'accountid' => $account->accountid,
+                    'accountname' => $account->name,
+                ];
+            }
+            if ($accounts) {
+                writer::with_context($context)->export_data([$pluginname, 'notifications'], (object) ['accounts' => $accounts]);
+            }
+        }
+    }
+
+    /**
+     * The ifthenpay gateway configurations that list notification recipients.
+     *
+     * The configuration is JSON, so the LIKE only narrows the rows down; the recipient list of
+     * each row is then decoded and checked in PHP.
+     *
+     * @param int|null $contextid Only accounts in this context; null for any context.
+     * @param int|null $userid Only configurations listing this user; null for any listed user.
+     * @return array<int, object{id: int, accountid: int, name: string, contextid: int, config: array<string, mixed>,
+     *     userids: int[]}> Keyed by payment_gateways id.
+     */
+    private static function recipient_accounts(?int $contextid, ?int $userid): array {
+        global $DB;
+
+        /** @var \moodle_database $db */
+        $db = $DB;
+        $where = 'pg.gateway = :gateway AND ' . $db->sql_like('pg.config', ':notifyusers');
+        $params = ['gateway' => 'ifthenpay', 'notifyusers' => '%notify_users%'];
+        if ($contextid !== null) {
+            $where .= ' AND pa.contextid = :contextid';
+            $params['contextid'] = $contextid;
+        }
+        $sql = "SELECT pg.id, pg.accountid, pg.config, pa.name, pa.contextid
+                  FROM {payment_gateways} pg
+                  JOIN {payment_accounts} pa ON pa.id = pg.accountid
+                 WHERE $where";
+        /** @var array<int, stdClass> $rows */
+        $rows = $db->get_records_sql($sql, $params);
+
+        $accounts = [];
+        foreach ($rows as $row) {
+            /** @var array<string, mixed>|null $config */
+            $config = is_string($row->config) ? json_decode($row->config, true) : null;
+            if (!is_array($config)) {
+                continue;
+            }
+            $userids = notification_recipients::chosen_userids($config);
+            if (!$userids || ($userid !== null && !in_array($userid, $userids, true))) {
+                continue;
+            }
+            $id = is_numeric($row->id) ? (int) $row->id : 0;
+            $accounts[$id] = (object) [
+                'id' => $id,
+                'accountid' => is_numeric($row->accountid) ? (int) $row->accountid : 0,
+                'name' => is_scalar($row->name) ? (string) $row->name : '',
+                'contextid' => is_numeric($row->contextid) ? (int) $row->contextid : 0,
+                'config' => $config,
+                'userids' => $userids,
+            ];
+        }
+        return $accounts;
+    }
+
+    /**
+     * Removes users from the recipient lists of the payment accounts in a context.
+     *
+     * Every other key of the gateway configuration is kept as it is.
+     *
+     * @param int $contextid Context the payment accounts belong to.
+     * @param int[]|null $userids Users to remove; null to empty the lists.
+     * @return void
+     */
+    private static function remove_recipients(int $contextid, ?array $userids): void {
+        global $DB;
+
+        /** @var \moodle_database $db */
+        $db = $DB;
+        foreach (self::recipient_accounts($contextid, null) as $account) {
+            $keep = $userids === null ? [] : array_values(array_diff($account->userids, $userids));
+            if ($keep === $account->userids) {
+                continue;
+            }
+            $config = $account->config;
+            $config['notify_users'] = array_map('strval', $keep);
+            $json = json_encode($config);
+            if ($json === false) {
+                continue;
+            }
+            $db->update_record('payment_gateways', (object) [
+                'id' => $account->id,
+                'config' => $json,
+                'timemodified' => time(),
+            ]);
+        }
     }
 }

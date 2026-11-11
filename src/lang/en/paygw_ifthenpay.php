@@ -198,3 +198,49 @@ $string['privacy:metadata:ifthenpay_tx:state'] = 'Current transaction state.';
 $string['ifthenpay:receivenotifications'] = 'Receive ifthenpay payment notifications';
 $string['messageprovider:paymentcompleted'] = 'ifthenpay payment completed';
 $string['messageprovider:paymentproblem'] = 'ifthenpay payment problem';
+
+// Staff notifications: failure event.
+$string['event:notification_failed'] = 'ifthenpay payment notification failed';
+
+// Staff notifications: privacy.
+$string['privacy:export:notifications'] = 'Recipient of ifthenpay notifications for payment account {$a}';
+$string['privacy:metadata:core_message'] = 'Staff notifications about ifthenpay payments (completed payments and payment problems) are sent through the messaging system. They name the payer, the item paid for and the amount.';
+$string['privacy:metadata:payment_gateways'] = 'The ifthenpay configuration of each payment account, stored with the account by the payment subsystem, lists the users chosen to receive its payment notifications.';
+$string['privacy:metadata:payment_gateways:config'] = 'The IDs of the users chosen to receive the payment notifications of the payment account.';
+
+// Staff notifications: account gateway form.
+$string['form:notifications'] = 'Staff notifications';
+$string['form:notify_completed'] = 'Notify completed payments';
+$string['form:notify_completed_help'] = 'Send a notification when a payment is confirmed and the purchased item (for example a course enrolment) has been delivered.';
+$string['form:notify_problems'] = 'Notify payment problems';
+$string['form:notify_problems_help'] = 'Send a notification when a known payment runs into a problem: amount mismatch, invalid callback key, delivery refused or an unexpected error. Each problem type is notified once per payment.';
+$string['form:notify_admins'] = 'Site administrators';
+$string['form:notify_admins_help'] = 'Notify every site administrator.';
+$string['form:notify_teachers'] = 'Course teachers';
+$string['form:notify_teachers_help'] = 'Notify every user who can edit the purchased course. Applies only when the payment is for a course enrolment.';
+$string['form:notify_users'] = 'Other users';
+$string['form:notify_users_help'] = 'Also notify these users. Each one needs a role with the capability "Receive ifthenpay payment notifications" (paygw/ifthenpay:receivenotifications).';
+$string['form:notify_users_none'] = 'None';
+$string['form:notify_users_readonly'] = 'You do not have permission to search users (moodle/user:viewalldetails), so this list cannot be changed here. Saving keeps it as shown.';
+$string['form:notify_users_dropped'] = '{$a} (can no longer receive notifications; removed when saved)';
+$string['form:error_notify_users_cannot_receive'] = 'These users cannot receive ifthenpay notifications: {$a}. Give them a role with the capability "Receive ifthenpay payment notifications" (paygw/ifthenpay:receivenotifications), or remove them.';
+
+// Staff notifications: message content and sending task.
+$string['task:send_notification'] = 'Send an ifthenpay payment notification';
+$string['notification:completed_subject'] = 'Payment received: {$a->item}';
+$string['notification:completed_intro'] = '{$a->payer} has paid for {$a->item} through ifthenpay, and the order has been delivered.';
+$string['notification:problem_subject'] = 'Payment problem: {$a->item}';
+$string['notification:problem_intro'] = 'A problem occurred with an ifthenpay payment by {$a->payer} for {$a->item}. Please review it.';
+$string['notification:payer'] = 'Paid by';
+$string['notification:item'] = 'Item';
+$string['notification:item_other'] = '{$a->component}, area {$a->paymentarea}, item {$a->itemid}';
+$string['notification:amount'] = 'Amount';
+$string['notification:reference'] = 'Transaction reference';
+$string['notification:date'] = 'Date';
+$string['notification:problem'] = 'Problem';
+$string['notification:problem_badkey'] = 'A payment confirmation was received with an anti-phishing key that does not match this transaction. It was rejected. If this repeats, check the gateway key configured in ifthenpay.';
+$string['notification:problem_mismatch'] = 'A payment confirmation was received with an amount different from the amount of this transaction. It was rejected. Check the payment in the ifthenpay backoffice.';
+$string['notification:problem_delivery'] = 'The payment was received, but the purchased item could not be delivered (for example, the enrolment was refused). Delivery is retried automatically when ifthenpay calls again; check the enrolment method if it does not complete.';
+$string['notification:problem_error'] = 'An unexpected error occurred while processing the payment confirmation. It is retried automatically when ifthenpay calls again.';
+$string['notification:problem_detail'] = 'Technical detail: {$a}';
+$string['notification:unknownuser'] = 'Unknown user';

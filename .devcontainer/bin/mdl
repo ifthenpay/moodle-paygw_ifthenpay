@@ -58,7 +58,7 @@ cmd_info() {
     enabled="$(db -N -B -e \
         "SELECT value FROM mdl_config WHERE name='paygw_plugins_sortorder';" 2>/dev/null || true)"
     lastcron="$(db -N -B -e \
-        "SELECT UNIX_TIMESTAMP() - value FROM mdl_config WHERE name='lastcronstart';" 2>/dev/null || true)"
+        "SELECT UNIX_TIMESTAMP() - value FROM mdl_config_plugins WHERE plugin='tool_task' AND name='lastcronstart';" 2>/dev/null || true)"
     adhoc="$(db -N -B -e "SELECT COUNT(*) FROM mdl_task_adhoc;" 2>/dev/null || echo '?')"
     health="$(curl -s -o /dev/null -w '%{http_code}' "http://${APP_HOST}/" 2>/dev/null || echo '---')"
 

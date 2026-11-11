@@ -18,6 +18,8 @@ namespace paygw_ifthenpay;
 
 defined('MOODLE_INTERNAL') || die();
 
+use PHPUnit\Framework\Attributes\CoversFunction;
+
 require_once(__DIR__ . '/../lib.php');
 
 /**
@@ -27,8 +29,8 @@ require_once(__DIR__ . '/../lib.php');
  * @category   test
  * @copyright  2025 ifthenpay <geral@ifthenpay.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     ::paygw_ifthenpay_amount_to_cents
  */
+#[CoversFunction('paygw_ifthenpay_amount_to_cents')]
 final class lib_test extends \advanced_testcase {
     /**
      * Valid amounts, with either decimal separator, convert to integer cents.

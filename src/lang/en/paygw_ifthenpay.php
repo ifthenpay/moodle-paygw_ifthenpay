@@ -193,3 +193,8 @@ $string['privacy:metadata:ifthenpay_tx:redirect_url'] = 'ifthenpay checkout addr
 $string['privacy:metadata:ifthenpay_tx:transaction_id'] = 'Transaction identifier returned by ifthenpay (if available).';
 $string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Link to the core payment record.';
 $string['privacy:metadata:ifthenpay_tx:state'] = 'Current transaction state.';
+
+// Staff notifications: capability and message providers.
+$string['ifthenpay:receivenotifications'] = 'Receive ifthenpay payment notifications';
+$string['messageprovider:paymentcompleted'] = 'ifthenpay payment completed';
+$string['messageprovider:paymentproblem'] = 'ifthenpay payment problem';

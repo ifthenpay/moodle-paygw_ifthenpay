@@ -57,12 +57,13 @@ final class send_notification_test extends \advanced_testcase {
     /**
      * A course sold through enrol_fee, a payer and a transaction for it.
      *
+     * @param string $coursename Course full name.
      * @return array{0: \stdClass, 1: \stdClass, 2: \stdClass} Course, payer and transaction records.
      */
-    private function course_payer_tx(): array {
+    private function course_payer_tx(string $coursename = 'Advanced Widgets'): array {
         global $DB;
         $gen = $this->getDataGenerator();
-        $course = $gen->create_course(['fullname' => 'Advanced Widgets']);
+        $course = $gen->create_course(['fullname' => $coursename]);
         $payer = $gen->create_user(['firstname' => 'Paula', 'lastname' => 'Payer']);
         /** @var \core_payment_generator $pgen */
         $pgen = $gen->get_plugin_generator('core_payment');
@@ -336,6 +337,83 @@ final class send_notification_test extends \advanced_testcase {
             $failed[0]->other
         );
         $this->assertStringContainsString('could not be sent', $failed[0]->get_description());
+    }
+
+    /**
+     * Names with HTML special characters are escaped exactly once in the HTML body and left raw in
+     * the plain-text body, subject and small message.
+     *
+     * The course name goes through format_string(), which (with the default formatstringstriptags)
+     * strips its tags; the payer's name is not a formatted string, so its '<' is kept as text.
+     *
+     * @return void
+     */
+    public function test_special_characters_escaped_once(): void {
+        global $DB;
+        /** @var \moodle_database $db */
+        $db = $DB;
+        [, $payer, $tx] = $this->course_payer_tx('R&D <b>"Q"</b>');
+        // Set directly: the generator cleans names, but one can still hold these characters.
+        $db->set_field('user', 'firstname', 'Tom & <Co>', ['id' => $payer->id]);
+
+        $sink = $this->redirectMessages();
+        $this->run_task(['txid' => $tx->id, 'event' => 'completed', 'recipientid' => self::id(get_admin()), 'time' => time()]);
+        $msg = $this->single_message($sink);
+
+        $plain = self::str($msg->fullmessage);
+        $html = self::str($msg->fullmessagehtml);
+        $subject = self::str($msg->subject);
+        $small = self::str($msg->smallmessage);
+
+        foreach ([$plain, $subject, $small] as $text) {
+            $this->assertStringContainsString('R&D "Q"', $text);
+            $this->assertStringNotContainsString('&amp;', $text);
+            $this->assertStringNotContainsString('&quot;', $text);
+        }
+        $this->assertStringContainsString('Tom & <Co> Payer', $plain);
+        $this->assertSame('R&D "Q"', $msg->contexturlname);
+
+        $this->assertStringContainsString('R&amp;D &quot;Q&quot;', $html);
+        $this->assertStringContainsString('Tom &amp; &lt;Co&gt; Payer', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+        $this->assertStringNotContainsString('&amp;lt;', $html);
+        $this->assertStringNotContainsString('&amp;quot;', $html);
+        $this->assertStringNotContainsString('<Co>', $html);
+        $this->assertStringNotContainsString('<b>', $html);
+    }
+
+    /**
+     * An exception from send() (Moodle failing before the message was stored) propagates out of
+     * execute(), so Moodle retries the task, and no notification_failed event is logged.
+     *
+     * @return void
+     */
+    public function test_send_exception_propagates(): void {
+        [, , $tx] = $this->course_payer_tx();
+        $throwing = new class extends send_notification {
+            /**
+             * Fail as message_send() does before the message is stored.
+             *
+             * @param \core\message\message $message Message.
+             * @return int|false
+             */
+            protected function send(\core\message\message $message): int|false {
+                throw new \moodle_exception('error', 'error', '', null, 'send failed for the test');
+            }
+        };
+
+        $events = $this->redirectEvents();
+        $thrown = null;
+        try {
+            $this->run_task(['txid' => $tx->id, 'event' => 'completed', 'recipientid' => self::id(get_admin()),
+                'time' => time()], $throwing);
+        } catch (\moodle_exception $e) {
+            $thrown = $e;
+        }
+
+        $this->assertInstanceOf(\moodle_exception::class, $thrown);
+        $this->assertSame('send failed for the test', $thrown->debuginfo);
+        $this->assertSame([], array_filter($events->get_events(), fn($e) => $e instanceof notification_failed));
     }
 
     /**

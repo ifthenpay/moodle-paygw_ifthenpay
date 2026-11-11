@@ -161,7 +161,9 @@ class send_notification extends \core\task\adhoc_task {
         $course = $courseid ? get_course($courseid) : null;
         if ($courseid && $course) {
             $coursecontext = \context_course::instance($courseid);
-            $itemname = format_string(self::str($course->fullname), true, ['context' => $coursecontext]);
+            // Raw text (filters applied, not HTML-escaped): every value here is plain text, escaped
+            // exactly once with s() where it goes into the HTML body.
+            $itemname = format_string(self::str($course->fullname), true, ['context' => $coursecontext, 'escape' => false]);
             $itemurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
         } else {
             $itemname = get_string('notification:item_other', $component, (object) [

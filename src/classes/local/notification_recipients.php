@@ -39,9 +39,7 @@ class notification_recipients {
     /**
      * Whether Moodle would deliver this plugin's provider to the user.
      *
-     * message_send() refuses a provider the recipient cannot use (its capability is checked in
-     * any context), so this asks the same question the same way rather than approximating it
-     * with has_capability() in one context.
+     * A provider disabled site-wide reaches nobody; otherwise this is holds_capability().
      *
      * @param int $userid User id.
      * @param string $provider One of the PROVIDER_* constants.
@@ -54,10 +52,29 @@ class notification_recipients {
         if (get_config('message', 'paygw_ifthenpay_' . $provider . '_disable')) {
             return false;
         }
+        return self::holds_capability($userid);
+    }
+
+    /**
+     * Whether the user holds the capability this plugin's providers require.
+     *
+     * Ignores any site-wide disable, so it answers "is this user eligible at all", which is what
+     * the configuration form must check: a provider an administrator turned off for now does not
+     * make a chosen user wrong. Both providers share paygw/ifthenpay:receivenotifications.
+     *
+     * message_send() refuses a provider the recipient cannot use (its capability is checked in
+     * any context), so this asks the same question the same way, through
+     * message_get_providers_for_user(), rather than approximating it with has_capability() in one
+     * context.
+     *
+     * @param int $userid User id.
+     * @return bool
+     */
+    public static function holds_capability(int $userid): bool {
         /** @var \stdClass[] $providers */
         $providers = message_get_providers_for_user($userid);
         foreach ($providers as $p) {
-            if ($p->component === 'paygw_ifthenpay' && $p->name === $provider) {
+            if ($p->component === 'paygw_ifthenpay' && $p->name === self::PROVIDER_COMPLETED) {
                 return true;
             }
         }

@@ -165,6 +165,26 @@ final class notification_recipients_test extends \advanced_testcase {
     }
 
     /**
+     * A site-wide disable stops can_receive() but not holds_capability(): the user is still eligible.
+     *
+     * @return void
+     */
+    public function test_holds_capability_ignores_site_wide_disable(): void {
+        $this->resetAfterTest();
+        [$course] = $this->course_and_tx();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        foreach ([notification_recipients::PROVIDER_COMPLETED, notification_recipients::PROVIDER_PROBLEM] as $provider) {
+            set_config('paygw_ifthenpay_' . $provider . '_disable', 1, 'message');
+        }
+
+        $this->assertTrue(notification_recipients::holds_capability(self::id($teacher)));
+        $this->assertFalse(notification_recipients::can_receive(self::id($teacher), notification_recipients::PROVIDER_COMPLETED));
+        $this->assertFalse(notification_recipients::can_receive(self::id($teacher), notification_recipients::PROVIDER_PROBLEM));
+        $this->assertFalse(notification_recipients::holds_capability(self::id($student)));
+    }
+
+    /**
      * Nothing configured means nobody, and malformed chosen ids are ignored.
      *
      * @return void

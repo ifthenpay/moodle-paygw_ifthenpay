@@ -29,9 +29,10 @@ require_once(__DIR__ . '/../lib.php');
  *
  * Deliveries go through a real enrol_fee instance (deliver_order() enrols the payer). enrol_fee
  * never refuses a delivery, so the "delivery refused" case uses a stand-in component whose
- * service provider returns false: core_payment\helper::deliver_order() resolves the provider by
- * class name ("<component>\payment\service_provider", via class_exists), so the test registers an
- * anonymous provider under such a name with class_alias().
+ * service provider returns false (while self::$refusedelivery is true, so a test can let a later
+ * delivery succeed): core_payment\helper::deliver_order() resolves the provider by class name
+ * ("<component>\payment\service_provider", via class_exists), so the test registers an anonymous
+ * provider under such a name with class_alias().
  *
  * @package    paygw_ifthenpay
  * @category   test
@@ -44,8 +45,11 @@ final class notification_test extends \advanced_testcase {
     /** @var string Gateway key of the test transactions. */
     private const KEY = 'GKEY-123';
 
-    /** @var string Component whose deliveries are always refused. */
+    /** @var string Component whose deliveries are refused while $refusedelivery is true. */
     private const REFUSING = 'paygw_ifthenpay_refusing';
+
+    /** @var bool Whether the REFUSING component's provider refuses deliveries; reset in setUp(). */
+    public static bool $refusedelivery = true;
 
     /**
      * The gateway must be enabled: Moodle hides the message providers of disabled plugins.
@@ -56,6 +60,7 @@ final class notification_test extends \advanced_testcase {
         parent::setUp();
         $this->resetAfterTest();
         \core\plugininfo\paygw::enable_plugin('ifthenpay', 1);
+        self::$refusedelivery = true;
     }
 
     /**
@@ -151,7 +156,7 @@ final class notification_test extends \advanced_testcase {
             }
 
             /**
-             * Always refuses.
+             * Refuses while notification_test::$refusedelivery is true.
              *
              * @param string $paymentarea Payment area.
              * @param int $itemid Item id.
@@ -160,7 +165,7 @@ final class notification_test extends \advanced_testcase {
              * @return bool
              */
             public static function deliver_order(string $paymentarea, int $itemid, int $paymentid, int $userid): bool {
-                return false;
+                return !notification_test::$refusedelivery;
             }
         };
         class_alias(get_class($provider), $name);
@@ -282,6 +287,58 @@ final class notification_test extends \advanced_testcase {
         $this->assertSame([self::id(get_admin())], self::recipients('problem', 'delivery'));
         $this->assertCount(1, self::queued());
         $this->assertSame(PAYGW_IFTHENPAY_PROBLEM_DELIVERY, self::bits($tx));
+    }
+
+    /**
+     * A refused delivery that later succeeds: the problem was notified once, and the eventual
+     * success is notified exactly once.
+     *
+     * @return void
+     */
+    public function test_delivery_refused_then_delivered(): void {
+        [$tx] = $this->setup_tx(['notify_completed' => '1', 'notify_problems' => '1', 'notify_admins' => '1'], true);
+        $adminid = self::id(get_admin());
+
+        $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_RETRY, $this->webhook($tx));
+        $this->assertSame([], self::recipients('completed'));
+        $this->assertSame([$adminid], self::recipients('problem', 'delivery'));
+
+        self::$refusedelivery = false;
+        $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_OK, $this->webhook($tx));
+        $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_OK, $this->webhook($tx));
+        $this->assertSame('PAID', paygw_ifthenpay_tx_get(self::str($tx->token))?->state);
+        $this->assertSame([$adminid], self::recipients('completed'));
+        $this->assertSame([$adminid], self::recipients('problem', 'delivery'));
+        $this->assertCount(2, self::queued());
+    }
+
+    /**
+     * The two events are switched independently: completed on with problems off notifies the
+     * success only, and the reverse notifies the problem only.
+     *
+     * @return void
+     */
+    public function test_events_switched_independently(): void {
+        $adminid = self::id(get_admin());
+
+        $completedonly = ['notify_completed' => '1', 'notify_problems' => '0', 'notify_admins' => '1'];
+        [$paid] = $this->setup_tx($completedonly);
+        $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_OK, $this->webhook($paid));
+        $this->assertSame([$adminid], self::recipients('completed'));
+        [$mismatched] = $this->setup_tx($completedonly);
+        $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_MISMATCH, $this->webhook($mismatched, '9.99'));
+        $this->assertSame([], self::recipients('problem'));
+        $this->assertCount(1, self::queued());
+        $this->assertSame(0, self::bits($mismatched));
+
+        $problemsonly = ['notify_completed' => '0', 'notify_problems' => '1', 'notify_admins' => '1'];
+        [$paid2] = $this->setup_tx($problemsonly);
+        $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_OK, $this->webhook($paid2));
+        $this->assertSame([$adminid], self::recipients('completed'));
+        [$mismatched2] = $this->setup_tx($problemsonly);
+        $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_MISMATCH, $this->webhook($mismatched2, '9.99'));
+        $this->assertSame([$adminid], self::recipients('problem', 'mismatch'));
+        $this->assertCount(2, self::queued());
     }
 
     /**

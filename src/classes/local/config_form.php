@@ -447,7 +447,7 @@ class config_form
         }
 
         /*
-         * Read-only. A chosen user who can no longer receive is not carried over: validate() would
+         * Read-only. A chosen user who no longer holds the capability is not carried over: validate() would
          * refuse the save, and this editor has no way to remove them. Rather than strand the whole
          * form, that user is listed as being removed, and dropping them changes nothing in practice
          * since the sender already skips them.
@@ -457,7 +457,7 @@ class config_form
         $kept = [];
         foreach (self::users_by_id($userids) as $id => $user) {
             $name = s(fullname($user));
-            if (notification_recipients::can_receive($id, notification_recipients::PROVIDER_COMPLETED)) {
+            if (notification_recipients::holds_capability($id)) {
                 $names[] = $name;
                 $elements[] = $mform->createElement('hidden', (string) count($kept), $id);
                 $kept[] = $id;
@@ -549,7 +549,7 @@ class config_form
         $ids = notification_recipients::chosen_userids(['notify_users' => $data->notify_users ?? []]);
         $refused = [];
         foreach (self::users_by_id($ids) as $id => $user) {
-            if (!notification_recipients::can_receive($id, notification_recipients::PROVIDER_COMPLETED)) {
+            if (!notification_recipients::holds_capability($id)) {
                 $refused[] = fullname($user);
             }
         }

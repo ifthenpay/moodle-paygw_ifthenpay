@@ -339,4 +339,51 @@ final class config_form_test extends \advanced_testcase {
         $this->assertIsArray($config);
         $this->assertEquals([self::id($teacher)], $config['notify_users']);
     }
+
+    /**
+     * With "payment completed" disabled site-wide, a chosen user who holds the capability is still
+     * valid: validate() accepts them on both paths, and the read-only path keeps them on save.
+     *
+     * @return void
+     */
+    public function test_site_wide_disable_keeps_chosen_users(): void {
+        set_config('paygw_ifthenpay_paymentcompleted_disable', 1, 'message');
+        $teacher = $this->teacher();
+        $teacherid = (string) self::id($teacher);
+
+        $gateway = $this->gateway(['notify_users' => [$teacherid]], false);
+        $editor = $this->getDataGenerator()->create_user();
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability('moodle/payment:manageaccounts', CAP_ALLOW, $roleid, \context_system::instance()->id);
+        role_assign($roleid, self::id($editor), \context_system::instance()->id);
+        $this->setUser($editor);
+
+        $html = $this->form($gateway)->render();
+        $this->assertStringContainsString('Tina Teacher', $html);
+        $this->assertStringNotContainsString('removed when saved', $html);
+
+        account_gateway::mock_submit([
+            'id' => $gateway->get('id'),
+            'accountid' => $gateway->get('accountid'),
+            'gateway' => 'ifthenpay',
+            'enabled' => 0,
+        ]);
+        $data = $this->form($gateway)->get_data();
+        $this->assertIsObject($data);
+        $config = json_decode(is_string($data->config ?? null) ? $data->config : '', true);
+        $this->assertIsArray($config);
+        $this->assertEquals([self::id($teacher)], $config['notify_users']);
+
+        // validate(), on both paths (the read-only save above ran on the unavailable path). The
+        // mocked submission is cleared first, or the next form would take it for its own.
+        $_POST = [];
+        $this->setAdminUser();
+        foreach (['unavailable', 'normal'] as $path) {
+            if ($path === 'normal') {
+                $this->prime_working_key();
+            }
+            $errors = $this->validate(['notify_users' => [$teacherid]]);
+            $this->assertArrayNotHasKey('notify_users', $errors, $path);
+        }
+    }
 }

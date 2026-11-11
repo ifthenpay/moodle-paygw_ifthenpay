@@ -225,6 +225,35 @@ final class send_notification_test extends \advanced_testcase {
     }
 
     /**
+     * A recipient whose language is Portuguese gets the plugin's own Portuguese strings.
+     *
+     * PHPUnit installs only 'en', so a bare pt langconfig in dataroot marks pt as installed; the
+     * plugin's lang/pt file then supplies the notification text.
+     *
+     * @return void
+     */
+    public function test_recipient_language_pt(): void {
+        global $CFG;
+        /** @var \stdClass $cfg */
+        $cfg = $CFG;
+        $langfolder = self::str($cfg->dataroot) . '/lang/pt';
+        check_dir_exists($langfolder);
+        file_put_contents($langfolder . '/langconfig.php', "<?php\n\$string['thislanguage'] = 'Português';\n");
+        get_string_manager()->reset_caches(true);
+
+        [, , $tx] = $this->course_payer_tx();
+        $manager = $this->getDataGenerator()->create_user(['lang' => 'pt']);
+        role_assign(self::id($this->manager_role()), self::id($manager), \context_system::instance());
+
+        $sink = $this->redirectMessages();
+        $this->run_task(['txid' => $tx->id, 'event' => 'completed', 'recipientid' => $manager->id, 'time' => time()]);
+        $msg = $this->single_message($sink);
+
+        $this->assertSame('Pagamento recebido: Advanced Widgets', $msg->subject);
+        $this->assertStringContainsString('a encomenda foi entregue', self::str($msg->fullmessage));
+    }
+
+    /**
      * The manager role record.
      *
      * @return \stdClass|false

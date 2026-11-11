@@ -225,3 +225,54 @@ $string['privacy:metadata:ifthenpay_tx:transaction_id'] =
     'Identifiant de transaction renvoyé par ifthenpay (si disponible).';
 $string['privacy:metadata:ifthenpay_tx:paymentid'] = 'Lien vers l\'enregistrement de paiement du noyau.';
 $string['privacy:metadata:ifthenpay_tx:state'] = 'État actuel de la transaction.';
+
+// Staff notifications: capability and message providers.
+$string['ifthenpay:receivenotifications'] = 'Recevoir les notifications de paiement ifthenpay';
+$string['messageprovider:paymentcompleted'] = 'Paiement ifthenpay finalisé';
+$string['messageprovider:paymentproblem'] = 'Problème de paiement ifthenpay';
+
+// Staff notifications: failure event.
+$string['event:notification_failed'] = 'Échec de l\'envoi d\'une notification de paiement ifthenpay';
+
+// Staff notifications: privacy.
+$string['privacy:export:notifications'] = 'Destinataire des notifications ifthenpay du compte de paiement {$a}';
+$string['privacy:metadata:core_message'] = 'Les notifications au personnel concernant les paiements ifthenpay (paiements finalisés et problèmes de paiement) sont envoyées via le système de messagerie. Elles indiquent le payeur, l\'élément payé et le montant.';
+$string['privacy:metadata:payment_gateways'] = 'La configuration ifthenpay de chaque compte de paiement, enregistrée avec le compte par le sous-système de paiement, indique les utilisateurs choisis pour recevoir ses notifications de paiement.';
+$string['privacy:metadata:payment_gateways:config'] = 'Les ID des utilisateurs choisis pour recevoir les notifications de paiement du compte de paiement.';
+
+// Staff notifications: account gateway form.
+$string['form:notifications'] = 'Notifications au personnel';
+$string['form:notify_completed'] = 'Notifier les paiements finalisés';
+$string['form:notify_completed_help'] = 'Envoie une notification lorsqu\'un paiement est confirmé et que l\'élément acheté (par exemple une inscription à un cours) a été livré.';
+$string['form:notify_problems'] = 'Notifier les problèmes de paiement';
+$string['form:notify_problems_help'] = 'Envoie une notification lorsqu\'un paiement connu rencontre un problème : montant non concordant, clé anti-phishing invalide, livraison refusée ou erreur inattendue. Chaque type de problème n\'est notifié qu\'une seule fois par paiement.';
+$string['form:notify_admins'] = 'Administrateurs du site';
+$string['form:notify_admins_help'] = 'Notifier tous les administrateurs du site.';
+$string['form:notify_teachers'] = 'Enseignants du cours';
+$string['form:notify_teachers_help'] = 'Notifier tous les utilisateurs qui peuvent modifier le cours acheté. Ne s\'applique que lorsque le paiement concerne une inscription à un cours.';
+$string['form:notify_users'] = 'Autres utilisateurs';
+$string['form:notify_users_help'] = 'Notifier également ces utilisateurs. Chacun doit avoir un rôle disposant de la capacité « Recevoir les notifications de paiement ifthenpay » (paygw/ifthenpay:receivenotifications).';
+$string['form:notify_users_none'] = 'Aucun';
+$string['form:notify_users_readonly'] = 'Vous n\'avez pas l\'autorisation de rechercher des utilisateurs (moodle/user:viewalldetails) ; cette liste ne peut donc pas être modifiée ici. L\'enregistrement la conserve telle qu\'affichée.';
+$string['form:notify_users_dropped'] = '{$a} (ne peut plus recevoir de notifications ; sera retiré lors de l\'enregistrement)';
+$string['form:error_notify_users_cannot_receive'] = 'Ces utilisateurs ne peuvent pas recevoir les notifications ifthenpay : {$a}. Attribuez-leur un rôle disposant de la capacité « Recevoir les notifications de paiement ifthenpay » (paygw/ifthenpay:receivenotifications), ou retirez-les.';
+
+// Staff notifications: message content and sending task.
+$string['task:send_notification'] = 'Envoyer une notification de paiement ifthenpay';
+$string['notification:completed_subject'] = 'Paiement reçu : {$a->item}';
+$string['notification:completed_intro'] = '{$a->payer} a payé {$a->item} via ifthenpay, et la commande a été livrée.';
+$string['notification:problem_subject'] = 'Problème de paiement : {$a->item}';
+$string['notification:problem_intro'] = 'Un problème est survenu avec un paiement ifthenpay de {$a->payer} pour {$a->item}. Veuillez le vérifier.';
+$string['notification:payer'] = 'Payé par';
+$string['notification:item'] = 'Élément';
+$string['notification:item_other'] = '{$a->component}, zone {$a->paymentarea}, élément {$a->itemid}';
+$string['notification:amount'] = 'Montant';
+$string['notification:reference'] = 'Référence de la transaction';
+$string['notification:date'] = 'Date';
+$string['notification:problem'] = 'Problème';
+$string['notification:problem_badkey'] = 'Une confirmation de paiement a été reçue avec une clé anti-phishing qui ne correspond pas à cette transaction. Elle a été rejetée. Si cela se répète, vérifiez la Gateway Key configurée chez ifthenpay.';
+$string['notification:problem_mismatch'] = 'Une confirmation de paiement a été reçue avec un montant différent de celui de cette transaction. Elle a été rejetée. Vérifiez le paiement dans le backoffice ifthenpay.';
+$string['notification:problem_delivery'] = 'Le paiement a été reçu, mais l\'élément acheté n\'a pas pu être livré (par exemple, l\'inscription a été refusée). La livraison est retentée automatiquement lorsqu\'ifthenpay rappelle ; vérifiez la méthode d\'inscription si elle n\'aboutit pas.';
+$string['notification:problem_error'] = 'Une erreur inattendue s\'est produite lors du traitement de la confirmation de paiement. Le traitement est retenté automatiquement lorsqu\'ifthenpay rappelle.';
+$string['notification:problem_detail'] = 'Détail technique : {$a}';
+$string['notification:unknownuser'] = 'Utilisateur inconnu';

@@ -177,6 +177,14 @@ jobs:
           PHP
           php -l "${MOODLE_DIRROOT}/config.php"
 
+      # Moodle's PHPUnit bootstrap refuses to run without the en_AU.UTF-8
+      # locale (its test site's default language pack), which the runner
+      # image does not ship.
+      - name: 🌐 Install en_AU.UTF-8 locale
+        run: |
+          sudo locale-gen en_AU.UTF-8
+          sudo update-locale
+
       - name: 🧰 Initialise PHPUnit environment
         run: php "${MOODLE_DIRROOT}/public/admin/tool/phpunit/cli/init.php"
 

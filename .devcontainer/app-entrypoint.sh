@@ -207,7 +207,14 @@ managed_block() {
         echo '$CFG->cachejs = false;            // Serve AMD sources without a rebuild.'
         echo '$CFG->cachetemplates = false;'
         echo '$CFG->langstringcache = false;    // Pick up lang file edits immediately.'
-        echo '$CFG->noemailever = true;         // Never send real mail from a dev site.'
+        if [ -n "${MOODLE_DEV_SMTP:-}" ]; then
+            # Mail goes to the Mailpit catcher, never to a real recipient.
+            echo "\$CFG->smtphosts = '${MOODLE_DEV_SMTP}';  // Dev SMTP catcher (Mailpit)."
+            # The default noreply@<wwwroot host> is noreply@localhost, which PHPMailer rejects.
+            echo "\$CFG->noreplyaddress = 'noreply@example.com';"
+        else
+            echo '$CFG->noemailever = true;         // Never send real mail from a dev site.'
+        fi
         echo '$CFG->passwordpolicy = false;'
     fi
     echo '// <<< ifthenpay-dev managed block <<<'

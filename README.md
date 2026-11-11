@@ -58,7 +58,7 @@ That is the whole setup. The first build takes a few minutes and does everything
 - pulls the pinned Moodle release (checksum-verified) and installs it
 - starts MySQL 8.4 and creates the site
 - **installs the plugin** (`admin/cli/upgrade.php`) and **enables the gateway**
-- switches the site to developer mode (debug on, JS/template/lang caching off, mail disabled)
+- switches the site to developer mode (debug on, JS/template/lang caching off, mail caught by Mailpit)
 - creates `.env` from `.env.example`, runs `composer install` and `npm install`
 
 When the terminal shows the environment summary you are ready:
@@ -67,6 +67,7 @@ When the terminal shows the environment summary you are ready:
 |---|---|
 | Moodle | <code>http://localhost:8080</code> — `admin` / `adminpass` |
 | phpMyAdmin | <code>http://localhost:8081</code> — `root` / `rootpass` |
+| Mailpit (mail inbox) | <code>http://localhost:8025</code> — every email Moodle sends |
 | Plugin source | `./src` on the host, `/workspace/plugin/src` in the editor |
 | Helper CLI | `mdl help` (purge, upgrade, lint, phpunit, …) |
 
@@ -88,9 +89,10 @@ Everything is driven by a single `.env` file (created automatically from
 | Variable | Default | What it does |
 |---|---|---|
 | `MOODLE_VERSION` / `MOODLE_BRANCH` | `5.3` / `stable503` | Pinned Moodle release. Change + rebuild to test another version; core files and DB upgrade themselves on the next start. |
-| `MOODLE_PORT` / `PMA_PORT` | `8080` / `8081` | Published ports. |
+| `MOODLE_PORT` / `PMA_PORT` / `MAILPIT_PORT` | `8080` / `8081` / `8025` | Published ports. |
 | `MOODLE_WWWROOT` | `http://localhost:8080` | Public base URL. `config.php` is rewritten and caches purged on start when it changes. |
-| `MOODLE_DEV_MODE` | `1` | DEVELOPER debug level, JS/template/lang caches off, mail disabled, password policy off. |
+| `MOODLE_DEV_MODE` | `1` | DEVELOPER debug level, JS/template/lang caches off, mail routed to Mailpit, password policy off. |
+| `MOODLE_DEV_SMTP` | `mailpit:1025` | Dev-mode SMTP catcher. Empty = send no mail at all (`noemailever`). |
 | `MOODLE_AUTO_UPGRADE` | `1` | Runs pending core/plugin upgrades on every start. |
 | `PLUGIN_AUTO_ENABLE` | `1` | Enables the gateway on every start, so the dev site is usable immediately (set `0` to manage it, and the Backoffice Key, yourself in Site administration). |
 | `XDEBUG_MODE` / `XDEBUG_START` | `debug,develop` / `trigger` | Web debugging. `XDEBUG_START=yes` breaks on every request; `XDEBUG_MODE=off` is fastest. |
@@ -171,6 +173,7 @@ Apply changes with `docker compose up -d` (rebuild only for `MOODLE_VERSION`, `A
 | **ifthenpay-db** | `mysql:8.4` | MySQL 8.4 LTS database | internal `3306` |
 | **ifthenpay-dev** | `mcr.microsoft.com/vscode/devcontainers/php:8.3` | Editor tooling **and** Moodle CLI | – |
 | **phpmyadmin** | `phpmyadmin:5.2` | Database UI | `${PMA_PORT}:80` |
+| **mailpit** | `axllent/mailpit:v1.33.1` | Catches outgoing mail (SMTP `1025`, UI `8025`); nothing leaves the stack | `${MAILPIT_PORT}:8025` |
 
 **Volumes**
 
@@ -298,7 +301,7 @@ mdl phpunit [args]         # Run the plugin's PHPUnit tests
 `mdl` runs Moodle CLI natively in the dev container — no `docker exec`, no Docker socket.
 
 `mdl cfg --set` cannot change `debug`, `debugdisplay`, `cachejs`, `cachetemplates`,
-`langstringcache`, `noemailever` or `passwordpolicy` — those are forced from `MOODLE_DEV_MODE` in
+`langstringcache`, `noemailever`, `smtphosts`, `noreplyaddress` or `passwordpolicy` — those are forced from `MOODLE_DEV_MODE` in
 `config.php` on every start (see `app-entrypoint.sh`'s managed block) and win over anything written
 to the database. Set `MOODLE_DEV_MODE=0` in `.env` first if you need to change one of them.
 

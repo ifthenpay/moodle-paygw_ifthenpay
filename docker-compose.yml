@@ -4,6 +4,7 @@
 #   ifthenpay-db    MySQL 8.4
 #   ifthenpay-app   Apache + PHP 8.3 + Xdebug, serves Moodle (pinned release)
 #   phpmyadmin      Database UI
+#   mailpit         Catches the mail Moodle sends (SMTP :1025, web UI :8025)
 #   dev             VS Code dev container (tooling only)
 #
 # Moodle core lives in the `moodle_core` volume, mounted at the SAME path
@@ -78,6 +79,8 @@ services:
       MOODLE_DEV_MODE: ${MOODLE_DEV_MODE:-1}
       MOODLE_AUTO_UPGRADE: ${MOODLE_AUTO_UPGRADE:-1}
       PLUGIN_AUTO_ENABLE: ${PLUGIN_AUTO_ENABLE:-1}
+      # Outgoing mail in dev mode: host:port of the SMTP catcher, empty = send nothing.
+      MOODLE_DEV_SMTP: ${MOODLE_DEV_SMTP-mailpit:1025}
       # Xdebug — connects back to the dev container, which listens on 9003.
       # zz-xdebug.ini is rewritten from these two on every start (see
       # app-entrypoint.sh, configure_xdebug); XDEBUG_CONFIG is not used, this
@@ -119,6 +122,13 @@ services:
       UPLOAD_LIMIT: 128M
     restart: unless-stopped
 
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    container_name: mailpit
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+    restart: unless-stopped
+
   dev:
     build:
       context: .
@@ -144,6 +154,7 @@ services:
       MOODLE_ADMIN_PASS: ${MOODLE_ADMIN_PASS:-adminpass}
       MOODLE_PORT: ${MOODLE_PORT:-8080}
       PMA_PORT: ${PMA_PORT:-8081}
+      MAILPIT_PORT: ${MAILPIT_PORT:-8025}
       PLUGIN_REPO: /workspace/plugin
       PLUGIN_COMPONENT: paygw_ifthenpay
       COMPOSER_MEMORY_LIMIT: "-1"

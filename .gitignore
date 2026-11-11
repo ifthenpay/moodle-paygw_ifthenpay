@@ -21,3 +21,7 @@ composer.phar
 /CLAUDE.md
 /.claude/
 /specs/
+
+# Local reference material, not part of the plugin
+/marketplace-screenshots/
+/old-plugin/

@@ -3,14 +3,14 @@
   "dockerComposeFile": ["../docker-compose.yml"],
   "service": "dev",
   // Bring the whole stack up, not just the dev container's dependencies.
-  "runServices": ["ifthenpay-db", "ifthenpay-app", "phpmyadmin", "dev"],
+  "runServices": ["ifthenpay-db", "ifthenpay-app", "phpmyadmin", "mailpit", "dev"],
   "workspaceFolder": "/workspace/plugin",
   "remoteUser": "vscode",
   // Stop the stack when VS Code closes. Use "none" to keep Moodle running
   // (handy while waiting for ifthenpay webhooks).
   "shutdownAction": "stopCompose",
 
-  // Ports are published by docker-compose (MOODLE_PORT / PMA_PORT in .env),
+  // Ports are published by docker-compose (MOODLE_PORT / PMA_PORT / MAILPIT_PORT in .env),
   // so VS Code must not also forward them from this container.
   "forwardPorts": [],
 

@@ -63,6 +63,7 @@ cmd_info() {
     printf '  %-18s %s\n' 'Site'        "${MOODLE_WWWROOT:-http://localhost:8080}  ${dim}(HTTP ${health} from the dev container)${reset}"
     printf '  %-18s %s / %s\n' 'Login'  "${MOODLE_ADMIN_USER:-admin}" "${MOODLE_ADMIN_PASS:-adminpass}"
     printf '  %-18s %s\n' 'phpMyAdmin'  "http://localhost:${PMA_PORT:-8081}"
+    printf '  %-18s %s\n' 'Mailpit'     "http://localhost:${MAILPIT_PORT:-8025}"
     printf '\n'
     printf '  %-18s %s\n' 'Moodle'      "${release:-unknown}  ${dim}${DIRROOT}${reset}"
     printf '  %-18s %s\n' 'Plugin (src)' "${plugin_src:-unknown}  ${dim}${REPO}/src${reset}"

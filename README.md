@@ -334,6 +334,12 @@ mdl phpunit          # Runs the paygw_ifthenpay test suite
 Put tests in `src/tests/` following Moodle's conventions. (Behat is not configured — it needs a
 browser/Selenium service.)
 
+CI runs the same suite in `.github/workflows/test-phpunit.yml`: a MySQL 8.4 service, the pinned
+Moodle release (cached, shared with the PHPStan workflow), the plugin copied to
+`public/payment/gateway/ifthenpay`, `admin/tool/phpunit/cli/init.php`, then
+`vendor/bin/phpunit --testsuite paygw_ifthenpay_testsuite`. When `src/tests/` has no `*_test.php`
+files the job is skipped without starting any of that.
+
 ---
 
 ## 🐞 Debugging (Xdebug)

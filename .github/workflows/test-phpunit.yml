@@ -18,10 +18,26 @@ concurrency:
 permissions:
   contents: read
 
+# Same pinned release as analyse-php.yml and .env.example — bump all three together.
+env:
+  MOODLE_BRANCH: stable503
+  MOODLE_VERSION: 5.3
+  MOODLE_DIRROOT: /var/www/html
+  # Moodle 5.x serves from public/, so plugins live under public/<type>/<name>.
+  PLUGIN_DIR: /var/www/html/public/payment/gateway/ifthenpay
+  COMPONENT: paygw_ifthenpay
+  DB_NAME: moodle
+  DB_USER: root
+  DB_PASS: rootpass
+
 jobs:
-  test-phpunit:
-    name: PHPUnit (plugin)
+  # Cheap gate: a runner with no services, so PRs that add no tests never pay
+  # for MySQL, the Moodle download or the PHPUnit install.
+  detect:
+    name: PHPUnit (detect tests)
     runs-on: ubuntu-latest
+    outputs:
+      has_tests: ${{ steps.detect.outputs.has_tests }}
 
     steps:
       - name: 📦 Checkout
@@ -34,22 +50,136 @@ jobs:
             echo "has_tests=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_tests=false" >> "$GITHUB_OUTPUT"
+            echo "✓ No PHPUnit tests in src/tests yet. Skipping."
           fi
 
-      - name: ⏭️ Skipping PHPUnit
-        if: steps.detect.outputs.has_tests != 'true'
-        run: echo "✓ No PHPUnit tests in src/tests yet. Skipping."
+  test-phpunit:
+    name: PHPUnit (plugin)
+    needs: detect
+    if: needs.detect.outputs.has_tests == 'true'
+    runs-on: ubuntu-latest
 
-      # Getting Moodle core into the runner isn't the missing piece — that
-      # part is already solved in analyse-php.yml (download + cache by
-      # version). Running PHPUnit for real needs more than that: a live
-      # MySQL service, a full admin/cli/install.php run, then
-      # admin/tool/phpunit/cli/init.php (see .devcontainer/bin/mdl's
-      # phpunit-init/phpunit commands for the local equivalent). That's
-      # deliberately not built out while src/tests/ is empty — revisit this
-      # job when the first test lands.
-      - name: 🚧 Tests detected but CI wiring is not built yet
-        if: steps.detect.outputs.has_tests == 'true'
+    services:
+      mysql:
+        image: mysql:8.4
+        # The env context is not available under services, so the password is
+        # spelled out here; keep it in sync with DB_PASS above.
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+        ports:
+          - 3306:3306
+        # tmpfs: the test database is throwaway, and disk-backed InnoDB is the
+        # slowest part of init.php.
+        options: >-
+          --tmpfs /var/lib/mysql
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -prootpass --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer
+          coverage: none
+          extensions: mbstring, intl, curl, json, mysqli, zip, gd, xml, xmlreader, simplexml, dom, soap, sodium, openssl, iconv, fileinfo, ctype, tokenizer, exif
+          ini-values: max_input_vars=5000, memory_limit=1G
+
+      # actions/cache restores as the runner user, which cannot create
+      # /var/www/html on its own.
+      - name: 📁 Prepare Moodle dirroot
         run: |
-          echo "::error::src/tests has test files, but this workflow doesn't run them yet — wire up MySQL + a full Moodle install/phpunit-init here (see mdl phpunit-init/mdl phpunit for the local equivalent)."
-          exit 1
+          sudo mkdir -p "$MOODLE_DIRROOT"
+          sudo chown "$(id -u):$(id -g)" "$MOODLE_DIRROOT"
+
+      # Same cache key as analyse-php.yml, so the two workflows share one
+      # pristine core + vendor/ (composer install there includes dev deps, i.e.
+      # PHPUnit). Restore/save are split so that config.php and the plugin
+      # copy added below never end up in the cache — analyse-php would then
+      # see the plugin twice.
+      - name: 📦 Moodle core cache (restore)
+        id: moodle-core-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.MOODLE_DIRROOT }}
+          key: moodle-core-${{ env.MOODLE_BRANCH }}-${{ env.MOODLE_VERSION }}
+
+      - name: 📥 Download Moodle core
+        if: steps.moodle-core-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          base="https://packaging.moodle.org/${MOODLE_BRANCH}/moodle-${MOODLE_VERSION}.tgz"
+          curl -fsSL -o /tmp/moodle.tgz "$base"
+          curl -fsSL -o /tmp/moodle.tgz.sha256 "$base.sha256"
+          expected="$(sed -E 's/.*=[[:space:]]*//' /tmp/moodle.tgz.sha256 | tr -d '[:space:]')"
+          echo "${expected}  /tmp/moodle.tgz" | sha256sum -c -
+          tar -xzf /tmp/moodle.tgz -C "$MOODLE_DIRROOT" --strip-components=1
+          rm -f /tmp/moodle.tgz /tmp/moodle.tgz.sha256
+
+      - name: 📥 Composer install (Moodle core, with dev deps)
+        if: steps.moodle-core-cache.outputs.cache-hit != 'true'
+        run: composer install --no-interaction --no-progress --working-dir="$MOODLE_DIRROOT"
+
+      - name: 💾 Moodle core cache (save)
+        if: steps.moodle-core-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.MOODLE_DIRROOT }}
+          key: moodle-core-${{ env.MOODLE_BRANCH }}-${{ env.MOODLE_VERSION }}
+
+      # A copy rather than a symlink: Moodle resolves component paths with
+      # realpath() in places, and a link pointing outside dirroot confuses it.
+      - name: 🔌 Install plugin into Moodle
+        run: |
+          set -euo pipefail
+          rm -rf "$PLUGIN_DIR"
+          mkdir -p "$(dirname "$PLUGIN_DIR")"
+          cp -R src "$PLUGIN_DIR"
+
+      # PHPUnit only needs a config.php pointing at an empty database —
+      # init.php installs its own phpu_-prefixed site, so the full
+      # admin/cli/install.php the dev container runs is not needed here.
+      - name: ⚙️ Write config.php + create database
+        run: |
+          set -euo pipefail
+          moodledata="${RUNNER_TEMP}/moodledata"
+          phpunitdata="${RUNNER_TEMP}/phpunitdata"
+          mkdir -p "$moodledata" "$phpunitdata"
+          MYSQL_PWD="$DB_PASS" mysql -h 127.0.0.1 -u "$DB_USER" -e \
+            "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+          cat > "${MOODLE_DIRROOT}/config.php" <<PHP
+          <?php
+          unset(\$CFG);
+          global \$CFG;
+          \$CFG = new stdClass();
+          \$CFG->dbtype    = 'mysqli';
+          \$CFG->dblibrary = 'native';
+          \$CFG->dbhost    = '127.0.0.1';
+          \$CFG->dbname    = '${DB_NAME}';
+          \$CFG->dbuser    = '${DB_USER}';
+          \$CFG->dbpass    = '${DB_PASS}';
+          \$CFG->prefix    = 'mdl_';
+          \$CFG->dboptions = ['dbpersist' => 0, 'dbport' => 3306, 'dbsocket' => '', 'dbcollation' => 'utf8mb4_unicode_ci'];
+          \$CFG->wwwroot   = 'http://localhost';
+          \$CFG->dataroot  = '${moodledata}';
+          \$CFG->admin     = 'admin';
+          \$CFG->directorypermissions = 02777;
+          \$CFG->phpunit_prefix   = 'phpu_';
+          \$CFG->phpunit_dataroot = '${phpunitdata}';
+          \$CFG->debug = 32767;
+          \$CFG->debugdisplay = 1;
+          require_once(__DIR__ . '/lib/setup.php');
+          PHP
+          php -l "${MOODLE_DIRROOT}/config.php"
+
+      - name: 🧰 Initialise PHPUnit environment
+        run: php "${MOODLE_DIRROOT}/public/admin/tool/phpunit/cli/init.php"
+
+      - name: 🧪 Run plugin tests
+        working-directory: ${{ env.MOODLE_DIRROOT }}
+        run: php vendor/bin/phpunit --testsuite "${COMPONENT}_testsuite" --colors=always

@@ -9,7 +9,8 @@
 #   4. keep wwwroot / developer settings in sync with the environment
 #   5. run pending core + plugin upgrades
 #   6. enable and (optionally) configure the ifthenpay gateway
-#   7. hand over to Apache and flag the container as ready
+#   7. start the background cron loop (MOODLE_CRON=1)
+#   8. hand over to Apache and flag the container as ready
 #
 # Everything after step 3 is best effort: a failure is reported but still lets
 # Apache start, so the site stays reachable for debugging.
@@ -27,6 +28,10 @@ DEV_SETUP=/usr/local/lib/ifthenpay/dev-setup.php
 
 MOODLE_DEV_MODE="${MOODLE_DEV_MODE:-1}"
 MOODLE_AUTO_UPGRADE="${MOODLE_AUTO_UPGRADE:-1}"
+MOODLE_CRON="${MOODLE_CRON:-1}"
+# On the app_logs volume, so `mdl logs cron` can read it from the dev container.
+CRON_LOG=/var/log/apache2/cron.log
+CRON_LOG_MAX_BYTES=$((10 * 1024 * 1024))
 
 needs_purge=0
 
@@ -279,6 +284,53 @@ purge_caches() {
     moodle_cli purge_caches.php >/dev/null || warn "Cache purge failed."
 }
 
+# ── 7. Cron ──────────────────────────────────────────────────────────────────
+# A plain loop instead of cron/supervisord in the image: one cron.php run per
+# minute, as www-data, like a site's crontab. --keep-alive=0 makes each run a
+# single pass (the Moodle default keeps it polling for 3 minutes), so the loop
+# alone sets the cadence and runs never overlap.
+#
+# Full output goes to CRON_LOG; container stdout only gets a line when cron
+# starts failing and when it recovers (e.g. "upgrade pending" with
+# MOODLE_AUTO_UPGRADE=0), not one per minute.
+#
+# The loop is a child of PID 1, which becomes Apache after `exec`: Apache stays
+# PID 1, so `docker stop` and Apache's exit status behave exactly as before,
+# and the loop dies with the container (a run cut short just loses its locks).
+cron_loop() {
+    set +e  # never let a transient error end the loop
+    local failing=0 started status elapsed
+    while :; do
+        started="$(date +%s)"
+        if [ "$(stat -c '%s' "${CRON_LOG}" 2>/dev/null || echo 0)" -gt "${CRON_LOG_MAX_BYTES}" ]; then
+            mv -f "${CRON_LOG}" "${CRON_LOG}.1"
+        fi
+        printf '\n===== %s =====\n' "$(date '+%F %T')" >> "${CRON_LOG}"
+        moodle_cli cron.php --keep-alive=0 >> "${CRON_LOG}" 2>&1
+        status=$?
+        if [ "${status}" -ne 0 ] && [ "${failing}" = "0" ]; then
+            warn "Cron run failed (exit ${status}): $(tail -n 1 "${CRON_LOG}") — full output: mdl logs cron"
+            failing=1
+        elif [ "${status}" -eq 0 ] && [ "${failing}" = "1" ]; then
+            log "Cron is running again."
+            failing=0
+        fi
+        elapsed=$(( $(date +%s) - started ))
+        [ "${elapsed}" -ge 60 ] || sleep $(( 60 - elapsed ))
+    done
+}
+
+start_cron() {
+    if [ "${MOODLE_CRON}" != "1" ]; then
+        log "Background cron disabled (MOODLE_CRON=0) — run it on demand with: mdl cron"
+        return
+    fi
+    touch "${CRON_LOG}"
+    chmod 0644 "${CRON_LOG}"
+    cron_loop </dev/null &
+    log "Cron runs every minute in the background (output: mdl logs cron)."
+}
+
 # ── Run ──────────────────────────────────────────────────────────────────────
 configure_xdebug
 fix_apache_error_log
@@ -297,6 +349,8 @@ apply_managed_block
 run_upgrade
 configure_plugin
 purge_caches
+
+start_cron
 
 touch "${READY_FLAG}"
 log "Ready → ${MOODLE_WWWROOT} (admin: ${MOODLE_ADMIN_USER:-admin} / ${MOODLE_ADMIN_PASS:-adminpass})"

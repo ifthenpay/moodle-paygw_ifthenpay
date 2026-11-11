@@ -94,6 +94,7 @@ Everything is driven by a single `.env` file (created automatically from
 | `MOODLE_DEV_MODE` | `1` | DEVELOPER debug level, JS/template/lang caches off, mail routed to Mailpit, password policy off. |
 | `MOODLE_DEV_SMTP` | `mailpit:1025` | Dev-mode SMTP catcher. Empty = send no mail at all (`noemailever`). |
 | `MOODLE_AUTO_UPGRADE` | `1` | Runs pending core/plugin upgrades on every start. |
+| `MOODLE_CRON` | `1` | Runs Moodle cron every minute in the app container, as the web user (sends queued mail, runs ad-hoc tasks). Output in `mdl logs cron`; `0` = only on demand with `mdl cron`. |
 | `PLUGIN_AUTO_ENABLE` | `1` | Enables the gateway on every start, so the dev site is usable immediately (set `0` to manage it, and the Backoffice Key, yourself in Site administration). |
 | `XDEBUG_MODE` / `XDEBUG_START` | `debug,develop` / `trigger` | Web debugging. `XDEBUG_START=yes` breaks on every request; `XDEBUG_MODE=off` is fastest. |
 | `DEV_XDEBUG_MODE` | `off` | Xdebug for CLI tools in the dev container. |
@@ -236,12 +237,16 @@ Prettier, EditorConfig.
    ```
 4. **Language strings** apply instantly (`langstringcache` is off).
 5. **Something looks stale?** `mdl purge`
-6. **Before committing:**
+6. **Waiting for an email or an ad-hoc task?** Cron runs every minute on its own
+   (`MOODLE_CRON=1`); `mdl cron` runs it right away, `mdl adhoc` just the ad-hoc queue.
+   The very first cron run after enabling it drains every ad-hoc task queued until then, so
+   expect a longer run and a burst of mail in Mailpit.
+7. **Before committing:**
    ```bash
    mdl qa         # phpcs + eslint + stylelint + PHPStan
    mdl build      # commit the built AMD files in src/amd/build/
    ```
-7. **Releasing:** add a `## x.y.z` section to `src/CHANGES.md`, set `$plugin->release = 'x.y.z'`
+8. **Releasing:** add a `## x.y.z` section to `src/CHANGES.md`, set `$plugin->release = 'x.y.z'`
    and bump `$plugin->version` in `src/version.php`, merge to `main`, then push the tag:
    ```bash
    git tag vx.y.z && git push origin vx.y.z
@@ -290,6 +295,9 @@ mdl cli <script> [args]    # Any admin/cli script (run `mdl cli` to list them)
 mdl cfg --name=noreplyaddress --set=noreply@example.com
 mdl sql                    # MySQL shell (or: mdl sql "SELECT ...")
 mdl logs                   # Tail Apache/PHP errors
+mdl logs cron              # Tail the background cron's output
+mdl cron                   # Run cron once now (e.g. right after a test payment)
+mdl adhoc                  # Run only the queued ad-hoc tasks now
 
 mdl reinstall              # Uninstall + reinstall the plugin (drops its data)
 

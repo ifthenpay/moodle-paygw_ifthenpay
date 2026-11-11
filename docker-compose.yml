@@ -79,6 +79,8 @@ services:
       MOODLE_DEV_MODE: ${MOODLE_DEV_MODE:-1}
       MOODLE_AUTO_UPGRADE: ${MOODLE_AUTO_UPGRADE:-1}
       PLUGIN_AUTO_ENABLE: ${PLUGIN_AUTO_ENABLE:-1}
+      # Background cron: admin/cli/cron.php every minute as www-data.
+      MOODLE_CRON: ${MOODLE_CRON:-1}
       # Outgoing mail in dev mode: host:port of the SMTP catcher, empty = send nothing.
       MOODLE_DEV_SMTP: ${MOODLE_DEV_SMTP-mailpit:1025}
       # Xdebug — connects back to the dev container, which listens on 9003.

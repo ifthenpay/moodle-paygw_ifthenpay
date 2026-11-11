@@ -49,7 +49,7 @@ php_value() { # php_value <file> <variable>  → prints the assigned literal
 }
 
 cmd_info() {
-    local release plugin_src plugin_db enabled health
+    local release plugin_src plugin_db enabled health lastcron adhoc
     release="$(php_value "${DIRROOT}/public/version.php" '\$release' 2>/dev/null || true)"
     plugin_src="$(php_value "${REPO}/src/version.php" '\$plugin->release' 2>/dev/null || true)"
     plugin_db="$(db -N -B -e \
@@ -57,6 +57,9 @@ cmd_info() {
         2>/dev/null || true)"
     enabled="$(db -N -B -e \
         "SELECT value FROM mdl_config WHERE name='paygw_plugins_sortorder';" 2>/dev/null || true)"
+    lastcron="$(db -N -B -e \
+        "SELECT UNIX_TIMESTAMP() - value FROM mdl_config WHERE name='lastcronstart';" 2>/dev/null || true)"
+    adhoc="$(db -N -B -e "SELECT COUNT(*) FROM mdl_task_adhoc;" 2>/dev/null || echo '?')"
     health="$(curl -s -o /dev/null -w '%{http_code}' "http://${APP_HOST}/" 2>/dev/null || echo '---')"
 
     printf '\n%sifthenpay Moodle dev environment%s\n\n' "${bold}" "${reset}"
@@ -72,6 +75,11 @@ cmd_info() {
         *ifthenpay*) printf '  %-18s %s\n' 'Gateway'  "${green}enabled${reset}" ;;
         *)           printf '  %-18s %s\n' 'Gateway'  "${yellow}disabled${reset} ${dim}(Site administration → Plugins → Payment gateways)${reset}" ;;
     esac
+    if [ -n "${lastcron}" ]; then
+        printf '  %-18s last run %ss ago, %s ad-hoc task(s) queued\n' 'Cron' "${lastcron}" "${adhoc}"
+    else
+        printf '  %-18s %s\n' 'Cron' "${yellow}never run${reset}, ${adhoc} ad-hoc task(s) queued ${dim}(mdl cron)${reset}"
+    fi
     printf '  %-18s app: %s (start_with_request=%s)   dev CLI: %s\n' 'Xdebug' \
         "${APP_XDEBUG_MODE:-debug,develop}" "${XDEBUG_START:-trigger}" "${XDEBUG_MODE}"
     printf '\n  %sRun `mdl help` for the available commands.%s\n\n' "${dim}" "${reset}"
@@ -91,6 +99,9 @@ ${bold}mdl${reset} — ifthenpay Moodle dev helper
   ${cyan}mdl cfg [args]${reset}             Read/write core config (admin/cli/cfg.php)
   ${cyan}mdl sql [query]${reset}            MySQL shell, or run one query
   ${cyan}mdl logs${reset}                   Tail the Moodle/PHP error log
+  ${cyan}mdl logs cron${reset}              Tail the background cron's output
+  ${cyan}mdl cron [args]${reset}            Run cron once now (admin/cli/cron.php, single pass)
+  ${cyan}mdl adhoc [args]${reset}           Run only the queued ad-hoc tasks now (adhoc_task.php --execute)
 
  ${bold}Plugin${reset}
   ${cyan}mdl reinstall${reset}              Uninstall the plugin, then reinstall it (drops its data)
@@ -193,10 +204,14 @@ main() {
         cfg)              moodle_cli cfg.php "$@" ;;
         sql)
             if [ $# -gt 0 ]; then db -e "$*"; else db; fi ;;
+        cron)             moodle_cli cron.php --keep-alive=0 "$@" ;;
+        adhoc)            moodle_cli adhoc_task.php --execute "$@" ;;
         logs)
-            [ -r /var/log/apache2/error.log ] \
-                || fail "Apache's log is not readable here. On the host: docker compose logs -f ifthenpay-app"
-            tail -n 100 -f /var/log/apache2/error.log ;;
+            local logfile=/var/log/apache2/error.log
+            [ "${1:-}" = "cron" ] && logfile=/var/log/apache2/cron.log
+            [ -r "${logfile}" ] \
+                || fail "${logfile} is not readable here. On the host: docker compose logs -f ifthenpay-app"
+            tail -n 100 -f "${logfile}" ;;
 
         reinstall)        cmd_reinstall ;;
 

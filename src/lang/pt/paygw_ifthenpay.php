@@ -213,14 +213,19 @@ $string['privacy:metadata:payment_gateways:config'] = 'Os IDs dos utilizadores e
 
 // Staff notifications: account gateway form.
 $string['form:notifications'] = 'Notificações à equipa';
-$string['form:notify_completed'] = 'Notificar pagamentos concluídos';
-$string['form:notify_completed_help'] = 'Envia uma notificação quando um pagamento é confirmado e o item adquirido (por exemplo, uma inscrição numa disciplina) foi entregue.';
-$string['form:notify_problems'] = 'Notificar problemas de pagamento';
-$string['form:notify_problems_help'] = 'Envia uma notificação quando um pagamento conhecido encontra um problema: montante divergente, chave anti-phishing inválida, entrega recusada ou erro inesperado. Cada tipo de problema é notificado uma única vez por pagamento.';
+$string['form:notifications_note'] = 'Enviadas pelo sistema de mensagens do Moodle, pelo que se aplicam as preferências de notificação de cada destinatário.';
+$string['form:notify_when'] = 'Notificar quando';
+$string['form:notify_when_help'] = '**Pagamento concluído**: Envia uma notificação quando um pagamento é confirmado e o item adquirido (por exemplo, uma inscrição numa disciplina) foi entregue.
+
+**Problema no pagamento**: Envia uma notificação quando um pagamento conhecido encontra um problema: montante divergente, chave anti-phishing inválida, entrega recusada ou erro inesperado. Cada tipo de problema é notificado uma única vez por pagamento.';
+$string['form:notify_recipients'] = 'Destinatários';
+$string['form:notify_recipients_help'] = '**Administradores do site**: Notificar todos os administradores do site.
+
+**Professores da disciplina**: Notificar todos os utilizadores que podem editar a disciplina adquirida. Aplica-se apenas quando o pagamento é referente a uma inscrição numa disciplina.';
+$string['form:notify_completed'] = 'Pagamento concluído';
+$string['form:notify_problems'] = 'Problema no pagamento';
 $string['form:notify_admins'] = 'Administradores do site';
-$string['form:notify_admins_help'] = 'Notificar todos os administradores do site.';
 $string['form:notify_teachers'] = 'Professores da disciplina';
-$string['form:notify_teachers_help'] = 'Notificar todos os utilizadores que podem editar a disciplina adquirida. Aplica-se apenas quando o pagamento é referente a uma inscrição numa disciplina.';
 $string['form:notify_users'] = 'Outros utilizadores';
 $string['form:notify_users_help'] = 'Notificar também estes utilizadores. Cada um precisa de um papel com a permissão "Receber notificações de pagamentos ifthenpay" (paygw/ifthenpay:receivenotifications).';
 $string['form:notify_users_none'] = 'Nenhum';

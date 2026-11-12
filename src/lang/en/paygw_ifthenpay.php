@@ -210,14 +210,19 @@ $string['privacy:metadata:payment_gateways:config'] = 'The IDs of the users chos
 
 // Staff notifications: account gateway form.
 $string['form:notifications'] = 'Staff notifications';
-$string['form:notify_completed'] = 'Notify completed payments';
-$string['form:notify_completed_help'] = 'Send a notification when a payment is confirmed and the purchased item (for example a course enrolment) has been delivered.';
-$string['form:notify_problems'] = 'Notify payment problems';
-$string['form:notify_problems_help'] = 'Send a notification when a known payment runs into a problem: amount mismatch, invalid callback key, delivery refused or an unexpected error. Each problem type is notified once per payment.';
+$string['form:notifications_note'] = 'Sent through Moodle\'s messaging, so each recipient\'s notification preferences apply.';
+$string['form:notify_when'] = 'Notify when';
+$string['form:notify_when_help'] = '**Payment completed**: Send a notification when a payment is confirmed and the purchased item (for example a course enrolment) has been delivered.
+
+**Payment problem**: Send a notification when a known payment runs into a problem: amount mismatch, invalid callback key, delivery refused or an unexpected error. Each problem type is notified once per payment.';
+$string['form:notify_recipients'] = 'Recipients';
+$string['form:notify_recipients_help'] = '**Site administrators**: Notify every site administrator.
+
+**Course teachers**: Notify every user who can edit the purchased course. Applies only when the payment is for a course enrolment.';
+$string['form:notify_completed'] = 'Payment completed';
+$string['form:notify_problems'] = 'Payment problem';
 $string['form:notify_admins'] = 'Site administrators';
-$string['form:notify_admins_help'] = 'Notify every site administrator.';
 $string['form:notify_teachers'] = 'Course teachers';
-$string['form:notify_teachers_help'] = 'Notify every user who can edit the purchased course. Applies only when the payment is for a course enrolment.';
 $string['form:notify_users'] = 'Other users';
 $string['form:notify_users_help'] = 'Also notify these users. Each one needs a role with the capability "Receive ifthenpay payment notifications" (paygw/ifthenpay:receivenotifications).';
 $string['form:notify_users_none'] = 'None';

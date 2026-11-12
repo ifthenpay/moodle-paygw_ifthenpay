@@ -242,14 +242,19 @@ $string['privacy:metadata:payment_gateways:config'] = 'Les ID des utilisateurs c
 
 // Staff notifications: account gateway form.
 $string['form:notifications'] = 'Notifications au personnel';
-$string['form:notify_completed'] = 'Notifier les paiements finalisés';
-$string['form:notify_completed_help'] = 'Envoie une notification lorsqu\'un paiement est confirmé et que l\'élément acheté (par exemple une inscription à un cours) a été livré.';
-$string['form:notify_problems'] = 'Notifier les problèmes de paiement';
-$string['form:notify_problems_help'] = 'Envoie une notification lorsqu\'un paiement connu rencontre un problème : montant non concordant, clé anti-phishing invalide, livraison refusée ou erreur inattendue. Chaque type de problème n\'est notifié qu\'une seule fois par paiement.';
+$string['form:notifications_note'] = 'Envoyées via la messagerie de Moodle : les préférences de notification de chaque destinataire s\'appliquent.';
+$string['form:notify_when'] = 'Notifier en cas de';
+$string['form:notify_when_help'] = '**Paiement finalisé**: Envoie une notification lorsqu\'un paiement est confirmé et que l\'élément acheté (par exemple une inscription à un cours) a été livré.
+
+**Problème de paiement**: Envoie une notification lorsqu\'un paiement connu rencontre un problème : montant non concordant, clé anti-phishing invalide, livraison refusée ou erreur inattendue. Chaque type de problème n\'est notifié qu\'une seule fois par paiement.';
+$string['form:notify_recipients'] = 'Destinataires';
+$string['form:notify_recipients_help'] = '**Administrateurs du site**: Notifier tous les administrateurs du site.
+
+**Enseignants du cours**: Notifier tous les utilisateurs qui peuvent modifier le cours acheté. Ne s\'applique que lorsque le paiement concerne une inscription à un cours.';
+$string['form:notify_completed'] = 'Paiement finalisé';
+$string['form:notify_problems'] = 'Problème de paiement';
 $string['form:notify_admins'] = 'Administrateurs du site';
-$string['form:notify_admins_help'] = 'Notifier tous les administrateurs du site.';
 $string['form:notify_teachers'] = 'Enseignants du cours';
-$string['form:notify_teachers_help'] = 'Notifier tous les utilisateurs qui peuvent modifier le cours acheté. Ne s\'applique que lorsque le paiement concerne une inscription à un cours.';
 $string['form:notify_users'] = 'Autres utilisateurs';
 $string['form:notify_users_help'] = 'Notifier également ces utilisateurs. Chacun doit avoir un rôle disposant de la capacité « Recevoir les notifications de paiement ifthenpay » (paygw/ifthenpay:receivenotifications).';
 $string['form:notify_users_none'] = 'Aucun';

@@ -95,6 +95,36 @@ final class config_form_test extends \advanced_testcase {
     }
 
     /**
+     * A form element by name, also looking inside the notification rows' groups.
+     *
+     * @param account_gateway $form Form.
+     * @param string $name Element name.
+     * @return \HTML_QuickForm_element|null
+     */
+    private static function element(account_gateway $form, string $name): ?\HTML_QuickForm_element {
+        $mform = $form->get_mform();
+        if ($mform->elementExists($name)) {
+            $element = $mform->getElement($name);
+            return $element instanceof \HTML_QuickForm_element ? $element : null;
+        }
+        foreach (['ifthenpay_notify_when', 'ifthenpay_notify_recipients'] as $groupname) {
+            if (!$mform->elementExists($groupname)) {
+                continue;
+            }
+            $group = $mform->getElement($groupname);
+            if (!$group instanceof \HTML_QuickForm_group) {
+                continue;
+            }
+            foreach ($group->getElements() as $element) {
+                if ($element instanceof \HTML_QuickForm_element && $element->getName() === $name) {
+                    return $element;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * A form element's current value.
      *
      * @param account_gateway $form Form.
@@ -102,7 +132,7 @@ final class config_form_test extends \advanced_testcase {
      * @return mixed
      */
     private static function value(account_gateway $form, string $name): mixed {
-        $element = $form->get_mform()->getElement($name);
+        $element = self::element($form, $name);
         return $element instanceof \HTML_QuickForm_element ? $element->getValue() : null;
     }
 
@@ -114,7 +144,7 @@ final class config_form_test extends \advanced_testcase {
      * @return string
      */
     private function type(account_gateway $form, string $name): string {
-        $element = $form->get_mform()->getElement($name);
+        $element = self::element($form, $name);
         $this->assertInstanceOf(\HTML_QuickForm_element::class, $element);
         return (string) $element->getType();
     }
@@ -166,9 +196,13 @@ final class config_form_test extends \advanced_testcase {
 
         $this->assertTrue($mform->elementExists('ifthenpay_gatewaykey'), 'normal path rendered');
         foreach (self::NOTIFY_FIELDS as $name) {
-            $this->assertTrue($mform->elementExists($name), $name);
+            $this->assertNotNull(self::element($form, $name), $name);
         }
         $this->assertSame('autocomplete', $this->type($form, 'notify_users'));
+        // Layout: a plain labelled row (no collapsible header), then "when" and "who" as two rows.
+        $this->assertSame('static', $this->type($form, 'ifthenpay_notifications'));
+        $this->assertSame('group', $this->type($form, 'ifthenpay_notify_when'));
+        $this->assertSame('group', $this->type($form, 'ifthenpay_notify_recipients'));
         foreach (['notify_completed', 'notify_problems', 'notify_admins', 'notify_teachers'] as $name) {
             $this->assertEquals(0, self::value($form, $name), $name);
         }
@@ -220,7 +254,7 @@ final class config_form_test extends \advanced_testcase {
 
         $this->assertTrue($mform->elementExists('ifthenpay_unavailable'), 'unavailable path rendered');
         foreach (self::NOTIFY_FIELDS as $name) {
-            $this->assertTrue($mform->elementExists($name), $name);
+            $this->assertNotNull(self::element($form, $name), $name);
         }
         $this->assertSame('advcheckbox', $this->type($form, 'notify_completed'));
         $this->assertEquals(1, self::value($form, 'notify_completed'));

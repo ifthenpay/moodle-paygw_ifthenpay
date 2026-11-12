@@ -419,14 +419,32 @@ class config_form
      * @return void
      */
     private static function render_notifications(\MoodleQuickForm $mform, array $saved): void {
-        $mform->addElement('header', 'ifthenpay_notifications', get_string('form:notifications', 'paygw_ifthenpay'));
-        $mform->setExpanded('ifthenpay_notifications');
+        // A plain labelled row like the rest of this form (it has no collapsible sections), then
+        // two rows that keep "when" apart from "who".
+        $mform->addElement(
+            'static',
+            'ifthenpay_notifications',
+            get_string('form:notifications', 'paygw_ifthenpay'),
+            \html_writer::div(get_string('form:notifications_note', 'paygw_ifthenpay'), 'text-muted small')
+        );
 
-        foreach (['notify_completed', 'notify_problems', 'notify_admins', 'notify_teachers'] as $name) {
-            $mform->addElement('advcheckbox', $name, get_string('form:' . $name, 'paygw_ifthenpay'));
-            $mform->setType($name, PARAM_BOOL);
-            $mform->setDefault($name, empty($saved[$name]) ? 0 : 1);
-            $mform->addHelpButton($name, 'form:' . $name, 'paygw_ifthenpay');
+        // The checkboxes keep their own names (appendName false), so they submit, save and load
+        // exactly as top-level fields would.
+        $rows = [
+            'ifthenpay_notify_when' => ['form:notify_when', ['notify_completed', 'notify_problems']],
+            'ifthenpay_notify_recipients' => ['form:notify_recipients', ['notify_admins', 'notify_teachers']],
+        ];
+        foreach ($rows as $group => [$labelkey, $names]) {
+            $boxes = [];
+            foreach ($names as $name) {
+                $boxes[] = $mform->createElement('advcheckbox', $name, '', get_string('form:' . $name, 'paygw_ifthenpay'));
+            }
+            $mform->addGroup($boxes, $group, get_string($labelkey, 'paygw_ifthenpay'), \html_writer::empty_tag('br'), false);
+            $mform->addHelpButton($group, $labelkey, 'paygw_ifthenpay');
+            foreach ($names as $name) {
+                $mform->setType($name, PARAM_BOOL);
+                $mform->setDefault($name, empty($saved[$name]) ? 0 : 1);
+            }
         }
 
         // Core's account_gateway::set_data() later sets every element whose name matches a saved

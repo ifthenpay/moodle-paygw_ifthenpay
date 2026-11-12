@@ -131,10 +131,11 @@ Apply changes with `docker compose up -d` (rebuild only for `MOODLE_VERSION`, `A
 │  ├─ amd/src/                 # Source AMD modules
 │  ├─ amd/build/               # Built/minified AMD (committed)
 │  ├─ classes/                 # PHP classes (PSR-4)
-│  ├─ db/                      # Database schema
-│  ├─ lang/                    # Language strings (en, pt)
+│  ├─ db/                      # Schema, upgrade steps, capability, message providers
+│  ├─ lang/                    # Language strings (en, pt, es, fr)
 │  ├─ pix/                     # Images & icons
 │  ├─ templates/               # Mustache templates
+│  ├─ tests/                   # PHPUnit tests
 │  └─ *.php, *.css, version.php
 │
 ├─ vendor/                     # Composer dependencies (dev-only)
@@ -332,7 +333,14 @@ mdl phpunit          # Runs the paygw_ifthenpay test suite
 ```
 
 Put tests in `src/tests/` following Moodle's conventions. (Behat is not configured — it needs a
-browser/Selenium service.)
+browser/Selenium service.) The suite covers the shared `lib.php` helpers (`lib_test.php`), staff
+notifications (`notification_test.php`, `notification_recipients_test.php`,
+`task/send_notification_test.php`), the account form (`config_form_test.php`) and the privacy
+provider (`privacy/provider_test.php`).
+
+To check staff notifications by hand, configure them on a payment account, complete a payment,
+run `mdl adhoc` (or wait for cron) and open Mailpit at <code>http://localhost:8025</code>; the
+popup copy shows in the recipient's Moodle notifications.
 
 CI runs the same suite in `.github/workflows/test-phpunit.yml`: a MySQL 8.4 service, the pinned
 Moodle release (cached, shared with the PHPStan workflow), the plugin copied to
@@ -439,21 +447,35 @@ src/
 ├─ classes/
 │  ├─ adminsetting/
 │  │  └─ backofficekey.php          # Custom admin setting + server-side validation
+│  ├─ event/
+│  │  ├─ notification_failed.php    # Logged when a staff notification cannot be sent
+│  │  └─ payment_problem.php        # Logged when a payment notification is rejected
 │  ├─ local/
 │  │  ├─ api_client.php             # HTTP client for ifthenpay endpoints
-│  │  └─ data_formatter.php         # Helpers for payloads/data types
+│  │  ├─ config_form.php            # Payment account form (Payment + Staff notifications)
+│  │  ├─ data_formatter.php         # Helpers for payloads/data types
+│  │  ├─ hook_callbacks.php         # Moodle hook callbacks
+│  │  └─ notification_recipients.php  # Resolves who receives a staff notification
 │  ├─ privacy/
 │  │  └─ provider.php               # GDPR/privacy API implementation
+│  ├─ task/
+│  │  └─ send_notification.php      # Ad-hoc task: sends one staff notification
 │  └─ gateway.php                   # Gateway integration glue (Payment Account form/adapters)
 │
 ├─ db/
+│  ├─ access.php                    # Capability: paygw/ifthenpay:receivenotifications
+│  ├─ caches.php                    # Cache definitions
+│  ├─ hooks.php                     # Hook callback registrations
 │  ├─ install.xml                   # DB schema
-│  └─ uninstall.php                 # Cleanup on uninstall
+│  ├─ messages.php                  # Message providers (payment completed / problem)
+│  ├─ uninstall.php                 # Cleanup on uninstall
+│  └─ upgrade.php                   # Upgrade steps
 │
 ├─ lang/                            # Language strings
 ├─ pix/                             # Icons/assets
 ├─ templates/
 │  └─ ifthenpay_button_placeholder.mustache  # UI partials
+├─ tests/                           # PHPUnit tests (see "Tests (PHPUnit)")
 │
 ├─ cancel.php                       # Cancel/error landing
 ├─ lib.php                          # Business logic (helper functions)

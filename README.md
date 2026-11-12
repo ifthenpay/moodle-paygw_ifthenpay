@@ -387,8 +387,10 @@ popup copy shows in the recipient's Moodle notifications.
 CI runs the same suite in the PHPUnit job of `.github/workflows/ci.yml`: a MySQL 8.4 service, the
 pinned Moodle release (cached, shared with the PHPStan job), the plugin copied to
 `public/payment/gateway/ifthenpay`, `admin/tool/phpunit/cli/init.php --disable-composer`, then
-`vendor/bin/phpunit --testsuite paygw_ifthenpay_testsuite`. When `src/tests/` has no `*_test.php`
-files the job is skipped.
+`vendor/bin/phpunit --testsuite paygw_ifthenpay_testsuite`. Installing the test site is the slow
+part, so a snapshot of it (database dump + `phpunit_dataroot`) is cached per Moodle release and
+plugin `version.php`/`db/`: a change there installs afresh, anything else reuses it. When
+`src/tests/` has no `*_test.php` files the job is skipped.
 
 ---
 

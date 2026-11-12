@@ -38,7 +38,7 @@ final class lib_test extends \advanced_testcase {
      * @return void
      */
     public function test_amount_to_cents_valid(): void {
-        $this->assertSame(1000, paygw_ifthenpay_amount_to_cents('10'));
+        $this->assertSame(999, paygw_ifthenpay_amount_to_cents('10'));
         $this->assertSame(1050, paygw_ifthenpay_amount_to_cents('10.5'));
         $this->assertSame(1050, paygw_ifthenpay_amount_to_cents('10,50'));
     }

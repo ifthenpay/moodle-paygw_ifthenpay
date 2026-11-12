@@ -205,34 +205,6 @@ function paygw_ifthenpay_get_methods_rich(): array {
 }
 
 /**
- * Whether ifthenpay recognises a Backoffice Key.
- *
- * Takes the key as an argument rather than reading configuration, because the admin setting needs
- * to check a value the user has just typed and not yet saved.
- *
- * @param string $key Backoffice Key to check.
- * @param int $timeout Request timeout in seconds.
- * @return bool True if the key belongs to an ifthenpay client.
- * @throws \moodle_exception 'api:error_unauthorized' if refused; transport/JSON errors otherwise.
- */
-function paygw_ifthenpay_key_is_recognised(string $key, int $timeout = 5): bool {
-    return (new api_client($key, $timeout))->verify_backoffice_key();
-}
-
-/**
- * Payment methods that Pay-by-Link can preselect at checkout.
- *
- * Wrapped here rather than read from data_formatter directly: phpstan-moodle emits phantom
- * errors when a plugin class file references another plugin class in this namespace. See the
- * note in phpstan.neon.
- *
- * @return string[] Method keys.
- */
-function paygw_ifthenpay_preselectable_methods(): array {
-    return data_formatter::PRESELECTABLE_METHODS;
-}
-
-/**
  * Build the full admin dataset in two requests.
  *
  * The accounts come from the same /gateway/get response as the keys — each row carries them

@@ -15,21 +15,17 @@ parameters:
 
   # Language packs are excluded from analysis. They are declarative data — a bare
   # `$string['key'] = '...';` sequence with no declaration — so PHPStan has nothing useful to say
-  # about them, and used to need a blanket ignoreErrors rule to swallow one error per string
-  # (400 of them across four packs). Worse, their presence in the file set changed the analysis of
-  # unrelated class files: adding the es and fr packs turned api_client.php from clean into six
-  # non-ignorable, provably false "return statement is missing" errors on methods that visibly
-  # return. Excluding them removes the trigger and the 400-error special case, and costs no
-  # coverage — every file with logic in it is still analysed.
+  # about them at level max beyond one error per string (about 400 across four packs), which would
+  # otherwise need a blanket ignoreErrors rule. Excluding them costs no coverage: every file with
+  # logic in it is still analysed.
   excludePaths:
     analyseAndScan:
       - src/lang/*/paygw_ifthenpay.php
 
-  # A related phantom-error family, same extension: a plugin class file that references another
-  # class under paygw_ifthenpay\local\ directly draws non-ignorable "return statement is missing"
-  # errors. Verified case by case: config_form -> data_formatter and adminsetting\backofficekey ->
-  # api_client both trigger it, so those two calls go through the global functions in lib.php
-  # instead. Referencing config_form itself does not, so gateway.php calls it directly.
+  # Errors that appeared only in local runs ("return statement is missing" on methods that visibly
+  # return, baseline entries suddenly unmatched) came from the dev container mounting the plugin
+  # inside the Moodle tree as well, so every class existed under two paths. Analyse locally with
+  # `mdl analyse` (phpstan.local.neon), which uses a core view without the plugin, as CI does.
 
   # One entry from ifthenpay's method catalog (/gateway/methods/available), as
   # data_formatter::format_available_payment_methods() returns it. Aliased because the shape is

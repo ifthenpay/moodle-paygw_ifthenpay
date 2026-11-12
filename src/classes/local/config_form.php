@@ -112,7 +112,7 @@ class config_form
             // deriving the list would drop it from the state the server validates.
             'methods' => array_keys($methods),
             'notActivated' => get_string('form:method_not_activated', 'paygw_ifthenpay'),
-            'preselectable' => \paygw_ifthenpay_preselectable_methods(),
+            'preselectable' => data_formatter::PRESELECTABLE_METHODS,
         ]);
 
         $PAGE->requires->js_call_amd('paygw_ifthenpay/admin_gateway_form', 'init', [
@@ -218,7 +218,7 @@ class config_form
         global $OUTPUT;
 
         $bymethod = $accounts[$currentgk] ?? [];
-        $preselectable = \paygw_ifthenpay_preselectable_methods();
+        $preselectable = data_formatter::PRESELECTABLE_METHODS;
 
         /*
          * A Gateway Key can carry only methods this plugin does not offer (Cofidis, Bizum), which

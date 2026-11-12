@@ -49,6 +49,11 @@ only) and/or **Other users** you pick.
 - Notifications go through Moodle's messaging (web and email by default), so each recipient can
   change how they receive them in their own notification preferences. Texts are in each
   recipient's language.
+- Mobile (Moodle app) delivery is available but off by default. A recipient can switch it on in
+  their own notification preferences, or an administrator can make it the default under **Site
+  administration → General → Messaging → Notification settings** (the *Mobile* column of the two
+  ifthenpay rows). It needs the site's Moodle app notifications set up (*Site administration →
+  General → Mobile app*).
 - They are sent by a background task, so **Moodle cron must be running**.
 - Notifications are **off by default**: after upgrading nothing is sent until you turn them on
   for an account. No notifications are sent while the ifthenpay gateway is disabled, or for a

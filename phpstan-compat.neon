@@ -1,0 +1,21 @@
+# The compatibility check against the oldest Moodle this plugin supports ($plugin->requires).
+#
+# A low level and no baseline on purpose: the baseline and level max are tuned to the pinned
+# release, and core's own type annotations differ between releases, so a strict run against an
+# older core is noise. Level 2 keeps exactly the errors that mean "this does not exist or cannot
+# be called like this on that release": unknown functions, classes, methods and properties, and
+# wrong argument counts. It is clean against the pinned release too, so anything it reports
+# against the older one is a real incompatibility.
+#
+# Only shipped runtime code is analysed: the tests are checked on that release by running them,
+# and they use PHPUnit 10+ attributes that the older release's PHPUnit 9.6 does not define (it
+# ignores them at runtime, but PHPStan reports the missing attribute classes).
+includes:
+  - phpstan-common.neon
+
+parameters:
+  level: 2
+  tmpDir: ./.phpstan-compat-cache
+  excludePaths:
+    analyseAndScan:
+      - src/tests/*

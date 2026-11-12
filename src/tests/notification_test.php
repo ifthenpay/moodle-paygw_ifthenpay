@@ -404,30 +404,31 @@ final class notification_test extends \advanced_testcase {
     }
 
     /**
-     * Make the ad-hoc task queue fail: queue_adhoc_task() reads the clock first.
+     * Make queueing a notification fail, through the plugin's own queue service.
      *
      * @return void
      */
     private static function break_task_queue(): void {
-        \core\di::set(\core\clock::class, new class implements \core\clock {
+        \core\di::set(\paygw_ifthenpay\local\notification_queue::class, new class extends \paygw_ifthenpay\local\notification_queue {
             /**
              * Always fails.
              *
-             * @return \DateTimeImmutable
+             * @param \paygw_ifthenpay\task\send_notification $task Task.
+             * @return void
              */
-            public function now(): \DateTimeImmutable {
-                throw new \RuntimeException('clock broken for the test');
-            }
-
-            /**
-             * Always fails.
-             *
-             * @return int
-             */
-            public function time(): int {
-                throw new \RuntimeException('clock broken for the test');
+            public function add(\paygw_ifthenpay\task\send_notification $task): void {
+                throw new \RuntimeException('queue broken for the test');
             }
         });
+    }
+
+    /**
+     * Put the real queue service back.
+     *
+     * @return void
+     */
+    private static function repair_task_queue(): void {
+        \core\di::set(\paygw_ifthenpay\local\notification_queue::class, new \paygw_ifthenpay\local\notification_queue());
     }
 
     /**
@@ -445,7 +446,7 @@ final class notification_test extends \advanced_testcase {
             $messages = $this->getDebuggingMessages();
             $this->resetDebugging();
         } finally {
-            \core\di::set(\core\clock::class, new \core\system_clock());
+            self::repair_task_queue();
         }
 
         $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_MISMATCH, $result);
@@ -476,7 +477,7 @@ final class notification_test extends \advanced_testcase {
             $result = paygw_ifthenpay_process_webhook(self::str($tx->token), '10.00', base64_encode(self::KEY));
             $this->resetDebugging();
         } finally {
-            \core\di::set(\core\clock::class, new \core\system_clock());
+            self::repair_task_queue();
         }
 
         $this->assertSame(PAYGW_IFTHENPAY_WEBHOOK_OK, $result);

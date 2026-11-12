@@ -456,6 +456,8 @@ function paygw_ifthenpay_notify(stdClass $rec, string $event, ?string $problemty
             return;
         }
 
+        /** @var \paygw_ifthenpay\local\notification_queue $queue */
+        $queue = \core\di::get(\paygw_ifthenpay\local\notification_queue::class);
         $transaction = $db->start_delegated_transaction();
         try {
             if ($bit) {
@@ -476,9 +478,7 @@ function paygw_ifthenpay_notify(stdClass $rec, string $event, ?string $problemty
                 }
                 $task = new \paygw_ifthenpay\task\send_notification();
                 $task->set_custom_data($data);
-                if (!\core\task\manager::queue_adhoc_task($task)) {
-                    throw new \RuntimeException('the notification task was not queued');
-                }
+                $queue->add($task);
             }
             $transaction->allow_commit();
         } catch (\Throwable $e) {

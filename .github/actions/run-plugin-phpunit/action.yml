@@ -1,0 +1,171 @@
+name: Run the plugin's PHPUnit suite
+description: >
+  Installs the plugin into a Moodle core prepared by setup-moodle-core, initialises the PHPUnit
+  test site (from a cached snapshot when Moodle and the plugin's version.php/db/ are unchanged),
+  runs paygw_ifthenpay_testsuite and reports the result as a job summary plus annotations on
+  failing tests. Needs PHP with Moodle's extensions and a MySQL service on 127.0.0.1:3306, with the
+  job's DB_NAME, DB_USER and DB_PASS env set.
+
+inputs:
+  dirroot:
+    description: Moodle dirroot (config.php, vendor/).
+    required: true
+  webroot:
+    description: Where plugins live (setup-moodle-core's webroot output).
+    required: true
+  branch:
+    description: Moodle branch, for the snapshot cache key.
+    required: true
+  version:
+    description: Moodle version, for the snapshot cache key.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # A copy rather than a symlink: Moodle resolves component paths with realpath() in places,
+    # and a link pointing outside dirroot confuses it.
+    - name: 🔌 Install plugin into Moodle
+      shell: bash
+      run: |
+        set -euo pipefail
+        rm -rf "${{ inputs.webroot }}/payment/gateway/ifthenpay"
+        mkdir -p "$(dirname "${{ inputs.webroot }}/payment/gateway/ifthenpay")"
+        cp -R src "${{ inputs.webroot }}/payment/gateway/ifthenpay"
+
+    # PHPUnit only needs a config.php pointing at an empty database: init.php installs its own
+    # phpu_-prefixed site.
+    - name: ⚙️ Write config.php + create database
+      shell: bash
+      run: |
+        set -euo pipefail
+        moodledata="${RUNNER_TEMP}/moodledata"
+        phpunitdata="${RUNNER_TEMP}/phpunitdata"
+        mkdir -p "$moodledata" "$phpunitdata"
+        MYSQL_PWD="$DB_PASS" mysql -h 127.0.0.1 -u "$DB_USER" -e \
+          "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+        cat > "${{ inputs.dirroot }}/config.php" <<PHP
+        <?php
+        unset(\$CFG);
+        global \$CFG;
+        \$CFG = new stdClass();
+        \$CFG->dbtype    = 'mysqli';
+        \$CFG->dblibrary = 'native';
+        \$CFG->dbhost    = '127.0.0.1';
+        \$CFG->dbname    = '${DB_NAME}';
+        \$CFG->dbuser    = '${DB_USER}';
+        \$CFG->dbpass    = '${DB_PASS}';
+        \$CFG->prefix    = 'mdl_';
+        \$CFG->dboptions = ['dbpersist' => 0, 'dbport' => 3306, 'dbsocket' => '', 'dbcollation' => 'utf8mb4_unicode_ci'];
+        \$CFG->wwwroot   = 'http://localhost';
+        \$CFG->dataroot  = '${moodledata}';
+        \$CFG->admin     = 'admin';
+        \$CFG->directorypermissions = 02777;
+        \$CFG->phpunit_prefix   = 'phpu_';
+        \$CFG->phpunit_dataroot = '${phpunitdata}';
+        \$CFG->debug = 32767;
+        \$CFG->debugdisplay = 1;
+        require_once(__DIR__ . '/lib/setup.php');
+        PHP
+        php -l "${{ inputs.dirroot }}/config.php"
+
+    # Moodle's PHPUnit bootstrap refuses to run without the en_AU.UTF-8 locale, which the runner
+    # image does not ship.
+    - name: 🌐 Install en_AU.UTF-8 locale
+      shell: bash
+      run: |
+        sudo locale-gen en_AU.UTF-8
+        sudo update-locale
+
+    # Installing the phpu_ test site is most of this job's time and gives the same result until
+    # Moodle or the plugin's schema/version changes, so a snapshot of it (database dump +
+    # phpunit_dataroot) is cached under exactly those inputs. init.php then finds the site up to
+    # date and only rebuilds phpunit.xml. Any change to version.php or db/ installs afresh.
+    - name: 📦 Test site snapshot (restore)
+      id: site-cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ runner.temp }}/phpunit-site
+        key: phpunit-site-${{ inputs.branch }}-${{ inputs.version }}-${{ hashFiles('src/version.php', 'src/db/**') }}
+
+    - name: ♻️ Load test site snapshot
+      if: steps.site-cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        tar -xzf "$RUNNER_TEMP/phpunit-site/dataroot.tgz" -C "$RUNNER_TEMP"
+        gunzip -c "$RUNNER_TEMP/phpunit-site/db.sql.gz" | MYSQL_PWD="$DB_PASS" mysql -h 127.0.0.1 -u "$DB_USER" "$DB_NAME"
+
+    # --disable-composer: core's dependencies (PHPUnit included) come from the Moodle core cache.
+    - name: 🧰 Initialise PHPUnit environment
+      shell: bash
+      run: php "${{ inputs.webroot }}/admin/tool/phpunit/cli/init.php" --disable-composer
+
+    - name: 📸 Take test site snapshot
+      if: steps.site-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/phpunit-site"
+        MYSQL_PWD="$DB_PASS" mysqldump -h 127.0.0.1 -u "$DB_USER" --single-transaction --no-tablespaces \
+          "$DB_NAME" | gzip > "$RUNNER_TEMP/phpunit-site/db.sql.gz"
+        tar -czf "$RUNNER_TEMP/phpunit-site/dataroot.tgz" -C "$RUNNER_TEMP" phpunitdata
+        du -sh "$RUNNER_TEMP/phpunit-site"/*
+
+    - name: 💾 Test site snapshot (save)
+      if: steps.site-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ runner.temp }}/phpunit-site
+        key: ${{ steps.site-cache.outputs.cache-primary-key }}
+
+    - name: 🧪 Run plugin tests
+      working-directory: ${{ inputs.dirroot }}
+      shell: bash
+      run: |
+        php vendor/bin/phpunit --testsuite "paygw_ifthenpay_testsuite" --colors=always \
+          --log-junit "$RUNNER_TEMP/junit.xml"
+
+    # Counts in the job summary; each failure as an annotation on the test file, with its message.
+    - name: 📊 Test report
+      if: always()
+      shell: bash
+      run: |
+        if [ ! -f "$RUNNER_TEMP/junit.xml" ]; then
+          printf '### 🧪 PHPUnit\n❌ The suite did not run (see the steps above).\n' >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+        python3 - "$RUNNER_TEMP/junit.xml" "${{ inputs.webroot }}/payment/gateway/ifthenpay" <<'PY'
+        import os, sys, xml.etree.ElementTree as ET
+        path, plugindir = sys.argv[1], sys.argv[2]
+        out = []
+        root = ET.parse(path).getroot()
+        suite = root if root.tag == 'testsuite' else root.find('testsuite')
+        get = lambda k: int(float(suite.get(k, 0)))
+        tests, assertions = get('tests'), get('assertions')
+        failures, errors, skipped = get('failures'), get('errors'), get('skipped')
+        ok = failures == 0 and errors == 0
+        out.append('### 🧪 PHPUnit')
+        out.append(f"{'✅' if ok else '❌'} **{tests} tests**, {assertions} assertions, {failures} failure(s), "
+                   f"{errors} error(s), {skipped} skipped — {float(suite.get('time', 0)):.1f}s")
+        # Workflow-command escaping: "::" or "," in a title would otherwise cut the annotation short.
+        data = lambda v: v.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+        prop = lambda v: data(v).replace(':', '%3A').replace(',', '%2C')
+        bad = []
+        for case in root.iter('testcase'):
+            for kind in ('failure', 'error'):
+                node = case.find(kind)
+                if node is not None:
+                    file = (case.get('file') or '').replace(plugindir + '/', 'src/')
+                    line = case.get('line') or '1'
+                    test = f"{case.get('class', '').rsplit(chr(92), 1)[-1]} › {case.get('name', '')}"
+                    # PHPUnit starts the text with the test's own id; the message is the next line.
+                    lines = [l.strip() for l in (node.text or node.get('message') or '').splitlines() if l.strip()]
+                    message = next((l for l in lines if '::' not in l or ' ' in l), kind)
+                    print(f"::error file={prop(file)},line={line},title={prop(test)}::{data(message)}")
+                    bad.append(f"| `{test}` | {message[:200].replace('|', '/')} |")
+        if bad:
+            out += ['', '| Test | Failure |', '|---|---|'] + bad
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+            summary.write('\n'.join(out) + '\n')
+        PY

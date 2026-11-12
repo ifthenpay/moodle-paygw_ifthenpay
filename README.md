@@ -151,7 +151,9 @@ Apply changes with `docker compose up -d` (rebuild only for `MOODLE_VERSION`, `A
 ├─ eslint.config.cjs           # ESLint flat config
 ├─ stylelint.config.cjs        # Stylelint configuration
 ├─ phpcs.xml                   # PHP CodeSniffer rules (Moodle CS)
-├─ phpstan.neon                # PHPStan configuration
+├─ phpstan.neon                # PHPStan: level max + baseline (CI and `composer run analyse`)
+├─ phpstan-compat.neon         # PHPStan: level 2, against the oldest supported Moodle (CI)
+├─ phpstan-common.neon         # Settings shared by the two PHPStan configs
 ├─ docker-compose.yml          # Container orchestration
 └─ LICENSE                     # Project license
 
@@ -270,6 +272,7 @@ One verification workflow, `.github/workflows/ci.yml`, and one release workflow.
 | When | What runs |
 |---|---|
 | Pull request to `main` | The checks its changes need (below), then **CI result** |
+| Change to `src/version.php` in a pull request | Its checks + the oldest-supported-Moodle job |
 | Change to `.github/**` in a pull request | Every check |
 | Tag `v*` (`release.yml`) | Tag/version/changelog check → every check → GitHub Release → Moodle Marketplace |
 | *Run workflow* on the Actions tab | Every check |
@@ -284,6 +287,7 @@ it to be up to date with `main`, so what is merged is what was checked.
 | 🐘 PHPCS | `src/`, `phpcs.xml`, `phpstan*.neon`, `composer.*`, `.env.example` | `composer run lint` rules |
 | 🛡️ PHPStan | same | `composer run analyse` (level max) against a cached Moodle core |
 | 🧪 PHPUnit | same, if `src/tests/` has tests | the `paygw_ifthenpay_testsuite` on MySQL 8.4 |
+| 🧬 Moodle 4.5 | `src/version.php` (release preparation, schema changes), releases, manual runs | Against the oldest supported release (`$plugin->requires`): PHPStan with `phpstan-compat.neon` (missing functions, classes, methods), then the PHPUnit suite |
 | 🔍 ESLint + Stylelint | `src/amd/`, CSS, the JS lint configs, `package*.json` | `npm run lint`, and checks `src/amd/build/` matches a fresh build |
 | ✅ **CI result** | always | fails if any job above failed; the one required check |
 
@@ -293,7 +297,9 @@ request's *Files changed*; each job writes a short result (counts, failing tests
 files, SHA-256, release link) and the Marketplace submission.
 
 **Moodle version:** CI reads `MOODLE_BRANCH` / `MOODLE_VERSION` from `.env.example`, the same pin
-as the dev environment; bumping it there updates both (the cached core is keyed by it).
+as the dev environment; bumping it there updates both (the cached core is keyed by it). The oldest
+supported release is `MOODLE_MIN_BRANCH` / `MOODLE_MIN_VERSION` at the top of `ci.yml` — raise it
+together with `$plugin->requires` in `src/version.php`.
 
 **Branch protection:** `.github/rulesets/main.json` is the ruleset for `main` — Settings → Rules →
 Rulesets → New ruleset → *Import a ruleset*. It requires a pull request (squash merge), the

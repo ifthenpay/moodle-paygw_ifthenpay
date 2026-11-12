@@ -9,25 +9,37 @@ inputs:
   dirroot:
     description: Where to put Moodle core.
     default: /var/www/html
+  branch:
+    description: Moodle branch (e.g. stable405). Empty = the pin in .env.example.
+    default: ""
+  version:
+    description: Moodle version (e.g. 4.5). Empty = the pin in .env.example.
+    default: ""
 
 outputs:
   branch:
-    description: Moodle branch from .env.example (e.g. stable503).
+    description: Moodle branch used (e.g. stable503).
     value: ${{ steps.pin.outputs.branch }}
   version:
-    description: Moodle version from .env.example (e.g. 5.3).
+    description: Moodle version used (e.g. 5.3).
     value: ${{ steps.pin.outputs.version }}
+  webroot:
+    description: Where plugins live — dirroot/public on Moodle 5.x, dirroot itself before.
+    value: ${{ steps.layout.outputs.webroot }}
 
 runs:
   using: composite
   steps:
-    - name: 📌 Read the Moodle pin from .env.example
+    - name: 📌 Moodle release (input, or the pin in .env.example)
       id: pin
       shell: bash
+      env:
+        IN_BRANCH: ${{ inputs.branch }}
+        IN_VERSION: ${{ inputs.version }}
       run: |
         set -euo pipefail
-        branch=$(sed -nE 's/^MOODLE_BRANCH=([^[:space:]#]+).*/\1/p' .env.example)
-        version=$(sed -nE 's/^MOODLE_VERSION=([^[:space:]#]+).*/\1/p' .env.example)
+        branch="${IN_BRANCH:-$(sed -nE 's/^MOODLE_BRANCH=([^[:space:]#]+).*/\1/p' .env.example)}"
+        version="${IN_VERSION:-$(sed -nE 's/^MOODLE_VERSION=([^[:space:]#]+).*/\1/p' .env.example)}"
         if [ -z "$branch" ] || [ -z "$version" ]; then
           echo "::error file=.env.example::MOODLE_BRANCH and MOODLE_VERSION must be set."
           exit 1
@@ -81,3 +93,14 @@ runs:
       with:
         path: ${{ inputs.dirroot }}
         key: moodle-core-${{ steps.pin.outputs.branch }}-${{ steps.pin.outputs.version }}
+
+    # Moodle 5.0 moved the web root (and every plugin) under public/.
+    - name: 🗂️ Detect layout
+      id: layout
+      shell: bash
+      run: |
+        if [ -d "${{ inputs.dirroot }}/public" ]; then
+          echo "webroot=${{ inputs.dirroot }}/public" >> "$GITHUB_OUTPUT"
+        else
+          echo "webroot=${{ inputs.dirroot }}" >> "$GITHUB_OUTPUT"
+        fi

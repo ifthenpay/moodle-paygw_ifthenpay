@@ -1,8 +1,8 @@
 name: Setup plugin PHP toolchain
 description: >
-  Sets up PHP 8.3 and installs this plugin's own Composer dependencies
-  (phpcs, PHPStan, etc). Shared by lint-php.yml and analyse-php.yml, which
-  both need exactly this before running their respective composer script.
+  Sets up PHP 8.3 and installs this plugin's own Composer dependencies (phpcs, PHPStan, etc).
+  Shared by the PHPCS and PHPStan jobs of ci.yml. cs2pr turns a checkstyle report into inline
+  annotations on the pull request diff.
 
 runs:
   using: composite
@@ -11,7 +11,7 @@ runs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: "8.3"
-        tools: composer
+        tools: composer, cs2pr
         coverage: none
         extensions: mbstring, intl, curl, json
 

@@ -16,7 +16,7 @@ jobs:
   # Cheap checks first, so a mistagged release fails in seconds rather than after the full suite.
   verify:
     name: 🏷️ Tag, version.php and changelog agree
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       component: ${{ steps.read.outputs.component }}
       release: ${{ steps.read.outputs.release }}
@@ -48,31 +48,17 @@ jobs:
           echo "component=${component}" >> "$GITHUB_OUTPUT"
           echo "release=${release}" >> "$GITHUB_OUTPUT"
 
-  # The four checks are independent of each other, so they run side by side.
-  lint-php:
-    name: 🐘 PHP Lint
+  # The same pipeline pull requests go through, but complete: outside a pull request ci.yml runs
+  # every check regardless of what changed.
+  ci:
+    name: 🔬 CI
     needs: verify
-    uses: ./.github/workflows/lint-php.yml
-
-  lint-js:
-    name: 🔍 JS/CSS Lint
-    needs: verify
-    uses: ./.github/workflows/lint-js.yml
-
-  analyse-php:
-    name: 🛡️ PHPStan
-    needs: verify
-    uses: ./.github/workflows/analyse-php.yml
-
-  test-phpunit:
-    name: 🧪 PHPUnit
-    needs: verify
-    uses: ./.github/workflows/test-phpunit.yml
+    uses: ./.github/workflows/ci.yml
 
   package:
     name: 📦 Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [verify, lint-php, lint-js, analyse-php, test-phpunit]
+    runs-on: ubuntu-24.04
+    needs: [verify, ci]
 
     steps:
       - name: 🛎️ Checkout
@@ -111,16 +97,37 @@ jobs:
             dist/release-notes.md
 
       - name: 🚀 Create GitHub Release
+        id: gh-release
         uses: softprops/action-gh-release@v3
         with:
           files: dist/ifthenpay-${{ github.ref_name }}.zip
           body_path: dist/release-notes.md
 
+      - name: 📊 Summary
+        env:
+          COMPONENT: ${{ needs.verify.outputs.component }}
+          RELEASE_URL: ${{ steps.gh-release.outputs.url }}
+        run: |
+          zip="dist/ifthenpay-${GITHUB_REF_NAME}.zip"
+          {
+            echo "### 📦 ${COMPONENT} ${GITHUB_REF_NAME}"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| GitHub Release | ${RELEASE_URL} |"
+            echo "| Package | \`$(basename "$zip")\` — $(du -h "$zip" | cut -f1), $(unzip -Z1 "$zip" | grep -vc '/$') files |"
+            echo "| SHA-256 | \`$(sha256sum "$zip" | cut -d' ' -f1)\` |"
+            echo
+            echo "<details><summary>Release notes</summary>"
+            echo
+            cat dist/release-notes.md
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # Its own job, so a failed submission can be retried with "Re-run failed jobs" without rebuilding
   # anything or touching the GitHub Release.
   marketplace:
     name: 🏪 Publish to Moodle Marketplace
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [verify, package]
 
     steps:
@@ -141,6 +148,7 @@ jobs:
           set -euo pipefail
           if [ -z "${TOKEN}" ]; then
             echo "::warning::MOODLE_MARKETPLACE_TOKEN is not set; skipping the Moodle Marketplace submission."
+            echo "### 🏪 Moodle Marketplace: skipped (no token)" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
@@ -158,4 +166,6 @@ jobs:
             jq -r '.violations[]? | "::error::\(.propertyPath // "request"): \(.message)"' response.json 2>/dev/null || true
             exit 1
           fi
-          echo "::notice::Published ${COMPONENT} ${GITHUB_REF_NAME} to the Moodle Marketplace (version id $(jq -r '.id' response.json))."
+          id=$(jq -r '.id' response.json)
+          echo "::notice::Published ${COMPONENT} ${GITHUB_REF_NAME} to the Moodle Marketplace (version id ${id})."
+          echo "### 🏪 Moodle Marketplace: published ${GITHUB_REF_NAME} (version id ${id})" >> "$GITHUB_STEP_SUMMARY"

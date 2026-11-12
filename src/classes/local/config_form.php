@@ -458,7 +458,11 @@ class config_form
                 'ajax' => 'core_user/form_user_selector',
                 'valuehtmlcallback' => [self::class, 'user_selector_html'],
             ]);
-            $mform->setType('notify_users', PARAM_INT);
+            // Not PARAM_INT: an emptied selector submits Moodle's '_qf__force_multiselect_submission'
+            // sentinel, which the element turns into [] only if cleaning leaves it intact. PARAM_INT
+            // would rewrite it to 0 first, saving a phantom user id 0 that reappears as a "0" chip.
+            // Ids are still only ever read through notification_recipients::chosen_userids().
+            $mform->setType('notify_users', PARAM_ALPHANUMEXT);
             $mform->setDefault('notify_users', $userids);
             $mform->addHelpButton('notify_users', 'form:notify_users', 'paygw_ifthenpay');
             return;

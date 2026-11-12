@@ -300,6 +300,38 @@ final class config_form_test extends \advanced_testcase {
     }
 
     /**
+     * Clearing every chosen user saves an empty list, not a phantom user id 0.
+     *
+     * A browser submits an emptied multiple autocomplete as Moodle's force-submission sentinel;
+     * the element turns that into [] only if the param cleaning has not already rewritten it.
+     *
+     * @return void
+     */
+    public function test_clearing_users_saves_empty_list(): void {
+        $this->setAdminUser();
+        $gateway = $this->gateway([], false);
+
+        account_gateway::mock_submit([
+            'id' => $gateway->get('id'),
+            'accountid' => $gateway->get('accountid'),
+            'gateway' => 'ifthenpay',
+            'enabled' => 0,
+            'notify_completed' => 1,
+            'notify_problems' => 0,
+            'notify_admins' => 1,
+            'notify_teachers' => 0,
+            'notify_users' => '_qf__force_multiselect_submission',
+        ]);
+        $data = $this->form($gateway)->get_data();
+        $_POST = [];
+
+        $this->assertIsObject($data);
+        $config = json_decode(is_string($data->config ?? null) ? $data->config : '', true);
+        $this->assertIsArray($config);
+        $this->assertSame([], $config['notify_users']);
+    }
+
+    /**
      * validate() refuses a chosen user who cannot receive, by name, on both paths; accepts others.
      *
      * @return void

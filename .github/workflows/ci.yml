@@ -18,6 +18,12 @@ concurrency:
 permissions:
   contents: read
 
+# The oldest Moodle this plugin supports: keep in step with $plugin->requires in src/version.php
+# (2024100700 = Moodle 4.5). The pinned, newest release comes from .env.example.
+env:
+  MOODLE_MIN_BRANCH: stable405
+  MOODLE_MIN_VERSION: "4.5"
+
 jobs:
   # Decides which checks a change needs, so a docs-only pull request costs seconds. Outside a pull
   # request (release, manual run) everything runs; so does any change to the CI itself.
@@ -28,6 +34,7 @@ jobs:
       php: ${{ steps.scope.outputs.php }}
       js: ${{ steps.scope.outputs.js }}
       tests: ${{ steps.scope.outputs.tests }}
+      compat: ${{ steps.scope.outputs.compat }}
     steps:
       - name: 📦 Checkout
         uses: actions/checkout@v7
@@ -56,8 +63,12 @@ jobs:
           if $all || has '^src/amd/|^src/.*\.css$|^(eslint|stylelint)\.config\.cjs$|^package(-lock)?\.json$|^Gruntfile'; then js=true; fi
           tests=false
           if find src/tests -type f -name '*_test.php' 2>/dev/null | grep -q .; then tests=true; fi
+          # The oldest supported Moodle is checked where compatibility is decided: a version.php
+          # change (release preparation, schema change), a release, a manual run, a CI change.
+          compat=false
+          if $all || has '^src/version\.php$'; then compat=true; fi
 
-          { echo "php=$php"; echo "js=$js"; echo "tests=$tests"; } >> "$GITHUB_OUTPUT"
+          { echo "php=$php"; echo "js=$js"; echo "tests=$tests"; echo "compat=$compat"; } >> "$GITHUB_OUTPUT"
           {
             echo "### 🧭 Scope"
             echo "| Check | Runs |"
@@ -65,6 +76,7 @@ jobs:
             echo "| PHPCS, PHPStan | $php |"
             echo "| PHPUnit | $([ "$php" = true ] && [ "$tests" = true ] && echo true || echo false) |"
             echo "| ESLint, Stylelint, AMD build | $js |"
+            echo "| Moodle ${MOODLE_MIN_VERSION} (oldest supported) | $compat |"
             echo
             echo "<details><summary>$(wc -l < "$RUNNER_TEMP/changed.txt") file(s) considered</summary>"
             echo
@@ -151,9 +163,6 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       MOODLE_DIRROOT: /var/www/html
-      # Moodle 5.x serves from public/, so plugins live under public/<type>/<name>.
-      PLUGIN_DIR: /var/www/html/public/payment/gateway/ifthenpay
-      COMPONENT: paygw_ifthenpay
       DB_NAME: moodle
       DB_USER: root
       DB_PASS: rootpass
@@ -193,144 +202,90 @@ jobs:
         with:
           dirroot: ${{ env.MOODLE_DIRROOT }}
 
-      # A copy rather than a symlink: Moodle resolves component paths with realpath() in places,
-      # and a link pointing outside dirroot confuses it.
-      - name: 🔌 Install plugin into Moodle
-        run: |
-          set -euo pipefail
-          rm -rf "$PLUGIN_DIR"
-          mkdir -p "$(dirname "$PLUGIN_DIR")"
-          cp -R src "$PLUGIN_DIR"
-
-      # PHPUnit only needs a config.php pointing at an empty database: init.php installs its own
-      # phpu_-prefixed site.
-      - name: ⚙️ Write config.php + create database
-        run: |
-          set -euo pipefail
-          moodledata="${RUNNER_TEMP}/moodledata"
-          phpunitdata="${RUNNER_TEMP}/phpunitdata"
-          mkdir -p "$moodledata" "$phpunitdata"
-          MYSQL_PWD="$DB_PASS" mysql -h 127.0.0.1 -u "$DB_USER" -e \
-            "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-          cat > "${MOODLE_DIRROOT}/config.php" <<PHP
-          <?php
-          unset(\$CFG);
-          global \$CFG;
-          \$CFG = new stdClass();
-          \$CFG->dbtype    = 'mysqli';
-          \$CFG->dblibrary = 'native';
-          \$CFG->dbhost    = '127.0.0.1';
-          \$CFG->dbname    = '${DB_NAME}';
-          \$CFG->dbuser    = '${DB_USER}';
-          \$CFG->dbpass    = '${DB_PASS}';
-          \$CFG->prefix    = 'mdl_';
-          \$CFG->dboptions = ['dbpersist' => 0, 'dbport' => 3306, 'dbsocket' => '', 'dbcollation' => 'utf8mb4_unicode_ci'];
-          \$CFG->wwwroot   = 'http://localhost';
-          \$CFG->dataroot  = '${moodledata}';
-          \$CFG->admin     = 'admin';
-          \$CFG->directorypermissions = 02777;
-          \$CFG->phpunit_prefix   = 'phpu_';
-          \$CFG->phpunit_dataroot = '${phpunitdata}';
-          \$CFG->debug = 32767;
-          \$CFG->debugdisplay = 1;
-          require_once(__DIR__ . '/lib/setup.php');
-          PHP
-          php -l "${MOODLE_DIRROOT}/config.php"
-
-      # Moodle's PHPUnit bootstrap refuses to run without the en_AU.UTF-8 locale, which the runner
-      # image does not ship.
-      - name: 🌐 Install en_AU.UTF-8 locale
-        run: |
-          sudo locale-gen en_AU.UTF-8
-          sudo update-locale
-
-      # Installing the phpu_ test site is most of this job's time and gives the same result until
-      # Moodle or the plugin's schema/version changes, so a snapshot of it (database dump +
-      # phpunit_dataroot) is cached under exactly those inputs. init.php then finds the site up to
-      # date and only rebuilds phpunit.xml. Any change to version.php or db/ installs afresh.
-      - name: 📦 Test site snapshot (restore)
-        id: site-cache
-        uses: actions/cache/restore@v6
+      - name: 🧪 Plugin PHPUnit suite
+        uses: ./.github/actions/run-plugin-phpunit
         with:
-          path: ${{ runner.temp }}/phpunit-site
-          key: phpunit-site-${{ steps.core.outputs.branch }}-${{ steps.core.outputs.version }}-${{ hashFiles('src/version.php', 'src/db/**') }}
+          dirroot: ${{ env.MOODLE_DIRROOT }}
+          webroot: ${{ steps.core.outputs.webroot }}
+          branch: ${{ steps.core.outputs.branch }}
+          version: ${{ steps.core.outputs.version }}
 
-      - name: ♻️ Load test site snapshot
-        if: steps.site-cache.outputs.cache-hit == 'true'
-        run: |
-          set -euo pipefail
-          tar -xzf "$RUNNER_TEMP/phpunit-site/dataroot.tgz" -C "$RUNNER_TEMP"
-          gunzip -c "$RUNNER_TEMP/phpunit-site/db.sql.gz" | MYSQL_PWD="$DB_PASS" mysql -h 127.0.0.1 -u "$DB_USER" "$DB_NAME"
+  # The oldest supported Moodle: PHPStan for APIs that do not exist there (phpstan-compat.neon),
+  # then the same PHPUnit suite on its runtime.
+  compat:
+    # Job names cannot read env: keep the version in the name in step with MOODLE_MIN_VERSION.
+    name: 🧬 Moodle 4.5 (oldest supported)
+    needs: changes
+    if: needs.changes.outputs.compat == 'true'
+    runs-on: ubuntu-24.04
+    env:
+      MOODLE_DIRROOT: /var/www/html
+      DB_NAME: moodle
+      DB_USER: root
+      DB_PASS: rootpass
 
-      # --disable-composer: core's dependencies (PHPUnit included) come from the Moodle core cache.
-      - name: 🧰 Initialise PHPUnit environment
-        run: php "${MOODLE_DIRROOT}/public/admin/tool/phpunit/cli/init.php" --disable-composer
+    services:
+      mysql:
+        image: mysql:8.4
+        # Same service as the PHPUnit job; the env context is not available here, keep in sync with DB_PASS.
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+        ports:
+          - 3306:3306
+        # tmpfs: the test database is throwaway, and disk-backed InnoDB slows init.php down.
+        options: >-
+          --tmpfs /var/lib/mysql
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -prootpass --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
 
-      - name: 📸 Take test site snapshot
-        if: steps.site-cache.outputs.cache-hit != 'true'
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/phpunit-site"
-          MYSQL_PWD="$DB_PASS" mysqldump -h 127.0.0.1 -u "$DB_USER" --single-transaction --no-tablespaces \
-            "$DB_NAME" | gzip > "$RUNNER_TEMP/phpunit-site/db.sql.gz"
-          tar -czf "$RUNNER_TEMP/phpunit-site/dataroot.tgz" -C "$RUNNER_TEMP" phpunitdata
-          du -sh "$RUNNER_TEMP/phpunit-site"/*
 
-      - name: 💾 Test site snapshot (save)
-        if: steps.site-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          path: ${{ runner.temp }}/phpunit-site
-          key: ${{ steps.site-cache.outputs.cache-primary-key }}
+          php-version: "8.3"
+          tools: composer
+          coverage: none
+          extensions: mbstring, intl, curl, json, mysqli, zip, gd, xml, xmlreader, simplexml, dom, soap, sodium, openssl, iconv, fileinfo, ctype, tokenizer, exif
+          ini-values: max_input_vars=5000, memory_limit=1G
 
-      - name: 🧪 Run plugin tests
-        working-directory: ${{ env.MOODLE_DIRROOT }}
-        run: |
-          php vendor/bin/phpunit --testsuite "${COMPONENT}_testsuite" --colors=always \
-            --log-junit "$RUNNER_TEMP/junit.xml"
+      - name: 📥 Composer install (plugin tools)
+        run: composer install --no-interaction --no-progress --prefer-dist
 
-      # Counts in the job summary; each failure as an annotation on the test file, with its message.
-      - name: 📊 Test report
-        if: always()
+      - name: 🧱 Moodle core (oldest supported)
+        id: core
+        uses: ./.github/actions/setup-moodle-core
+        with:
+          dirroot: ${{ env.MOODLE_DIRROOT }}
+          branch: ${{ env.MOODLE_MIN_BRANCH }}
+          version: ${{ env.MOODLE_MIN_VERSION }}
+
+      - name: 🔍 PHPStan (compatibility)
         run: |
-          if [ ! -f "$RUNNER_TEMP/junit.xml" ]; then
-            printf '### 🧪 PHPUnit\n❌ The suite did not run (see the steps above).\n' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          python3 - "$RUNNER_TEMP/junit.xml" "$PLUGIN_DIR" <<'PY'
-          import os, sys, xml.etree.ElementTree as ET
-          path, plugindir = sys.argv[1], sys.argv[2]
-          out = []
-          root = ET.parse(path).getroot()
-          suite = root if root.tag == 'testsuite' else root.find('testsuite')
-          get = lambda k: int(float(suite.get(k, 0)))
-          tests, assertions = get('tests'), get('assertions')
-          failures, errors, skipped = get('failures'), get('errors'), get('skipped')
-          ok = failures == 0 and errors == 0
-          out.append('### 🧪 PHPUnit')
-          out.append(f"{'✅' if ok else '❌'} **{tests} tests**, {assertions} assertions, {failures} failure(s), "
-                     f"{errors} error(s), {skipped} skipped — {float(suite.get('time', 0)):.1f}s")
-          # Workflow-command escaping: "::" or "," in a title would otherwise cut the annotation short.
-          data = lambda v: v.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
-          prop = lambda v: data(v).replace(':', '%3A').replace(',', '%2C')
-          bad = []
-          for case in root.iter('testcase'):
-              for kind in ('failure', 'error'):
-                  node = case.find(kind)
-                  if node is not None:
-                      file = (case.get('file') or '').replace(plugindir + '/', 'src/')
-                      line = case.get('line') or '1'
-                      test = f"{case.get('class', '').rsplit(chr(92), 1)[-1]} › {case.get('name', '')}"
-                      # PHPUnit starts the text with the test's own id; the message is the next line.
-                      lines = [l.strip() for l in (node.text or node.get('message') or '').splitlines() if l.strip()]
-                      message = next((l for l in lines if '::' not in l or ' ' in l), kind)
-                      print(f"::error file={prop(file)},line={line},title={prop(test)}::{data(message)}")
-                      bad.append(f"| `{test}` | {message[:200].replace('|', '/')} |")
-          if bad:
-              out += ['', '| Test | Failure |', '|---|---|'] + bad
-          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
-              summary.write('\n'.join(out) + '\n')
-          PY
+          set +e
+          XDEBUG_MODE=off php -d memory_limit=1G vendor/bin/phpstan analyse --configuration=phpstan-compat.neon \
+            --no-progress --error-format=github src | tee "$RUNNER_TEMP/phpstan.txt"
+          rc=${PIPESTATUS[0]}
+          count=$(grep -c '^::error' "$RUNNER_TEMP/phpstan.txt")
+          {
+            echo "### 🧬 Moodle ${MOODLE_MIN_VERSION}: PHPStan (compatibility)"
+            [ "$rc" -eq 0 ] && echo "✅ No APIs missing on this release." || echo "❌ **$count error(s)** — see the annotations on the diff."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+
+      - name: 🧪 Plugin PHPUnit suite
+        if: success() || failure()
+        uses: ./.github/actions/run-plugin-phpunit
+        with:
+          dirroot: ${{ env.MOODLE_DIRROOT }}
+          webroot: ${{ steps.core.outputs.webroot }}
+          branch: ${{ steps.core.outputs.branch }}
+          version: ${{ steps.core.outputs.version }}
 
   js:
     name: 🔍 ESLint + Stylelint
@@ -374,7 +329,7 @@ jobs:
   # also when the checks above were skipped as irrelevant, which path-filtered workflows cannot do.
   result:
     name: CI result
-    needs: [changes, phpcs, phpstan, phpunit, js]
+    needs: [changes, phpcs, phpstan, phpunit, compat, js]
     if: always()
     runs-on: ubuntu-24.04
     steps:

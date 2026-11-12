@@ -1,0 +1,363 @@
+name: CI
+
+# The one verification pipeline. Pull requests to main run what their changes touch; a release
+# (release.yml) and a manual run check everything. Nothing runs on push to main: the pull request
+# was the gate, and the "require branches to be up to date" rule (.github/rulesets/main.json)
+# makes the merged result exactly what was checked.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+# A newer push to the same pull request makes the running checks pointless.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # Decides which checks a change needs, so a docs-only pull request costs seconds. Outside a pull
+  # request (release, manual run) everything runs; so does any change to the CI itself.
+  changes:
+    name: 🧭 What changed
+    runs-on: ubuntu-24.04
+    outputs:
+      php: ${{ steps.scope.outputs.php }}
+      js: ${{ steps.scope.outputs.js }}
+      tests: ${{ steps.scope.outputs.tests }}
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 🔎 Scope the checks
+        id: scope
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            git diff --name-only "$BASE...$HEAD" > "$RUNNER_TEMP/changed.txt"
+          else
+            git ls-files > "$RUNNER_TEMP/changed.txt"
+          fi
+          has() { grep -qE "$1" "$RUNNER_TEMP/changed.txt"; }
+
+          all=false; php=false; js=false
+          if [ "$GITHUB_EVENT_NAME" != "pull_request" ] || has '^\.github/'; then all=true; fi
+          # PHP checks: any plugin file (lang, templates and db feed the tests too), their configs,
+          # and the Moodle pin.
+          if $all || has '^src/|^phpcs\.xml$|^phpstan.*\.neon$|^composer\.(json|lock)$|^\.env\.example$'; then php=true; fi
+          if $all || has '^src/amd/|^src/.*\.css$|^(eslint|stylelint)\.config\.cjs$|^package(-lock)?\.json$|^Gruntfile'; then js=true; fi
+          tests=false
+          if find src/tests -type f -name '*_test.php' 2>/dev/null | grep -q .; then tests=true; fi
+
+          { echo "php=$php"; echo "js=$js"; echo "tests=$tests"; } >> "$GITHUB_OUTPUT"
+          {
+            echo "### 🧭 Scope"
+            echo "| Check | Runs |"
+            echo "|---|---|"
+            echo "| PHPCS, PHPStan | $php |"
+            echo "| PHPUnit | $([ "$php" = true ] && [ "$tests" = true ] && echo true || echo false) |"
+            echo "| ESLint, Stylelint, AMD build | $js |"
+            echo
+            echo "<details><summary>$(wc -l < "$RUNNER_TEMP/changed.txt") file(s) considered</summary>"
+            echo
+            sed 's/^/- `/; s/$/`/' "$RUNNER_TEMP/changed.txt" | head -200
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  phpcs:
+    name: 🐘 PHPCS
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🐘 Setup PHP + plugin dependencies
+        uses: ./.github/actions/setup-plugin-php
+
+      # Same standard as `composer run lint`; the checkstyle copy becomes inline annotations.
+      - name: ✅ Run PHPCS
+        run: |
+          set +e
+          report="$RUNNER_TEMP/phpcs.xml"
+          XDEBUG_MODE=off vendor/bin/phpcs --standard=phpcs.xml --report=full --report-checkstyle="$report" src
+          rc=$?
+          cs2pr --graceful-warnings "$report" || true
+          read -r files errors warnings < <(python3 - "$report" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          root = ET.parse(sys.argv[1]).getroot()
+          files = [f for f in root.iter('file') if len(f)]
+          errors = sum(1 for e in root.iter('error') if e.get('severity') == 'error')
+          print(len(files), errors, sum(1 for e in root.iter('error') if e.get('severity') == 'warning'))
+          PY
+          )
+          {
+            echo "### 🐘 PHPCS (Moodle CS)"
+            [ "$rc" -eq 0 ] && echo "✅ No violations." || echo "❌ **$errors error(s)**, $warnings warning(s) in $files file(s) — see the annotations on the diff."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+
+  phpstan:
+    name: 🛡️ PHPStan
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🐘 Setup PHP + plugin dependencies
+        uses: ./.github/actions/setup-plugin-php
+
+      # phpstan-moodle resolves core classes and globals against a real core (moodle.rootDirectory).
+      - name: 🧱 Moodle core
+        uses: ./.github/actions/setup-moodle-core
+
+      # PHPStan's own result cache: unchanged files are not analysed again.
+      - name: 📦 PHPStan result cache
+        uses: actions/cache@v6
+        with:
+          path: .phpstan-cache
+          key: phpstan-${{ github.sha }}
+          restore-keys: phpstan-
+
+      # Same as `composer run analyse`, with errors printed as annotations.
+      - name: 🔍 Run PHPStan (level max)
+        run: |
+          set +e
+          XDEBUG_MODE=off php -d memory_limit=1G vendor/bin/phpstan analyse --configuration=phpstan.neon \
+            --no-progress --error-format=github src | tee "$RUNNER_TEMP/phpstan.txt"
+          rc=${PIPESTATUS[0]}
+          count=$(grep -c '^::error' "$RUNNER_TEMP/phpstan.txt")
+          {
+            echo "### 🛡️ PHPStan (level max)"
+            [ "$rc" -eq 0 ] && echo "✅ No errors." || echo "❌ **$count error(s)** — see the annotations on the diff."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+
+  phpunit:
+    name: 🧪 PHPUnit
+    needs: changes
+    if: needs.changes.outputs.php == 'true' && needs.changes.outputs.tests == 'true'
+    runs-on: ubuntu-24.04
+    env:
+      MOODLE_DIRROOT: /var/www/html
+      # Moodle 5.x serves from public/, so plugins live under public/<type>/<name>.
+      PLUGIN_DIR: /var/www/html/public/payment/gateway/ifthenpay
+      COMPONENT: paygw_ifthenpay
+      DB_NAME: moodle
+      DB_USER: root
+      DB_PASS: rootpass
+
+    services:
+      mysql:
+        image: mysql:8.4
+        # The env context is not available under services; keep in sync with DB_PASS.
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+        ports:
+          - 3306:3306
+        # tmpfs: the test database is throwaway, and disk-backed InnoDB slows init.php down.
+        options: >-
+          --tmpfs /var/lib/mysql
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -prootpass --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer
+          coverage: none
+          extensions: mbstring, intl, curl, json, mysqli, zip, gd, xml, xmlreader, simplexml, dom, soap, sodium, openssl, iconv, fileinfo, ctype, tokenizer, exif
+          ini-values: max_input_vars=5000, memory_limit=1G
+
+      - name: 🧱 Moodle core
+        uses: ./.github/actions/setup-moodle-core
+        with:
+          dirroot: ${{ env.MOODLE_DIRROOT }}
+
+      # A copy rather than a symlink: Moodle resolves component paths with realpath() in places,
+      # and a link pointing outside dirroot confuses it.
+      - name: 🔌 Install plugin into Moodle
+        run: |
+          set -euo pipefail
+          rm -rf "$PLUGIN_DIR"
+          mkdir -p "$(dirname "$PLUGIN_DIR")"
+          cp -R src "$PLUGIN_DIR"
+
+      # PHPUnit only needs a config.php pointing at an empty database: init.php installs its own
+      # phpu_-prefixed site.
+      - name: ⚙️ Write config.php + create database
+        run: |
+          set -euo pipefail
+          moodledata="${RUNNER_TEMP}/moodledata"
+          phpunitdata="${RUNNER_TEMP}/phpunitdata"
+          mkdir -p "$moodledata" "$phpunitdata"
+          MYSQL_PWD="$DB_PASS" mysql -h 127.0.0.1 -u "$DB_USER" -e \
+            "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+          cat > "${MOODLE_DIRROOT}/config.php" <<PHP
+          <?php
+          unset(\$CFG);
+          global \$CFG;
+          \$CFG = new stdClass();
+          \$CFG->dbtype    = 'mysqli';
+          \$CFG->dblibrary = 'native';
+          \$CFG->dbhost    = '127.0.0.1';
+          \$CFG->dbname    = '${DB_NAME}';
+          \$CFG->dbuser    = '${DB_USER}';
+          \$CFG->dbpass    = '${DB_PASS}';
+          \$CFG->prefix    = 'mdl_';
+          \$CFG->dboptions = ['dbpersist' => 0, 'dbport' => 3306, 'dbsocket' => '', 'dbcollation' => 'utf8mb4_unicode_ci'];
+          \$CFG->wwwroot   = 'http://localhost';
+          \$CFG->dataroot  = '${moodledata}';
+          \$CFG->admin     = 'admin';
+          \$CFG->directorypermissions = 02777;
+          \$CFG->phpunit_prefix   = 'phpu_';
+          \$CFG->phpunit_dataroot = '${phpunitdata}';
+          \$CFG->debug = 32767;
+          \$CFG->debugdisplay = 1;
+          require_once(__DIR__ . '/lib/setup.php');
+          PHP
+          php -l "${MOODLE_DIRROOT}/config.php"
+
+      # Moodle's PHPUnit bootstrap refuses to run without the en_AU.UTF-8 locale, which the runner
+      # image does not ship.
+      - name: 🌐 Install en_AU.UTF-8 locale
+        run: |
+          sudo locale-gen en_AU.UTF-8
+          sudo update-locale
+
+      # --disable-composer: core's dependencies (PHPUnit included) come from the Moodle core cache;
+      # init.php would otherwise run composer install again.
+      - name: 🧰 Initialise PHPUnit environment
+        run: php "${MOODLE_DIRROOT}/public/admin/tool/phpunit/cli/init.php" --disable-composer
+
+      - name: 🧪 Run plugin tests
+        working-directory: ${{ env.MOODLE_DIRROOT }}
+        run: |
+          php vendor/bin/phpunit --testsuite "${COMPONENT}_testsuite" --colors=always \
+            --log-junit "$RUNNER_TEMP/junit.xml"
+
+      # Counts in the job summary; each failure as an annotation on the test file, with its message.
+      - name: 📊 Test report
+        if: always()
+        run: |
+          if [ ! -f "$RUNNER_TEMP/junit.xml" ]; then
+            printf '### 🧪 PHPUnit\n❌ The suite did not run (see the steps above).\n' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 - "$RUNNER_TEMP/junit.xml" "$PLUGIN_DIR" <<'PY'
+          import os, sys, xml.etree.ElementTree as ET
+          path, plugindir = sys.argv[1], sys.argv[2]
+          out = []
+          root = ET.parse(path).getroot()
+          suite = root if root.tag == 'testsuite' else root.find('testsuite')
+          get = lambda k: int(float(suite.get(k, 0)))
+          tests, assertions = get('tests'), get('assertions')
+          failures, errors, skipped = get('failures'), get('errors'), get('skipped')
+          ok = failures == 0 and errors == 0
+          out.append('### 🧪 PHPUnit')
+          out.append(f"{'✅' if ok else '❌'} **{tests} tests**, {assertions} assertions, {failures} failure(s), "
+                     f"{errors} error(s), {skipped} skipped — {float(suite.get('time', 0)):.1f}s")
+          bad = []
+          for case in root.iter('testcase'):
+              for kind in ('failure', 'error'):
+                  node = case.find(kind)
+                  if node is not None:
+                      file = (case.get('file') or '').replace(plugindir + '/', 'src/')
+                      line = case.get('line') or '1'
+                      message = (node.text or node.get('message') or '').strip().splitlines()
+                      first = message[0] if message else kind
+                      title = f"{case.get('class', '')}::{case.get('name', '')}"
+                      print(f"::error file={file},line={line},title={title}::{first}")
+                      bad.append(f"| `{title}` | {first[:200]} |")
+          if bad:
+              out += ['', '| Test | Failure |', '|---|---|'] + bad
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('\n'.join(out) + '\n')
+          PY
+
+  js:
+    name: 🔍 ESLint + Stylelint
+    needs: changes
+    if: needs.changes.outputs.js == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v7
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 📥 npm ci
+        run: npm ci
+
+      - name: 🔎 Run ESLint + Stylelint
+        run: npm run lint
+
+      # The release zips the committed src/amd/build as-is, so it must match src/amd/src.
+      - name: 🧱 Verify amd/build/ matches amd/src/
+        run: |
+          npm run --silent build
+          if ! git diff --exit-code --stat -- src/amd/build; then
+            echo "::error::src/amd/build/ is out of date with src/amd/src/. Run 'npm run build' (or 'mdl build') and commit the result."
+            exit 1
+          fi
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          {
+            echo "### 🔍 JS / CSS"
+            [ "${{ job.status }}" = "success" ] && echo "✅ ESLint, Stylelint and the AMD build check passed." || echo "❌ See the failing step above."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # The single required status check for main (see .github/rulesets/main.json). It always reports,
+  # also when the checks above were skipped as irrelevant, which path-filtered workflows cannot do.
+  result:
+    name: CI result
+    needs: [changes, phpcs, phpstan, phpunit, js]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: ✅ Summarise and gate
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          needs = json.loads(os.environ['NEEDS'])
+          icon = {'success': '✅', 'skipped': '⏭️', 'failure': '❌', 'cancelled': '🚫'}
+          lines = ['### CI result', '| Job | Result |', '|---|---|']
+          failed = []
+          for job, data in needs.items():
+              result = data.get('result', 'unknown')
+              lines.append(f"| {job} | {icon.get(result, '❔')} {result} |")
+              if result not in ('success', 'skipped'):
+                  failed.append(job)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('\n'.join(lines) + '\n')
+          if failed:
+              print(f"::error::Failed or cancelled: {', '.join(failed)}")
+              sys.exit(1)
+          print('All required checks passed or were not needed.')
+          PY

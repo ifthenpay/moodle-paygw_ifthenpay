@@ -120,7 +120,10 @@ Apply changes with `docker compose up -d` (rebuild only for `MOODLE_VERSION`, `A
 │  └─ lib/dev-setup.php        # Enables the gateway on the dev site
 │
 ├─ .github/
-│  └─ workflows/               # GitHub Actions CI/CD workflows
+│  ├─ workflows/ci.yml         # Checks for pull requests (and for releases), see "CI/CD"
+│  ├─ workflows/release.yml    # Tag-triggered release: CI, GitHub Release, Moodle Marketplace
+│  ├─ actions/                 # Shared steps: plugin PHP toolchain, cached Moodle core
+│  └─ rulesets/main.json       # Branch protection for main, importable in the repo settings
 │
 ├─ .vscode/
 │  ├─ launch.json              # Xdebug launch configurations (web + CLI)
@@ -260,6 +263,45 @@ Prettier, EditorConfig.
 
 ---
 
+## 🚦 CI/CD
+
+One verification workflow, `.github/workflows/ci.yml`, and one release workflow.
+
+| When | What runs |
+|---|---|
+| Pull request to `main` | The checks its changes need (below), then **CI result** |
+| Change to `.github/**` in a pull request | Every check |
+| Tag `v*` (`release.yml`) | Tag/version/changelog check → every check → GitHub Release → Moodle Marketplace |
+| *Run workflow* on the Actions tab | Every check |
+
+Nothing runs on push to `main`: the pull request was the gate, and the branch ruleset requires
+it to be up to date with `main`, so what is merged is what was checked.
+
+**Jobs** (in parallel after *What changed* decides the scope):
+
+| Job | Runs when the change touches | Does |
+|---|---|---|
+| 🐘 PHPCS | `src/`, `phpcs.xml`, `phpstan*.neon`, `composer.*`, `.env.example` | `composer run lint` rules |
+| 🛡️ PHPStan | same | `composer run analyse` (level max) against a cached Moodle core |
+| 🧪 PHPUnit | same, if `src/tests/` has tests | the `paygw_ifthenpay_testsuite` on MySQL 8.4 |
+| 🔍 ESLint + Stylelint | `src/amd/`, CSS, the JS lint configs, `package*.json` | `npm run lint`, and checks `src/amd/build/` matches a fresh build |
+| ✅ **CI result** | always | fails if any job above failed; the one required check |
+
+**Reports:** PHPCS and PHPStan problems and PHPUnit failures appear as annotations on the pull
+request's *Files changed*; each job writes a short result (counts, failing tests) to the run's
+*Summary*, and *CI result* a table of every job. A release run summarises the package (size,
+files, SHA-256, release link) and the Marketplace submission.
+
+**Moodle version:** CI reads `MOODLE_BRANCH` / `MOODLE_VERSION` from `.env.example`, the same pin
+as the dev environment; bumping it there updates both (the cached core is keyed by it).
+
+**Branch protection:** `.github/rulesets/main.json` is the ruleset for `main` — Settings → Rules →
+Rulesets → New ruleset → *Import a ruleset*. It requires a pull request (squash merge), the
+**CI result** check and an up-to-date branch, blocks force pushes and deletion, and lets
+repository admins bypass it (e.g. a direct push for a dev-environment chore).
+
+---
+
 ## 🛠️ Commands
 
 ### PHP (Composer)
@@ -342,11 +384,11 @@ To check staff notifications by hand, configure them on a payment account, compl
 run `mdl adhoc` (or wait for cron) and open Mailpit at <code>http://localhost:8025</code>; the
 popup copy shows in the recipient's Moodle notifications.
 
-CI runs the same suite in `.github/workflows/test-phpunit.yml`: a MySQL 8.4 service, the pinned
-Moodle release (cached, shared with the PHPStan workflow), the plugin copied to
-`public/payment/gateway/ifthenpay`, `admin/tool/phpunit/cli/init.php`, then
+CI runs the same suite in the PHPUnit job of `.github/workflows/ci.yml`: a MySQL 8.4 service, the
+pinned Moodle release (cached, shared with the PHPStan job), the plugin copied to
+`public/payment/gateway/ifthenpay`, `admin/tool/phpunit/cli/init.php --disable-composer`, then
 `vendor/bin/phpunit --testsuite paygw_ifthenpay_testsuite`. When `src/tests/` has no `*_test.php`
-files the job is skipped without starting any of that.
+files the job is skipped.
 
 ---
 
@@ -474,7 +516,11 @@ src/
 ├─ lang/                            # Language strings
 ├─ pix/                             # Icons/assets
 ├─ templates/
-│  └─ ifthenpay_button_placeholder.mustache  # UI partials
+│  ├─ checkout_waiting.mustache            # "Complete the payment in the other tab" page
+│  ├─ ifthenpay_button_placeholder.mustache  # Redirect placeholder in the payment modal
+│  ├─ settings_status.mustache             # Connection status card on the settings page
+│  ├─ status_page.mustache                 # Return / cancel / error pages
+│  └─ steps.mustache                       # Onboarding steps on the settings page
 ├─ tests/                           # PHPUnit tests (see "Tests (PHPUnit)")
 │
 ├─ cancel.php                       # Cancel/error landing

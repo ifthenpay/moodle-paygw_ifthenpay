@@ -1,0 +1,83 @@
+name: Setup Moodle core
+description: >
+  Puts a pristine Moodle core (with its Composer dev dependencies, i.e. PHPUnit) at a fixed
+  dirroot, from cache when possible. PHPStan resolves core classes against it and PHPUnit runs
+  inside it. The Moodle release comes from .env.example, the same pin the dev environment uses,
+  so CI and the dev site cannot drift apart. Expects PHP and Composer to be set up already.
+
+inputs:
+  dirroot:
+    description: Where to put Moodle core.
+    default: /var/www/html
+
+outputs:
+  branch:
+    description: Moodle branch from .env.example (e.g. stable503).
+    value: ${{ steps.pin.outputs.branch }}
+  version:
+    description: Moodle version from .env.example (e.g. 5.3).
+    value: ${{ steps.pin.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: 📌 Read the Moodle pin from .env.example
+      id: pin
+      shell: bash
+      run: |
+        set -euo pipefail
+        branch=$(sed -nE 's/^MOODLE_BRANCH=([^[:space:]#]+).*/\1/p' .env.example)
+        version=$(sed -nE 's/^MOODLE_VERSION=([^[:space:]#]+).*/\1/p' .env.example)
+        if [ -z "$branch" ] || [ -z "$version" ]; then
+          echo "::error file=.env.example::MOODLE_BRANCH and MOODLE_VERSION must be set."
+          exit 1
+        fi
+        echo "branch=$branch" >> "$GITHUB_OUTPUT"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    # Before the restore, not after: actions/cache extracts as the runner user, which cannot
+    # create /var/www/html. Without this the restore failed silently and every run re-downloaded
+    # and re-installed core.
+    - name: 📁 Prepare dirroot
+      shell: bash
+      run: |
+        sudo mkdir -p "${{ inputs.dirroot }}"
+        sudo chown "$(id -u):$(id -g)" "${{ inputs.dirroot }}"
+
+    # Restore and save are separate so that whatever the calling job adds afterwards (the
+    # plugin copy, config.php) never ends up in the shared cache entry.
+    - name: 📦 Moodle core cache (restore)
+      id: cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ inputs.dirroot }}
+        key: moodle-core-${{ steps.pin.outputs.branch }}-${{ steps.pin.outputs.version }}
+
+    - name: 📥 Download Moodle core (checksum-verified)
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        MOODLE_BRANCH: ${{ steps.pin.outputs.branch }}
+        MOODLE_VERSION: ${{ steps.pin.outputs.version }}
+      run: |
+        set -euo pipefail
+        base="https://packaging.moodle.org/${MOODLE_BRANCH}/moodle-${MOODLE_VERSION}.tgz"
+        curl -fsSL -o "$RUNNER_TEMP/moodle.tgz" "$base"
+        curl -fsSL -o "$RUNNER_TEMP/moodle.tgz.sha256" "$base.sha256"
+        expected="$(sed -E 's/.*=[[:space:]]*//' "$RUNNER_TEMP/moodle.tgz.sha256" | tr -d '[:space:]')"
+        echo "${expected}  $RUNNER_TEMP/moodle.tgz" | sha256sum -c -
+        tar -xzf "$RUNNER_TEMP/moodle.tgz" -C "${{ inputs.dirroot }}" --strip-components=1
+        rm -f "$RUNNER_TEMP/moodle.tgz" "$RUNNER_TEMP/moodle.tgz.sha256"
+
+    - name: 📥 Composer install (Moodle core, with dev deps)
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: composer install --no-interaction --no-progress --working-dir="${{ inputs.dirroot }}"
+
+    # Two jobs can miss at once; the second save then only warns that the key exists.
+    - name: 💾 Moodle core cache (save)
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ inputs.dirroot }}
+        key: moodle-core-${{ steps.pin.outputs.branch }}-${{ steps.pin.outputs.version }}

@@ -70,7 +70,7 @@ class backofficekey extends \admin_setting_configpasswordunmask
          * separately rather than blocking the save here.
          */
         try {
-            if (!\paygw_ifthenpay_key_is_recognised($data, $this->apitimeout)) {
+            if (!(new \paygw_ifthenpay\local\api_client($data, $this->apitimeout))->verify_backoffice_key()) {
                 return get_string('error_invalid_backoffice_key', 'paygw_ifthenpay');
             }
         } catch (\moodle_exception $e) {

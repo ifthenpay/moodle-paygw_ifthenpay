@@ -186,6 +186,9 @@ class send_notification extends \core\task\adhoc_task {
             $subject = get_string('notification:completed_subject', $component, $a);
             $intro = get_string('notification:completed_intro', $component, $a);
         } else {
+            // The type in the subject: an inbox list otherwise shows identical subjects for an amount
+            // mismatch and a forged confirmation, which call for different reactions.
+            $a->type = get_string('notification:problemtype_' . $problemtype, $component);
             $subject = get_string('notification:problem_subject', $component, $a);
             $intro = get_string('notification:problem_intro', $component, $a);
         }

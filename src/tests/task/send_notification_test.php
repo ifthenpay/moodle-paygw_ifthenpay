@@ -181,6 +181,11 @@ final class send_notification_test extends \advanced_testcase {
         $this->assertCount(4, $messages);
         foreach (['badkey', 'mismatch', 'delivery', 'error'] as $i => $type) {
             $this->assertSame('paymentproblem', $messages[$i]->eventtype);
+            // The type is in the subject, so an inbox list tells the problems apart.
+            $this->assertStringContainsString(
+                '(' . get_string('notification:problemtype_' . $type, 'paygw_ifthenpay') . ')',
+                self::str($messages[$i]->subject)
+            );
             $this->assertStringContainsString(
                 get_string('notification:problem_' . $type, 'paygw_ifthenpay'),
                 self::str($messages[$i]->fullmessage)

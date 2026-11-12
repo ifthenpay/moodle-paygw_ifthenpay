@@ -69,6 +69,7 @@ class config_form
         $status = \paygw_ifthenpay_backoffice_key_status();
         if ($status !== 'ok') {
             $saved = self::get_saved_config($form);
+            self::render_section_heading($mform, get_string('form:section_payment', 'paygw_ifthenpay'));
             self::render_unavailable($mform, $status, $saved);
             self::render_notifications($mform, $saved);
             return;
@@ -85,6 +86,7 @@ class config_form
         $savedgk   = (string) ($saved['ifthenpay_gatewaykey'] ?? '');
         $currentgk = isset($gkmap[$savedgk]) ? $savedgk : (string) array_key_first($gkmap);
 
+        self::render_section_heading($mform, get_string('form:section_payment', 'paygw_ifthenpay'));
         self::render_gateway_key($mform, $gkmap, $currentgk);
         self::render_methods($mform, $methods, $accounts, $currentgk, $saved);
         self::render_description($mform, $saved);
@@ -419,13 +421,11 @@ class config_form
      * @return void
      */
     private static function render_notifications(\MoodleQuickForm $mform, array $saved): void {
-        // A plain labelled row like the rest of this form (it has no collapsible sections), then
-        // two rows that keep "when" apart from "who".
-        $mform->addElement(
-            'static',
-            'ifthenpay_notifications',
+        // Its own titled section, then two rows that keep "when" apart from "who".
+        self::render_section_heading(
+            $mform,
             get_string('form:notifications', 'paygw_ifthenpay'),
-            \html_writer::div(get_string('form:notifications_note', 'paygw_ifthenpay'), 'text-muted small')
+            get_string('form:notifications_note', 'paygw_ifthenpay')
         );
 
         // The checkboxes keep their own names (appendName false), so they submit, save and load
@@ -495,6 +495,26 @@ class config_form
         // position from the stored list, which no longer lines up once a user has been dropped.
         // It also makes the list tamper-proof for an editor who is not allowed to change it.
         $mform->setConstant('notify_users', $kept);
+    }
+
+    /**
+     * A section title with a divider, spanning the form's full width.
+     *
+     * Plain HTML rather than a Moodle header: the sections are short, always relevant, and a
+     * collapsible fieldset would add an "Expand all" control for no gain. The form below the core
+     * account fields (name, gateway, enable) reads as "Payment" then "Staff notifications".
+     *
+     * @param \MoodleQuickForm $mform Form.
+     * @param string $title Section title.
+     * @param string $note Optional one-line explanation under the title.
+     * @return void
+     */
+    private static function render_section_heading(\MoodleQuickForm $mform, string $title, string $note = ''): void {
+        $html = \html_writer::tag('h3', s($title), ['class' => 'h5 mb-0 pb-2 border-bottom']);
+        if ($note !== '') {
+            $html .= \html_writer::div(s($note), 'text-muted small mt-2');
+        }
+        $mform->addElement('html', \html_writer::div($html, 'ifthenpay-section mt-4 mb-3'));
     }
 
     /**

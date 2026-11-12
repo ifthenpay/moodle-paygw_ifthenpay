@@ -199,8 +199,14 @@ final class config_form_test extends \advanced_testcase {
             $this->assertNotNull(self::element($form, $name), $name);
         }
         $this->assertSame('autocomplete', $this->type($form, 'notify_users'));
-        // Layout: a plain labelled row (no collapsible header), then "when" and "who" as two rows.
-        $this->assertSame('static', $this->type($form, 'ifthenpay_notifications'));
+        // Layout: titled sections (plain headings, no collapsible fieldsets), "when" and "who" as two rows.
+        $headings = array_filter($mform->_elements, fn($e) => $e instanceof \HTML_QuickForm_html
+            && str_contains((string) $e->toHtml(), 'ifthenpay-section'));
+        $html = implode('', array_map(fn($e) => (string) $e->toHtml(), $headings));
+        $this->assertCount(2, $headings);
+        $this->assertStringContainsString(get_string('form:section_payment', 'paygw_ifthenpay'), $html);
+        $this->assertStringContainsString(get_string('form:notifications', 'paygw_ifthenpay'), $html);
+        $this->assertFalse($mform->elementExists('ifthenpay_notifications'), 'no collapsible header');
         $this->assertSame('group', $this->type($form, 'ifthenpay_notify_when'));
         $this->assertSame('group', $this->type($form, 'ifthenpay_notify_recipients'));
         foreach (['notify_completed', 'notify_problems', 'notify_admins', 'notify_teachers'] as $name) {

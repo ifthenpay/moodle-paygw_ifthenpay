@@ -241,6 +241,7 @@ $string['privacy:metadata:payment_gateways'] = 'La configuration ifthenpay de ch
 $string['privacy:metadata:payment_gateways:config'] = 'Les ID des utilisateurs choisis pour recevoir les notifications de paiement du compte de paiement.';
 
 // Staff notifications: account gateway form.
+$string['form:section_payment'] = 'Paiement';
 $string['form:notifications'] = 'Notifications au personnel';
 $string['form:notifications_note'] = 'Envoyées via la messagerie de Moodle : les préférences de notification de chaque destinataire s\'appliquent.';
 $string['form:notify_when'] = 'Notifier en cas de';

@@ -2,6 +2,35 @@
 
 Earlier releases are described on the project's GitHub Releases page.
 
+## 1.4.0
+
+### Added
+
+- **Staff notifications**, set per payment account in a new *Staff notifications* section: notify
+  site administrators, the course's teachers and/or chosen users when a payment is completed, and
+  when a payment runs into a problem (amount mismatch, anti-phishing key mismatch, delivery
+  refused or unexpected error; each type once per payment, named in the subject). They are sent
+  through Moodle's messaging, so each recipient's notification preferences apply, in the
+  recipient's language, and need Moodle cron to be running. Off by default: upgrading changes
+  nothing until an account is configured.
+- New capability **Receive ifthenpay payment notifications**
+  (`paygw/ifthenpay:receivenotifications`), granted by default to managers and editing teachers
+  (site administrators always have it). Give it to a role to notify other users, such as a finance
+  team.
+- Privacy data requests (export and delete) cover the notification recipient lists of payment
+  accounts.
+
+### Changed
+
+- The payment account's ifthenpay form is split into a *Payment* section and a *Staff
+  notifications* section.
+
+### Fixed
+
+- Privacy data requests that cover several users at once (Moodle's user-list requests, for
+  example deleting the data of several users in a context) now correctly include ifthenpay
+  payment data: the plugin declared this support in a way Moodle did not recognise.
+
 ## 1.3.1
 
 ### Changed

@@ -19,6 +19,7 @@
         <FIELD NAME="transaction_id" TYPE="char" LENGTH="64" NOTNULL="false"/>
         <FIELD NAME="paymentid" TYPE="int" LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="state" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="PENDING"/>
+        <FIELD NAME="notifiedproblems" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Bitmask of the problem types already notified to staff for this transaction"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

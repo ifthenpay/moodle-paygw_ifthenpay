@@ -70,5 +70,21 @@ function xmldb_paygw_ifthenpay_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026082600, 'paygw', 'ifthenpay');
     }
 
+    // Staff notifications: remembers which problem types were already notified per transaction, so a
+    // problem repeated on every webhook retry alerts once (the capability and message providers are
+    // installed from db/access.php and db/messages.php by this same version bump).
+    if ($oldversion < 2026111100) {
+        $table = new xmldb_table('paygw_ifthenpay_tx');
+        $field = new xmldb_field('notifiedproblems', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'state');
+
+        /** @var \database_manager $manager */
+        $manager = $dbman;
+        if (!$manager->field_exists($table, $field)) {
+            $manager->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111100, 'paygw', 'ifthenpay');
+    }
+
     return true;
 }

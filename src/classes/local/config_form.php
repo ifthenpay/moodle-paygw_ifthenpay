@@ -50,6 +50,12 @@ class config_form
     private const DESCRIPTION_MAX_LENGTH = 150;
 
     /**
+     * Staff notification settings. They do not depend on the ifthenpay API, so they are rendered
+     * on both paths of build() and are never re-registered as hidden fields by render_unavailable().
+     */
+    private const NOTIFY_KEYS = ['notify_completed', 'notify_problems', 'notify_admins', 'notify_teachers', 'notify_users'];
+
+    /**
      * Add the ifthenpay fields to the account gateway form.
      *
      * @param account_gateway $form The account gateway form wrapper.
@@ -62,7 +68,10 @@ class config_form
         // Gateway Key yet, which need different explanations.
         $status = \paygw_ifthenpay_backoffice_key_status();
         if ($status !== 'ok') {
-            self::render_unavailable($mform, $status, self::get_saved_config($form));
+            $saved = self::get_saved_config($form);
+            self::render_section_heading($mform, get_string('form:section_payment', 'paygw_ifthenpay'));
+            self::render_unavailable($mform, $status, $saved);
+            self::render_notifications($mform, $saved);
             return;
         }
 
@@ -77,9 +86,11 @@ class config_form
         $savedgk   = (string) ($saved['ifthenpay_gatewaykey'] ?? '');
         $currentgk = isset($gkmap[$savedgk]) ? $savedgk : (string) array_key_first($gkmap);
 
+        self::render_section_heading($mform, get_string('form:section_payment', 'paygw_ifthenpay'));
         self::render_gateway_key($mform, $gkmap, $currentgk);
         self::render_methods($mform, $methods, $accounts, $currentgk, $saved);
         self::render_description($mform, $saved);
+        self::render_notifications($mform, $saved);
 
         // Mirrors the UI on submission; initialised here from the saved defaults.
         $mform->addElement('hidden', 'ifthenpay_state', json_encode(
@@ -135,7 +146,8 @@ class config_form
         global $OUTPUT;
 
         foreach ($saved as $name => $value) {
-            if (!is_scalar($value)) {
+            // The notification settings are rendered for real by render_notifications().
+            if (!is_scalar($value) || in_array($name, self::NOTIFY_KEYS, true)) {
                 continue;
             }
             $mform->addElement('hidden', $name, (string) $value);
@@ -394,6 +406,202 @@ class config_form
     }
 
     /**
+     * Staff notifications: which events notify, and who receives them.
+     *
+     * Every option starts off: an account saved before this section existed has none of these
+     * keys, and must keep sending nothing.
+     *
+     * The user selector searches through core_user's web service, which requires
+     * moodle/user:viewalldetails at system level. An editor without it (a category-level manager)
+     * would get a selector that cannot search, so they see the chosen users read-only instead,
+     * with their ids carried as hidden values so saving the rest of the form keeps them.
+     *
+     * @param \MoodleQuickForm $mform Form.
+     * @param array<string, mixed> $saved Saved config for defaults.
+     * @return void
+     */
+    private static function render_notifications(\MoodleQuickForm $mform, array $saved): void {
+        // Its own titled section, then two rows that keep "when" apart from "who".
+        self::render_section_heading(
+            $mform,
+            get_string('form:notifications', 'paygw_ifthenpay'),
+            get_string('form:notifications_note', 'paygw_ifthenpay')
+        );
+
+        // The checkboxes keep their own names (appendName false), so they submit, save and load
+        // exactly as top-level fields would.
+        $rows = [
+            'ifthenpay_notify_when' => ['form:notify_when', ['notify_completed', 'notify_problems']],
+            'ifthenpay_notify_recipients' => ['form:notify_recipients', ['notify_admins', 'notify_teachers']],
+        ];
+        foreach ($rows as $group => [$labelkey, $names]) {
+            $boxes = [];
+            foreach ($names as $name) {
+                $boxes[] = $mform->createElement('advcheckbox', $name, '', get_string('form:' . $name, 'paygw_ifthenpay'));
+            }
+            $mform->addGroup($boxes, $group, get_string($labelkey, 'paygw_ifthenpay'), \html_writer::empty_tag('br'), false);
+            $mform->addHelpButton($group, $labelkey, 'paygw_ifthenpay');
+            foreach ($names as $name) {
+                $mform->setType($name, PARAM_BOOL);
+                $mform->setDefault($name, empty($saved[$name]) ? 0 : 1);
+            }
+        }
+
+        // Core's account_gateway::set_data() later sets every element whose name matches a saved
+        // key straight from the stored config, so this default is only what that will set anyway.
+        $userids = notification_recipients::chosen_userids($saved);
+        $label = get_string('form:notify_users', 'paygw_ifthenpay');
+
+        if (has_capability('moodle/user:viewalldetails', \context_system::instance())) {
+            $mform->addElement('autocomplete', 'notify_users', $label, [], [
+                'multiple' => true,
+                'ajax' => 'core_user/form_user_selector',
+                'valuehtmlcallback' => [self::class, 'user_selector_html'],
+            ]);
+            // Not PARAM_INT: an emptied selector submits Moodle's '_qf__force_multiselect_submission'
+            // sentinel, which the element turns into [] only if cleaning leaves it intact. PARAM_INT
+            // would rewrite it to 0 first, saving a phantom user id 0 that reappears as a "0" chip.
+            // Ids are still only ever read through notification_recipients::chosen_userids().
+            $mform->setType('notify_users', PARAM_ALPHANUMEXT);
+            $mform->setDefault('notify_users', $userids);
+            $mform->addHelpButton('notify_users', 'form:notify_users', 'paygw_ifthenpay');
+            return;
+        }
+
+        /*
+         * Read-only. A chosen user who no longer holds the capability is not carried over: validate() would
+         * refuse the save, and this editor has no way to remove them. Rather than strand the whole
+         * form, that user is listed as being removed, and dropping them changes nothing in practice
+         * since the sender already skips them.
+         */
+        $names = [];
+        $elements = [];
+        $kept = [];
+        foreach (self::users_by_id($userids) as $id => $user) {
+            $name = s(fullname($user));
+            if (notification_recipients::holds_capability($id)) {
+                $names[] = $name;
+                $elements[] = $mform->createElement('hidden', (string) count($kept), $id);
+                $kept[] = $id;
+            } else {
+                $names[] = get_string('form:notify_users_dropped', 'paygw_ifthenpay', $name);
+            }
+        }
+        $text = \html_writer::div($names ? implode(', ', $names) : get_string('form:notify_users_none', 'paygw_ifthenpay'))
+            . \html_writer::div(get_string('form:notify_users_readonly', 'paygw_ifthenpay'), 'text-muted small');
+        array_unshift($elements, $mform->createElement('static', 'list', '', $text));
+
+        // A group named notify_users, so the hidden values submit as notify_users[n] exactly like
+        // the selector's, and an error from validate() has an element to attach to.
+        $mform->addGroup($elements, 'notify_users', $label, '', true);
+        $mform->setType('notify_users', PARAM_INT);
+        // A constant, not a default: core's set_data() would otherwise refill the hidden values by
+        // position from the stored list, which no longer lines up once a user has been dropped.
+        // It also makes the list tamper-proof for an editor who is not allowed to change it.
+        $mform->setConstant('notify_users', $kept);
+    }
+
+    /**
+     * A section title with a divider, spanning the form's full width.
+     *
+     * Plain HTML rather than a Moodle header: the sections are short, always relevant, and a
+     * collapsible fieldset would add an "Expand all" control for no gain. The form below the core
+     * account fields (name, gateway, enable) reads as "Payment" then "Staff notifications".
+     *
+     * @param \MoodleQuickForm $mform Form.
+     * @param string $title Section title.
+     * @param string $note Optional one-line explanation under the title.
+     * @return void
+     */
+    private static function render_section_heading(\MoodleQuickForm $mform, string $title, string $note = ''): void {
+        $html = \html_writer::tag('h3', s($title), ['class' => 'h5 mb-0 pb-2 border-bottom']);
+        if ($note !== '') {
+            $html .= \html_writer::div(s($note), 'text-muted small mt-2');
+        }
+        $mform->addElement('html', \html_writer::div($html, 'ifthenpay-section mt-4 mb-3'));
+    }
+
+    /**
+     * Render one chosen user in the user selector, as core's own user selectors do.
+     *
+     * Public only because the autocomplete element calls it back.
+     *
+     * @param string $value Submitted user id.
+     * @return string|false HTML, or false to leave the value as it is.
+     */
+    public static function user_selector_html(string $value): string|false {
+        global $OUTPUT;
+
+        // Deleted users included: the stored list can still name one, and showing who it was
+        // lets the admin remove them instead of facing a bare id.
+        $users = is_numeric($value) ? self::users_by_id([(int) $value], true) : [];
+        $user = reset($users);
+        if (!$user) {
+            return false;
+        }
+        $context = \context_system::instance();
+        /** @var \core_renderer $output */
+        $output = $OUTPUT;
+        $html = $output->render_from_template('core_user/form_user_selector_suggestion', (object) [
+            'id' => $user->id,
+            'fullname' => fullname($user, has_capability('moodle/site:viewfullnames', $context)),
+            'extrafields' => [],
+        ]);
+        return is_string($html) ? $html : false;
+    }
+
+    /**
+     * Existing users by id, in the order asked for.
+     *
+     * @param int[] $ids User ids.
+     * @param bool $withdeleted Whether to include deleted users.
+     * @return array<int, \stdClass> User records keyed by id.
+     */
+    private static function users_by_id(array $ids, bool $withdeleted = false): array {
+        global $DB;
+
+        if (!$ids) {
+            return [];
+        }
+        /** @var \moodle_database $db */
+        $db = $DB;
+        $fields = 'id, deleted, ' . implode(', ', \core_user\fields::get_name_fields());
+        /** @var array<int, \stdClass> $records */
+        $records = $db->get_records_list('user', 'id', $ids, '', $fields);
+        $users = [];
+        foreach ($ids as $id) {
+            if (isset($records[$id]) && ($withdeleted || empty($records[$id]->deleted))) {
+                $users[$id] = $records[$id];
+            }
+        }
+        return $users;
+    }
+
+    /**
+     * Refuse chosen users Moodle would not deliver these notifications to.
+     *
+     * Messaging refuses a provider to a user without paygw/ifthenpay:receivenotifications, so
+     * saving such a user would look configured and send nothing.
+     *
+     * @param \stdClass $data Raw form submission data.
+     * @param array<string, string> $errors Errors to attach to form fields (by ref).
+     * @return void
+     */
+    private static function validate_notifications(\stdClass $data, array &$errors): void {
+        $ids = notification_recipients::chosen_userids(['notify_users' => $data->notify_users ?? []]);
+        $refused = [];
+        foreach (self::users_by_id($ids) as $id => $user) {
+            if (!notification_recipients::holds_capability($id)) {
+                $refused[] = fullname($user);
+            }
+        }
+        if ($refused) {
+            $errors['notify_users'] =
+                get_string('form:error_notify_users_cannot_receive', 'paygw_ifthenpay', s(implode(', ', $refused)));
+        }
+    }
+
+    /**
      * Validate the account gateway configuration form.
      *
      * Every error must be keyed to an element this form actually registered: Moodle silently
@@ -420,6 +628,9 @@ class config_form
          * Gated on the live status rather than on which fields arrived, because those hidden fields
          * include ifthenpay_state and would otherwise look like a normal submission.
          */
+        // Before the early return below: the notification section is editable on both paths.
+        self::validate_notifications($data, $errors);
+
         if (\paygw_ifthenpay_backoffice_key_status() !== 'ok') {
             if (!empty($data->enabled)) {
                 $errors['enabled'] = get_string('form:error_unavailable_enable', 'paygw_ifthenpay');

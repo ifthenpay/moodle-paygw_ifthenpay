@@ -24,6 +24,7 @@
 
 use paygw_ifthenpay\local\api_client;
 use paygw_ifthenpay\local\data_formatter;
+use paygw_ifthenpay\local\notification_recipients;
 
 /** Webhook outcome: the payment is (or already was) settled. */
 define('PAYGW_IFTHENPAY_WEBHOOK_OK', 'ok');
@@ -35,6 +36,15 @@ define('PAYGW_IFTHENPAY_WEBHOOK_BADKEY', 'badkey');
 define('PAYGW_IFTHENPAY_WEBHOOK_MISMATCH', 'mismatch');
 /** Webhook outcome: a transient failure; ifthenpay should retry. */
 define('PAYGW_IFTHENPAY_WEBHOOK_RETRY', 'retry');
+
+/** Problem type bit in paygw_ifthenpay_tx.notifiedproblems: anti-phishing key mismatch. */
+define('PAYGW_IFTHENPAY_PROBLEM_BADKEY', 1);
+/** Problem type bit in paygw_ifthenpay_tx.notifiedproblems: amount mismatch. */
+define('PAYGW_IFTHENPAY_PROBLEM_MISMATCH', 2);
+/** Problem type bit in paygw_ifthenpay_tx.notifiedproblems: delivery refused. */
+define('PAYGW_IFTHENPAY_PROBLEM_DELIVERY', 4);
+/** Problem type bit in paygw_ifthenpay_tx.notifiedproblems: unexpected error. */
+define('PAYGW_IFTHENPAY_PROBLEM_ERROR', 8);
 
 /**
  * Get the configured Ifthenpay Backoffice Key.
@@ -385,6 +395,116 @@ function paygw_ifthenpay_amount_to_cents(string $amount): ?int {
 }
 
 /**
+ * Queue the staff notifications for a payment event, at most once per transaction and problem type.
+ *
+ * Called from paygw_ifthenpay_process_webhook(), inside its per-token lock, so the read-then-write
+ * of notifiedproblems cannot race. Nothing is built or sent here: one send_notification ad-hoc task
+ * is queued per recipient, so the webhook answers as fast as before. The problem bit and the tasks
+ * are written in one transaction, so neither exists without the other.
+ *
+ * Never throws and never changes the caller's outcome: a failure is only logged (debugging and a
+ * notification_failed event).
+ *
+ * @param stdClass $rec Transaction record (id, accountid, component, paymentarea, itemid used).
+ * @param string $event 'completed' or 'problem'.
+ * @param string|null $problemtype For problems: 'badkey', 'mismatch', 'delivery' or 'error'.
+ * @param string $reason Technical detail of the problem; only an 'error' carries it to the message.
+ * @return void
+ */
+function paygw_ifthenpay_notify(stdClass $rec, string $event, ?string $problemtype = null, string $reason = ''): void {
+    global $DB;
+
+    $isproblem = $event === 'problem';
+    $txid = is_numeric($rec->id ?? null) ? (int) $rec->id : 0;
+    try {
+        /** @var \moodle_database $db */
+        $db = $DB;
+        $accountid = is_numeric($rec->accountid ?? null) ? (int) $rec->accountid : 0;
+        $json = $db->get_field('payment_gateways', 'config', ['accountid' => $accountid, 'gateway' => 'ifthenpay']);
+        $decoded = is_string($json) ? json_decode($json, true) : null;
+        if (!is_array($decoded)) {
+            return;
+        }
+        /** @var array<string, mixed> $config */
+        $config = $decoded;
+        if (empty($config[$isproblem ? 'notify_problems' : 'notify_completed'])) {
+            return;
+        }
+
+        $bit = 0;
+        $notified = 0;
+        if ($isproblem) {
+            [$problemtype, $bit] = match ($problemtype) {
+                'badkey' => ['badkey', PAYGW_IFTHENPAY_PROBLEM_BADKEY],
+                'mismatch' => ['mismatch', PAYGW_IFTHENPAY_PROBLEM_MISMATCH],
+                'delivery' => ['delivery', PAYGW_IFTHENPAY_PROBLEM_DELIVERY],
+                default => ['error', PAYGW_IFTHENPAY_PROBLEM_ERROR],
+            };
+            // Re-read: $rec was read at the start of the webhook and must not be trusted for this.
+            $current = $db->get_field('paygw_ifthenpay_tx', 'notifiedproblems', ['id' => $txid]);
+            $notified = is_numeric($current) ? (int) $current : 0;
+            if ($notified & $bit) {
+                return;
+            }
+        } else {
+            $problemtype = null;
+        }
+
+        $provider = $isproblem ? notification_recipients::PROVIDER_PROBLEM : notification_recipients::PROVIDER_COMPLETED;
+        $recipients = notification_recipients::resolve($rec, $config, $provider);
+        if (!$recipients) {
+            return;
+        }
+
+        $transaction = $db->start_delegated_transaction();
+        try {
+            if ($bit) {
+                $db->set_field('paygw_ifthenpay_tx', 'notifiedproblems', $notified | $bit, ['id' => $txid]);
+            }
+            foreach (array_keys($recipients) as $recipientid) {
+                $data = ['txid' => $txid, 'event' => $isproblem ? 'problem' : 'completed', 'recipientid' => $recipientid,
+                    'time' => time()];
+                if ($problemtype !== null) {
+                    $data['problemtype'] = $problemtype;
+                    if ($problemtype === 'error') {
+                        $data['reason'] = \core_text::substr(
+                            (string) preg_replace('/[[:cntrl:]]/', ' ', $reason),
+                            0,
+                            \paygw_ifthenpay\task\send_notification::REASON_MAX_LENGTH
+                        );
+                    }
+                }
+                $task = new \paygw_ifthenpay\task\send_notification();
+                $task->set_custom_data($data);
+                if (!\core\task\manager::queue_adhoc_task($task)) {
+                    throw new \RuntimeException('the notification task was not queued');
+                }
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            $transaction->rollback($e);
+        }
+    } catch (\Throwable $e) {
+        $detail = \core_text::substr(get_class($e) . ': ' . $e->getMessage(), 0, 200);
+        debugging('[ifthenpay] notification for transaction ' . $txid . ' not queued: ' . $detail, DEBUG_DEVELOPER);
+        try {
+            \paygw_ifthenpay\event\notification_failed::create([
+                'context' => \context_system::instance(),
+                'other' => [
+                    'txid' => $txid,
+                    'event' => $isproblem ? 'problem' : 'completed',
+                    'problemtype' => $problemtype,
+                    'reason' => 'not queued: ' . $detail,
+                ],
+            ])->trigger();
+        } catch (\Throwable $ignored) {
+            // Logging is best effort: the payment outcome must not depend on it.
+            unset($ignored);
+        }
+    }
+}
+
+/**
  * Process an Ifthenpay webhook event (idempotent).
  *
  * Contract (same as webhook.php GET):
@@ -413,6 +533,8 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         return PAYGW_IFTHENPAY_WEBHOOK_RETRY;
     }
 
+    // Declared before the try so the catch can tell whether a known transaction was involved.
+    $rec = null;
     try {
         // Read inside the lock: anything read before it may already be stale.
         $rec = paygw_ifthenpay_tx_get($token);
@@ -445,6 +567,7 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         if ($expectedkey === '' || $decoded === false || !hash_equals($expectedkey, $decoded)) {
             // The key itself is never logged: it is the webhook's shared secret.
             paygw_ifthenpay_report_payment_problem($token, 'anti-phishing key does not match the transaction');
+            paygw_ifthenpay_notify($rec, 'problem', 'badkey', 'anti-phishing key does not match the transaction');
             return PAYGW_IFTHENPAY_WEBHOOK_BADKEY;
         }
 
@@ -455,10 +578,9 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
          */
         $notifiedcents = paygw_ifthenpay_amount_to_cents($amount);
         if ($notifiedcents === null || $notifiedcents !== paygw_ifthenpay_amount_to_cents((string) $rec->amount)) {
-            paygw_ifthenpay_report_payment_problem(
-                $token,
-                'amount mismatch: notified ' . paygw_ifthenpay_log_value($amount) . ', expected ' . $rec->amount
-            );
+            $problem = 'amount mismatch: notified ' . paygw_ifthenpay_log_value($amount) . ', expected ' . $rec->amount;
+            paygw_ifthenpay_report_payment_problem($token, $problem);
+            paygw_ifthenpay_notify($rec, 'problem', 'mismatch', $problem);
             return PAYGW_IFTHENPAY_WEBHOOK_MISMATCH;
         }
 
@@ -506,6 +628,7 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
         );
         if ($delivered === false) {
             paygw_ifthenpay_report_payment_problem($token, 'payment captured but delivery was refused');
+            paygw_ifthenpay_notify($rec, 'problem', 'delivery', 'payment captured but delivery was refused');
             return PAYGW_IFTHENPAY_WEBHOOK_RETRY;
         }
 
@@ -515,9 +638,15 @@ function paygw_ifthenpay_process_webhook(string $token, string $amount, string $
             'timemodified' => time(),
         ]);
 
+        // Only here, after the one PENDING -> PAID transition: a retry returns OK further up.
+        paygw_ifthenpay_notify($rec, 'completed');
+
         return PAYGW_IFTHENPAY_WEBHOOK_OK;
     } catch (\Throwable $e) {
         paygw_ifthenpay_report_payment_problem($token, $e->getMessage());
+        if ($rec instanceof stdClass) {
+            paygw_ifthenpay_notify($rec, 'problem', 'error', $e->getMessage());
+        }
         return PAYGW_IFTHENPAY_WEBHOOK_RETRY;
     } finally {
         $lock->release();

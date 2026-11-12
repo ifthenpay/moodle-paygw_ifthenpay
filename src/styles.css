@@ -62,3 +62,13 @@
     height: 20px;
     width: auto;
 }
+
+/* Payment methods table on the gateway configuration form.
+ *
+ * Each row is a Bootstrap grid inside the form's value column, so on a wide screen the checkbox,
+ * the method and its Default radio drifted a whole screen-width apart and a row no longer read as
+ * one unit. Capping the grid keeps the columns close together.
+ */
+.ifthenpay-methods-grid {
+    max-width: 48rem;
+}

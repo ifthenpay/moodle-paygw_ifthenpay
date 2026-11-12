@@ -141,7 +141,7 @@ $string['form:default_unsupported'] = 'Ce moyen de paiement ne peut pas être pr
 $string['form:default_method_help'] =
     'Facultatif. S\'il est défini, ce moyen est présélectionné au checkout lorsque plusieurs moyens sont activés. ' .
     'Laissez « Aucun » pour que le client choisisse sans présélection.';
-$string['form:default_method_none'] = 'Aucun';
+$string['form:default_method_none_row'] = 'Pas de moyen par défaut : le client choisit le moyen';
 $string['form:description'] = 'Description du checkout (facultatif)';
 $string['form:description_help'] = 'Texte facultatif, jusqu\'à 150 caractères, affiché au checkout.';
 

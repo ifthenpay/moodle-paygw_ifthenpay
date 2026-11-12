@@ -123,7 +123,7 @@ $string['form:set_default_method'] = 'Set {$a} as the default method';
 $string['form:default_unsupported'] = 'This payment method cannot be preselected at checkout.';
 $string['form:default_method_help'] =
     'Optional. If set, this method will be preselected at checkout when multiple methods are enabled. Leave as "None" to let the customer choose without a preset.';
-$string['form:default_method_none'] = 'None';
+$string['form:default_method_none_row'] = 'No default: the customer chooses the method';
 $string['form:description'] = 'Checkout description (Optional)';
 $string['form:description_help'] = 'Optional text, up to 150 characters, shown at checkout.';
 

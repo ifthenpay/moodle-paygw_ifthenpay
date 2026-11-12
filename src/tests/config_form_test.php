@@ -207,6 +207,9 @@ final class config_form_test extends \advanced_testcase {
         $this->assertStringContainsString(get_string('form:section_payment', 'paygw_ifthenpay'), $html);
         $this->assertStringContainsString(get_string('form:notifications', 'paygw_ifthenpay'), $html);
         $this->assertFalse($mform->elementExists('ifthenpay_notifications'), 'no collapsible header');
+        // "No default" is a row of the methods table, not a separate setting below it.
+        $this->assertSame('group', $this->type($form, 'ifthenpay_default_none'));
+        $this->assertFalse($mform->elementExists('ifthenpay_defaultmethod'), 'no standalone default row');
         $this->assertSame('group', $this->type($form, 'ifthenpay_notify_when'));
         $this->assertSame('group', $this->type($form, 'ifthenpay_notify_recipients'));
         foreach (['notify_completed', 'notify_problems', 'notify_admins', 'notify_teachers'] as $name) {

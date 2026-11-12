@@ -126,7 +126,7 @@ $string['form:set_default_method'] = 'Definir {$a} como método predefinido';
 $string['form:default_unsupported'] = 'Este método de pagamento não pode ser pré-selecionado no checkout.';
 $string['form:default_method_help'] =
     'Opcional. Se ativo, este método será o pré-selecionado no checkout quando multiplicos métodos estão ativos. Selecione "Nenhum" para que o cliente escolha sem a pré-seleção.';
-$string['form:default_method_none'] = 'Nenhum';
+$string['form:default_method_none_row'] = 'Sem método predefinido: o cliente escolhe o método';
 $string['form:description'] = 'Descrição do checkout (Opcional)';
 $string['form:description_help'] = 'Texto opcional, até 150 caracteres, apresentado no checkout.';
 

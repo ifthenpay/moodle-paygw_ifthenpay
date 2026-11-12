@@ -40,6 +40,9 @@ use core_payment\form\account_gateway;
  */
 class config_form
 {
+    /** @var string Classes of each payment-methods grid row; capped in styles.css so a row reads as a unit. */
+    private const GRID_CLASSES = 'row align-items-center w-100 m-0 ifthenpay-methods-grid';
+
     /**
      * Length limit on the admin's checkout description.
      *
@@ -246,12 +249,15 @@ class config_form
         // wrapper, which is where the method rows below compute their col-* widths from, whereas
         // static content is confined to the narrower value cell and would not line up.
         $headercols = '';
+        /** @var \core_renderer $output */
+        $output = $OUTPUT;
+        $defaulthelp = $output->help_icon('form:default_method', 'paygw_ifthenpay');
         foreach (
             [
                 'col-1' => '',
                 'col-4' => get_string('form:col_method', 'paygw_ifthenpay'),
                 'col-5' => get_string('form:col_account', 'paygw_ifthenpay'),
-                'col-2' => get_string('form:col_default', 'paygw_ifthenpay'),
+                'col-2' => get_string('form:col_default', 'paygw_ifthenpay') . $defaulthelp,
             ] as $cols => $text
         ) {
             // Bootstrap 5 spells this fw-bold and Bootstrap 4 font-weight-bold; both are emitted
@@ -261,14 +267,15 @@ class config_form
                 $cols . ' px-0 text-uppercase text-muted small fw-bold font-weight-bold'
             );
         }
-        $header = $mform->addGroup(
-            [$mform->createElement('html', $headercols)],
+        // The divider sits on the grid itself, not on the whole form row, so it starts under the
+        // table rather than under the empty label column.
+        $mform->addGroup(
+            [$mform->createElement('html', \html_writer::div($headercols, self::GRID_CLASSES . ' border-bottom pb-1'))],
             'ifthenpay_methods_header',
             '',
             '',
             false
         );
-        $header->setAttributes(['class' => 'row align-items-center w-100 m-0 border-bottom pb-1']);
 
         foreach ($methods as $methodkey => $meta) {
             $label   = (string) $meta['label'];
@@ -337,38 +344,51 @@ class config_form
                 $radio->updateAttributes(['disabled' => 'disabled']);
             }
 
-            $group = $mform->addGroup(
+            $mform->addGroup(
                 [
-                    $mform->createElement('html', '<div class="col-1 px-0">'),
+                    $mform->createElement('html', '<div class="' . self::GRID_CLASSES . '"><div class="col-1 px-0">'),
                     $checkbox,
                     $mform->createElement('html', '</div><div class="col-4 px-0 d-flex align-items-center">'
                         . $logo . \html_writer::span(s($label), '', ['title' => $tooltip]) . '</div>'),
                     $mform->createElement('html', '<div class="col-5 px-0">' . $accounttext . '</div>'),
                     $mform->createElement('html', '<div class="col-2 px-0">'),
                     $radio,
-                    $mform->createElement('html', '</div>'),
+                    $mform->createElement('html', '</div></div>'),
                 ],
                 "ifthenpay_row_{$methodkey}",
                 '',
                 '',
                 false
             );
-            $group->setAttributes(['class' => 'row align-items-center w-100 m-0']);
 
             // Value carrier: the account is derived, never chosen, so it submits hidden.
             $mform->addElement('hidden', $accname, $available ? $account : '');
             $mform->setType($accname, PARAM_RAW_TRIMMED);
         }
 
-        $mform->addElement(
-            'radio',
-            'ifthenpay_defaultmethod',
-            get_string('form:default_method', 'paygw_ifthenpay'),
-            get_string('form:default_method_none', 'paygw_ifthenpay'),
-            ''
+        /*
+         * "No default" is the last row of the table, in the Default column, so it reads as the
+         * other choice of the same radio group rather than a separate setting below the table.
+         * Named ifthenpay_default_none so validation errors about the default have a row to show
+         * on. The AMD module finds these radios by name, not position.
+         */
+        $none = $mform->createElement('radio', 'ifthenpay_defaultmethod', '', '', '', [
+            'aria-label' => get_string('form:default_method_none_row', 'paygw_ifthenpay'),
+        ]);
+        $mform->addGroup(
+            [
+                $mform->createElement('html', '<div class="' . self::GRID_CLASSES . '"><div class="col-1 px-0"></div>'
+                    . \html_writer::div(get_string('form:default_method_none_row', 'paygw_ifthenpay'), 'col-9 px-0 text-muted')
+                    . '<div class="col-2 px-0">'),
+                $none,
+                $mform->createElement('html', '</div></div>'),
+            ],
+            'ifthenpay_default_none',
+            '',
+            '',
+            false
         );
         $mform->setType('ifthenpay_defaultmethod', PARAM_ALPHANUMEXT);
-        $mform->addHelpButton('ifthenpay_defaultmethod', 'form:default_method', 'paygw_ifthenpay');
 
         // Fall back to "no default" if the saved method can no longer be one, otherwise the row
         // would show a checked but disabled radio while "None" looked unset.
@@ -655,9 +675,9 @@ class config_form
 
         if ($default !== '') {
             if (!isset($methods[$default])) {
-                $errors['ifthenpay_defaultmethod'] = get_string('form:error_default_unknown', 'paygw_ifthenpay', $default);
+                $errors['ifthenpay_default_none'] = get_string('form:error_default_unknown', 'paygw_ifthenpay', $default);
             } else if (empty($methods[$default]['enabled'])) {
-                $errors['ifthenpay_defaultmethod'] = get_string('form:error_default_not_enabled', 'paygw_ifthenpay', $default);
+                $errors['ifthenpay_default_none'] = get_string('form:error_default_not_enabled', 'paygw_ifthenpay', $default);
             }
         }
 

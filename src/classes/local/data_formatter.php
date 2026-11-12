@@ -126,6 +126,23 @@ class data_formatter
     }
 
     /**
+     * Method names as the brands write them, keyed by method entity.
+     *
+     * ifthenpay's catalog sends every name in capitals (MULTIBANCO, MBWAY, GOOGLE PAY), which
+     * shouts in the admin table and competes with the logos. A method missing here keeps the
+     * catalog's own name, so a new one still shows up correctly, just in capitals.
+     */
+    private const DISPLAY_NAMES = [
+        'MB' => 'Multibanco',
+        'MBWAY' => 'MB WAY',
+        'PAYSHOP' => 'Payshop',
+        'CCARD' => 'Visa / Mastercard',
+        'GOOGLE' => 'Google Pay',
+        'APPLE' => 'Apple Pay',
+        'PIX' => 'Pix',
+    ];
+
+    /**
      * Format available payment methods into [key => ['position','image','tooltip','label']].
      *
      * Input is the response from api_client::get_available_payment_methods().
@@ -144,7 +161,7 @@ class data_formatter
                 'position' => (int)($entry['Position'] ?? 0),
                 'image'    => (string)($entry['SmallImageUrl'] ?? ''),
                 'tooltip'  => (string)($entry['DescriptionEN'] ?? ''),
-                'label'    => (string)($entry['Method'] ?? ''),
+                'label'    => (is_string($key) ? self::DISPLAY_NAMES[$key] ?? null : null) ?? (string)($entry['Method'] ?? ''),
             ];
         }
         uasort($methods, fn ($a, $b) => $a['position'] <=> $b['position']);

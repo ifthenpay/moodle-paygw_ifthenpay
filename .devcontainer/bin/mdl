@@ -109,7 +109,7 @@ ${bold}mdl${reset} — ifthenpay Moodle dev helper
  ${bold}Quality${reset}
   ${cyan}mdl lint${reset}                   phpcs (Moodle standard) + eslint + stylelint
   ${cyan}mdl fix${reset}                    phpcbf + eslint --fix + stylelint --fix
-  ${cyan}mdl analyse${reset}                PHPStan
+  ${cyan}mdl analyse${reset}                PHPStan, as CI runs it (core without the plugin)
   ${cyan}mdl qa${reset}                     lint + analyse
   ${cyan}mdl build${reset}                  Build the AMD modules
   ${cyan}mdl watch${reset}                  Rebuild AMD modules on change
@@ -183,10 +183,34 @@ cmd_fix() {
     return "${status}"
 }
 
+# PHPStan as CI runs it: against Moodle core *without* the plugin. Here the plugin is also
+# mounted inside core, and analysing with both copies visible produces phantom errors. The view is
+# a tree of symlinks to core minus the plugin and config.php, rebuilt on every run (it is cheap).
+cmd_analyse() {
+    local view="${XDG_CACHE_HOME:-$HOME/.cache}/ifthenpay/moodle-core-view"
+    rm -rf "${view}"
+    _view_level() { # source destination skip-entry
+        mkdir -p "$2"
+        local entry name
+        for entry in "$1"/* "$1"/.[!.]*; do
+            [ -e "${entry}" ] || continue
+            name="$(basename "${entry}")"
+            [ "${name}" = "$3" ] || [ "${name}" = "config.php" ] && continue
+            ln -s "${entry}" "$2/${name}"
+        done
+    }
+    _view_level "${DIRROOT}" "${view}" public
+    _view_level "${DIRROOT}/public" "${view}/public" payment
+    _view_level "${DIRROOT}/public/payment" "${view}/public/payment" gateway
+    _view_level "${DIRROOT}/public/payment/gateway" "${view}/public/payment/gateway" ifthenpay
+    (cd "${REPO}" && PHPSTAN_MOODLE_ROOT="${view}" XDEBUG_MODE=off \
+        php -d memory_limit=1G vendor/bin/phpstan analyse --configuration=phpstan.local.neon "$@")
+}
+
 cmd_qa() {
     local status=0
     cmd_lint || status=1
-    (cd "${REPO}" && composer analyse) || status=1
+    cmd_analyse || status=1
     return "${status}"
 }
 
@@ -217,7 +241,7 @@ main() {
 
         lint)             cmd_lint ;;
         fix)              cmd_fix ;;
-        analyse|analyze)  (cd "${REPO}" && composer analyse) ;;
+        analyse|analyze)  cmd_analyse "$@" ;;
         qa)               cmd_qa ;;
         build)            (cd "${REPO}" && npm run --silent build) ;;
         watch)            (cd "${REPO}" && npm run --silent watch) ;;

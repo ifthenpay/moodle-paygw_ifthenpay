@@ -1,0 +1,13 @@
+# Local runs of the full PHPStan check (`mdl analyse`, `mdl qa`).
+#
+# In the dev container the plugin is also mounted inside the Moodle tree
+# (public/payment/gateway/ifthenpay), so every plugin class exists under two paths and PHPStan
+# reports phantom errors that depend on which copy it resolves first. CI analyses against a core
+# without the plugin. `mdl analyse` builds that same view (symlinks to core, minus the plugin and
+# config.php) and points PHPSTAN_MOODLE_ROOT at it; this file only swaps the core path.
+includes:
+  - phpstan.neon
+
+parameters:
+  moodle:
+    rootDirectory: %env.PHPSTAN_MOODLE_ROOT%

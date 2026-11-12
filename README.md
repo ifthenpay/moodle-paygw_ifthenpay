@@ -151,7 +151,8 @@ Apply changes with `docker compose up -d` (rebuild only for `MOODLE_VERSION`, `A
 ├─ eslint.config.cjs           # ESLint flat config
 ├─ stylelint.config.cjs        # Stylelint configuration
 ├─ phpcs.xml                   # PHP CodeSniffer rules (Moodle CS)
-├─ phpstan.neon                # PHPStan: level max + baseline (CI and `composer run analyse`)
+├─ phpstan.neon                # PHPStan: level max + baseline (CI)
+├─ phpstan.local.neon          # Same check for `mdl analyse`, against a core view without the plugin
 ├─ phpstan-compat.neon         # PHPStan: level 2, against the oldest supported Moodle (CI)
 ├─ phpstan-common.neon         # Settings shared by the two PHPStan configs
 ├─ docker-compose.yml          # Container orchestration
@@ -285,7 +286,7 @@ it to be up to date with `main`, so what is merged is what was checked.
 | Job | Runs when the change touches | Does |
 |---|---|---|
 | 🐘 PHPCS | `src/`, `phpcs.xml`, `phpstan*.neon`, `composer.*`, `.env.example` | `composer run lint` rules |
-| 🛡️ PHPStan | same | `composer run analyse` (level max) against a cached Moodle core |
+| 🛡️ PHPStan | same | `phpstan.neon` (level max) against a cached Moodle core — locally `mdl analyse` |
 | 🧪 PHPUnit | same, if `src/tests/` has tests | the `paygw_ifthenpay_testsuite` on MySQL 8.4 |
 | 🧬 Moodle 4.5 | `src/version.php` (release preparation, schema changes), releases, manual runs | Against the oldest supported release (`$plugin->requires`): PHPStan with `phpstan-compat.neon` (missing functions, classes, methods), then the PHPUnit suite |
 | 🔍 ESLint + Stylelint | `src/amd/`, CSS, the JS lint configs, `package*.json` | `npm run lint`, and checks `src/amd/build/` matches a fresh build |
@@ -315,9 +316,14 @@ repository admins bypass it (e.g. a direct push for a dev-environment chore).
 ```bash
 composer run lint      # PHPCS (Moodle CS)
 composer run lint:fix  # PHPCBF auto-fix
-composer run analyse   # PHPStan static analysis
+composer run analyse   # PHPStan — outside the dev container only (see below)
 composer run qa        # Run lint + analyse
 ```
+
+In the dev container use **`mdl analyse`** (and `mdl qa`) instead of `composer run analyse`: the
+plugin is mounted inside the Moodle tree there too, so every plugin class exists under two paths
+and a plain run reports phantom errors. `mdl analyse` analyses against a view of core without the
+plugin (`phpstan.local.neon`), exactly like CI.
 
 ### JS / AMD (Grunt)
 

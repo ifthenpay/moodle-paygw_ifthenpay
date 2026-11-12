@@ -24,6 +24,10 @@ Earlier releases are described on the project's GitHub Releases page.
 
 - The payment account's ifthenpay form is split into a *Payment* section and a *Staff
   notifications* section.
+- Payment methods table on that form: "no default method" is now a row of the table, in the
+  *Default* column, rather than a separate setting below it; the table no longer stretches across
+  wide screens; and methods are named as their brands write them (Multibanco, MB WAY, Google Pay…)
+  instead of in capitals, here and on the plugin's settings page.
 
 ### Fixed
 

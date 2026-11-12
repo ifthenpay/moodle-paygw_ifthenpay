@@ -137,7 +137,7 @@ $string['form:default_unsupported'] = 'Este método de pago no puede preseleccio
 $string['form:default_method_help'] =
     'Opcional. Si se define, este método se preselecciona en el checkout cuando hay varios métodos activados. ' .
     'Déjelo en «Ninguno» para que el cliente elija sin preselección.';
-$string['form:default_method_none'] = 'Ninguno';
+$string['form:default_method_none_row'] = 'Sin método predeterminado: el cliente elige el método';
 $string['form:description'] = 'Descripción del checkout (opcional)';
 $string['form:description_help'] = 'Texto opcional, de hasta 150 caracteres, que se muestra en el checkout.';
 
